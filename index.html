@@ -7134,22 +7134,48 @@ const PORTARIAS_DATA = {
     function logoutUsuario() {
       currentUser = null;
       adminSenha = null;
+      adminMode = false;
       pararAtualizacaoAutomaticaPermissoes();
       sessionStorage.removeItem("ibrep_user");
-      sairAdmin();
+
+      // sairAdmin() re-renderiza a tela atual (regras/portarias/comparativo/
+      // tutoriais) para tirar os controles de edição — se essa tela estiver
+      // em algum estado inesperado isso pode lançar um erro e, sem o
+      // try/catch, o logout parava no meio do caminho e a tela de login
+      // nunca aparecia (o botão "Sair" parecia não fazer nada). Por isso
+      // essa parte roda protegida e o login sempre aparece no final.
+      try {
+        sairAdmin();
+      } catch (e) {
+        console.warn("Erro ao encerrar modo admin durante logout:", e);
+        document.body.classList.remove("admin-mode");
+        document.getElementById("admin-toolbar")?.classList.remove("open");
+      }
+
+      try {
+        irParaTela("welcome", false);
+      } catch (e) {
+        console.warn("Erro ao navegar para welcome durante logout:", e);
+      }
+
       mostrarLoginUsuario();
       document.getElementById("user-login-input").value = "";
       document.getElementById("user-password-input").value = "";
       document.getElementById("user-login-error").textContent = "";
-      irParaTela("welcome", false);
     }
 
     function initAuth() {
       currentUser = carregarSessaoUsuario();
       if (currentUser) {
         esconderLoginUsuario();
+        // Mostra na hora o que já estava salvo (evita tela em branco),
+        // mas em seguida busca no banco as permissões mais atuais —
+        // assim, se a administradora tiver retirado algum acesso, o
+        // card correspondente já some no próprio recarregamento da
+        // página, sem precisar esperar 20s nem deslogar/logar de novo.
         aplicarPermissoes();
         iniciarAtualizacaoAutomaticaPermissoes();
+        atualizarPermissoesEmSegundoPlano();
       } else {
         mostrarLoginUsuario();
       }
