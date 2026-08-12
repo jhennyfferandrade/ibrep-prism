@@ -2921,6 +2921,14 @@
     const EMAILJS_SERVICE_ID = "service_x6gjzzd";
     const EMAILJS_TEMPLATE_ID = "template_urnh9kc";
     const EMAILJS_PUBLIC_KEY = "CmqwtccPnfd5shhHy";
+    // Diagnóstico: se o SDK do EmailJS não carregar (bloqueio de rede,
+    // adblocker, extensão de navegador etc.), isso aparece no console
+    // (F12 > Console) para ajudar a identificar o problema.
+    if (!window.emailjs) {
+      console.error("EmailJS: o script do CDN não carregou (window.emailjs é undefined). " +
+        "Verifique sua conexão ou se algum bloqueador de anúncios/extensão está " +
+        "bloqueando cdn.jsdelivr.net ou emailjs.com.");
+    }
     try {
       if (window.emailjs && EMAILJS_PUBLIC_KEY && EMAILJS_PUBLIC_KEY.indexOf("TROQUE_") !== 0) {
         emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
@@ -7224,6 +7232,28 @@ const PORTARIAS_DATA = {
       document.getElementById("reset-senha-overlay").classList.add("hidden");
     }
 
+    // Tenta garantir que o SDK do EmailJS esteja carregado, recarregando o
+    // script dinamicamente se, por algum motivo (bloqueio de rede,
+    // extensão etc.), ele não tiver carregado junto com a página.
+    function garantirEmailJsCarregado() {
+      if (window.emailjs) return Promise.resolve(true);
+      return new Promise((resolve) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+        s.onload = () => {
+          try {
+            if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+          } catch (e) { console.warn("EmailJS init (retry) falhou:", e); }
+          resolve(!!window.emailjs);
+        };
+        s.onerror = () => {
+          console.error("EmailJS: falha ao carregar o script (rede bloqueada?).");
+          resolve(false);
+        };
+        document.head.appendChild(s);
+      });
+    }
+
     async function enviarResetSenha() {
       const email = document.getElementById("reset-email-input").value.trim();
       const errEl = document.getElementById("reset-senha-error");
@@ -7244,21 +7274,38 @@ const PORTARIAS_DATA = {
           return;
         }
         // A nova senha já foi salva no banco — agora envia por e-mail via EmailJS.
-        if (window.emailjs && EMAILJS_SERVICE_ID.indexOf("TROQUE_") !== 0) {
+        const chavesConfiguradas = EMAILJS_SERVICE_ID.indexOf("TROQUE_") !== 0
+          && EMAILJS_TEMPLATE_ID.indexOf("TROQUE_") !== 0
+          && EMAILJS_PUBLIC_KEY.indexOf("TROQUE_") !== 0;
+
+        if (!chavesConfiguradas) {
+          errEl.textContent = "Senha redefinida, mas o envio de e-mail ainda não foi configurado. Contate a administradora.";
+          return;
+        }
+
+        const sdkOk = await garantirEmailJsCarregado();
+        if (!sdkOk) {
+          console.error("EmailJS indisponível — a senha foi redefinida no banco, mas o e-mail não pôde ser enviado porque o SDK não carregou.");
+          errEl.textContent = "Senha redefinida, mas não consegui carregar o serviço de e-mail agora (verifique sua conexão) — tente de novo em instantes.";
+          return;
+        }
+
+        try {
           await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             to_email: data.email,
             to_name: data.nome,
             login: data.login,
             nova_senha: data.nova_senha
           });
-          okEl.textContent = "Nova senha enviada para o seu e-mail!";
-        } else {
-          // EmailJS ainda não configurado: avisa a administradora no console
-          // e mostra um aviso no lugar de falhar silenciosamente.
-          console.warn("EmailJS não configurado — nova senha gerada mas não enviada por e-mail:", data);
-          errEl.textContent = "Senha redefinida, mas o envio de e-mail ainda não foi configurado. Contate a administradora.";
+        } catch (sendErr) {
+          console.error("EmailJS recusou o envio:", sendErr);
+          errEl.textContent = "Senha redefinida, mas o EmailJS recusou o envio (" +
+            (sendErr && (sendErr.text || sendErr.message) || "erro desconhecido") +
+            "). Confira o Service ID / Template ID / Public Key e se o domínio está liberado no EmailJS.";
           return;
         }
+
+        okEl.textContent = "Nova senha enviada para o seu e-mail!";
         document.getElementById("user-login-input").value = data.login;
         setTimeout(fecharResetSenha, 2500);
       } catch (e) {
@@ -7589,7 +7636,6 @@ const PORTARIAS_DATA = {
             p_admin_senha: adminSenha,
             p_id: usersEditId,
             p_nome: nome,
-            p_login: email,
             p_senha: senha || null,
             p_email: email,
             ...perms
@@ -7598,7 +7644,6 @@ const PORTARIAS_DATA = {
           data = await supabaseRpc("criar_usuario", {
             p_admin_senha: adminSenha,
             p_nome: nome,
-            p_login: email,
             p_senha: senha,
             p_email: email,
             ...perms
