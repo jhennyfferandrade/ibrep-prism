@@ -7069,6 +7069,17 @@ const PORTARIAS_DATA = {
       if (nomeEl && currentUser) {
         nomeEl.textContent = currentUser.nome || currentUser.login;
       }
+      atualizarVisibilidadeLinkAdmin();
+    }
+
+    // O botão "🔒 Área do administrador" só aparece para quem tem a
+    // permissão "Administradora" marcada no cadastro. Quem não é admin
+    // nunca vê o botão.
+    function atualizarVisibilidadeLinkAdmin() {
+      const link = document.getElementById("admin-lock-link");
+      if (!link) return;
+      const podeVerAdmin = !!(currentUser && currentUser.is_admin) && !adminMode;
+      link.style.display = podeVerAdmin ? "flex" : "none";
     }
 
     function mostrarLoginUsuario() {
@@ -7080,7 +7091,7 @@ const PORTARIAS_DATA = {
     function esconderLoginUsuario() {
       document.getElementById("user-login-overlay").classList.add("hidden");
       document.getElementById("welcome-screen").style.display = "flex";
-      document.getElementById("admin-lock-link").style.display = "flex";
+      atualizarVisibilidadeLinkAdmin();
     }
 
     async function tentarLoginUsuario() {
@@ -7111,6 +7122,7 @@ const PORTARIAS_DATA = {
         salvarSessaoUsuario(currentUser);
         esconderLoginUsuario();
         aplicarPermissoes();
+        iniciarAtualizacaoAutomaticaPermissoes();
       } catch (e) {
         errEl.textContent = e.message || "Erro ao conectar. Verifique sua internet.";
       } finally {
@@ -7122,6 +7134,7 @@ const PORTARIAS_DATA = {
     function logoutUsuario() {
       currentUser = null;
       adminSenha = null;
+      pararAtualizacaoAutomaticaPermissoes();
       sessionStorage.removeItem("ibrep_user");
       sairAdmin();
       mostrarLoginUsuario();
@@ -7136,12 +7149,95 @@ const PORTARIAS_DATA = {
       if (currentUser) {
         esconderLoginUsuario();
         aplicarPermissoes();
+        iniciarAtualizacaoAutomaticaPermissoes();
       } else {
         mostrarLoginUsuario();
       }
     }
 
     initAuth();
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🔄 ATUALIZAÇÃO AUTOMÁTICA DE PERMISSÕES — sem precisar deslogar
+    // Consulta o banco de tempos em tempos (e sempre que a aba volta a
+    // ficar em foco) para refletir mudanças feitas pela administradora
+    // na hora, sem esperar o usuário sair e entrar de novo.
+    // ══════════════════════════════════════════════════════════════════
+
+    let _refreshPermInterval = null;
+    const REFRESH_PERMISSOES_MS = 20000; // 20 segundos
+
+    function iniciarAtualizacaoAutomaticaPermissoes() {
+      if (_refreshPermInterval) clearInterval(_refreshPermInterval);
+      _refreshPermInterval = setInterval(atualizarPermissoesEmSegundoPlano, REFRESH_PERMISSOES_MS);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") atualizarPermissoesEmSegundoPlano();
+      });
+    }
+
+    function pararAtualizacaoAutomaticaPermissoes() {
+      if (_refreshPermInterval) clearInterval(_refreshPermInterval);
+      _refreshPermInterval = null;
+    }
+
+    async function atualizarPermissoesEmSegundoPlano() {
+      if (!currentUser || !currentUser.id) return;
+      try {
+        const data = await supabaseRpc("atualizar_sessao_usuario", { p_id: currentUser.id });
+        if (!data.ok) {
+          // Usuário foi excluído/desativado enquanto estava logado — desloga.
+          pararAtualizacaoAutomaticaPermissoes();
+          alert("Seu acesso foi desativado ou removido. Você será desconectado.");
+          logoutUsuario();
+          return;
+        }
+        const permissoesAntigas = currentUser.permissoes || {};
+        currentUser = {
+          id: data.id,
+          nome: data.nome,
+          login: data.login,
+          is_admin: data.is_admin,
+          permissoes: data.permissoes
+        };
+        salvarSessaoUsuario(currentUser);
+        aplicarPermissoes();
+
+        // Se a área que o usuário está vendo agora perdeu a permissão,
+        // manda ele de volta pra tela inicial na hora.
+        const areaAtual = telaParaArea(currentSectionTela());
+        if (areaAtual && permissoesAntigas[areaAtual] && !temPermissao(areaAtual)) {
+          alert("Sua permissão para esta área foi removida.");
+          irParaTela("welcome", false);
+        }
+      } catch (e) {
+        // Falha de rede/temporária: não desloga o usuário por causa disso.
+        console.warn("Falha ao atualizar permissões em segundo plano:", e);
+      }
+    }
+
+    // Descobre qual área corresponde à tela atualmente aberta, para saber
+    // se o usuário precisa ser redirecionado após perder uma permissão.
+    function telaParaArea(tela) {
+      const mapa = {
+        panel: "painel",
+        tutorials: "tutoriais",
+        portarias: "portarias",
+        regras: "regras",
+        comparativo: "comparativo",
+        cursos: "cursos"
+      };
+      return mapa[tela] || null;
+    }
+
+    function currentSectionTela() {
+      if (document.getElementById("welcome-screen").style.display !== "none") return "welcome";
+      if (document.getElementById("tutorial-screen").classList.contains("open")) return "tutorials";
+      if (document.getElementById("portarias-screen").classList.contains("open")) return "portarias";
+      if (document.getElementById("regras-screen").classList.contains("open")) return "regras";
+      if (document.getElementById("comparativo-screen").classList.contains("open")) return "comparativo";
+      if (document.getElementById("cursos-screen").classList.contains("open")) return "cursos";
+      return "panel";
+    }
 
     // ══════════════════════════════════════════════════════════════════
     // 🔒 MODO ADMIN — senha validada no Supabase, edição inline
@@ -7185,7 +7281,7 @@ const PORTARIAS_DATA = {
       adminMode = false;
       document.body.classList.remove("admin-mode");
       document.getElementById("admin-toolbar").classList.remove("open");
-      document.getElementById("admin-lock-link").style.display = "flex";
+      atualizarVisibilidadeLinkAdmin();
       fecharGestaoUsuarios();
       refrescarTelaAtual();
     }
@@ -7194,7 +7290,7 @@ const PORTARIAS_DATA = {
       adminMode = true;
       document.body.classList.add("admin-mode");
       document.getElementById("admin-toolbar").classList.add("open");
-      document.getElementById("admin-lock-link").style.display = "none";
+      atualizarVisibilidadeLinkAdmin();
       refrescarTelaAtual();
     }
 
