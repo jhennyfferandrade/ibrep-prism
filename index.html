@@ -2613,6 +2613,10 @@
       display: none;
     }
 
+    #reset-senha-overlay.hidden {
+      display: none;
+    }
+
     .user-login-card {
       background: #fff;
       border-radius: 18px;
@@ -2878,6 +2882,42 @@
       color: #27ae60;
     }
   </style>
+  <!-- ══════════════════════════════════════════════════════════════════
+     ✉️ RESET DE SENHA / EMAILJS
+     O botão "Esqueci minha senha" da tela de login gera uma senha nova
+     no banco (Supabase) e usa o EmailJS para enviá-la por e-mail —
+     sem precisar de nenhum servidor próprio, direto do navegador.
+
+     COMO CONFIGURAR (é gratuito até 200 e-mails/mês):
+     1. Crie uma conta em https://www.emailjs.com
+     2. Em "Email Services", conecte seu e-mail (Gmail, Outlook etc.) e
+        copie o "Service ID"
+     3. Em "Email Templates", crie um template com estas variáveis:
+        {{to_email}}, {{to_name}}, {{login}}, {{nova_senha}}
+        Exemplo de corpo do template:
+          "Olá {{to_name}}, sua nova senha de acesso ao IBREP Prism é:
+           {{nova_senha}}  (login: {{login}}). Recomendamos trocá-la
+           depois de entrar."
+        Copie o "Template ID"
+     4. Em "Account" > "General", copie a "Public Key"
+     5. Troque os 3 valores abaixo (EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,
+        EMAILJS_PUBLIC_KEY) pelos que você copiou
+     Enquanto isso não for configurado, o botão continuará gerando a nova
+     senha no banco normalmente, mas o e-mail não será enviado.
+  ══════════════════════════════════════════════════════════════════ -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    const EMAILJS_SERVICE_ID = "service_x6gjzzd";
+    const EMAILJS_TEMPLATE_ID = "template_urnh9kc";
+    const EMAILJS_PUBLIC_KEY = "CmqwtccPnfd5shhHy";
+    try {
+      if (window.emailjs && EMAILJS_PUBLIC_KEY && EMAILJS_PUBLIC_KEY.indexOf("TROQUE_") !== 0) {
+        emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+      }
+    } catch (e) {
+      console.warn("EmailJS não inicializado:", e);
+    }
+  </script>
 </head>
 
 <body>
@@ -2897,6 +2937,31 @@
         onkeydown="if(event.key==='Enter') tentarLoginUsuario()">
       <div class="user-login-error" id="user-login-error"></div>
       <button class="user-login-btn" id="user-login-btn" onclick="tentarLoginUsuario()">Entrar</button>
+      <button type="button" class="user-forgot-link" onclick="abrirResetSenha()"
+        style="margin-top:14px;background:none;border:none;color:var(--roxo);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">
+        Esqueci minha senha
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+     ✉️ RESET DE SENHA — gera uma senha nova e envia por e-mail
+     ══════════════════════════════════════════════════════════════════ -->
+  <div id="reset-senha-overlay" class="hidden"
+    style="position:fixed;inset:0;background:rgba(30,30,46,.55);backdrop-filter:blur(6px);z-index:10001;display:flex;align-items:center;justify-content:center;">
+    <div class="user-login-card" style="text-align:left;">
+      <h3 style="text-align:center;">Esqueci minha senha</h3>
+      <p style="text-align:center;">Informe seu login e o e-mail cadastrado. Enviaremos uma nova senha para esse e-mail.</p>
+      <input type="text" id="reset-login-input" placeholder="Login" autocomplete="username">
+      <input type="email" id="reset-email-input" placeholder="E-mail cadastrado" autocomplete="email"
+        onkeydown="if(event.key==='Enter') enviarResetSenha()">
+      <div class="user-login-error" id="reset-senha-error"></div>
+      <div class="user-login-error" id="reset-senha-ok" style="color:#1a9e5c;"></div>
+      <button class="user-login-btn" id="reset-senha-btn" onclick="enviarResetSenha()">Enviar nova senha</button>
+      <button type="button" onclick="fecharResetSenha()"
+        style="margin-top:10px;background:none;border:none;color:var(--texto-muted);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">
+        Cancelar
+      </button>
     </div>
   </div>
 
@@ -2916,6 +2981,7 @@
             <tr>
               <th>Nome</th>
               <th>Login</th>
+              <th>E-mail</th>
               <th class="users-perm-check">🎬</th>
               <th class="users-perm-check">📊</th>
               <th class="users-perm-check">📖</th>
@@ -2938,6 +3004,10 @@
             <div>
               <label>Login</label>
               <input type="text" id="users-form-login">
+            </div>
+            <div>
+              <label>E-mail <span style="font-weight:400;color:var(--texto-muted)">(para reset de senha)</span></label>
+              <input type="email" id="users-form-email" placeholder="nome@exemplo.com">
             </div>
             <div>
               <label>Senha <span id="users-form-senha-hint" style="font-weight:400;color:var(--texto-muted)"></span></label>
@@ -7084,7 +7154,11 @@ const PORTARIAS_DATA = {
 
     function mostrarLoginUsuario() {
       document.getElementById("user-login-overlay").classList.remove("hidden");
-      document.getElementById("welcome-screen").style.display = "none";
+      // A tela de boas-vindas fica por baixo do overlay de login (como
+      // fundo desfocado) — NÃO deve ser escondida aqui. Escondê-la fazia
+      // aparecer o painel institucional por baixo do login, em vez da
+      // tela inicial.
+      document.getElementById("welcome-screen").style.display = "flex";
       document.getElementById("admin-lock-link").style.display = "none";
     }
 
@@ -7128,6 +7202,67 @@ const PORTARIAS_DATA = {
       } finally {
         btn.disabled = false;
         btn.textContent = "Entrar";
+      }
+    }
+
+    // ── Esqueci minha senha ──
+
+    function abrirResetSenha() {
+      document.getElementById("reset-senha-error").textContent = "";
+      document.getElementById("reset-senha-ok").textContent = "";
+      document.getElementById("reset-login-input").value = document.getElementById("user-login-input").value.trim();
+      document.getElementById("reset-email-input").value = "";
+      document.getElementById("reset-senha-overlay").classList.remove("hidden");
+      setTimeout(() => document.getElementById("reset-email-input").focus(), 50);
+    }
+
+    function fecharResetSenha() {
+      document.getElementById("reset-senha-overlay").classList.add("hidden");
+    }
+
+    async function enviarResetSenha() {
+      const login = document.getElementById("reset-login-input").value.trim();
+      const email = document.getElementById("reset-email-input").value.trim();
+      const errEl = document.getElementById("reset-senha-error");
+      const okEl = document.getElementById("reset-senha-ok");
+      const btn = document.getElementById("reset-senha-btn");
+      errEl.textContent = "";
+      okEl.textContent = "";
+      if (!login || !email) {
+        errEl.textContent = "Preencha login e e-mail.";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Enviando…";
+      try {
+        const data = await supabaseRpc("solicitar_reset_senha", { p_login: login, p_email: email });
+        if (!data.ok) {
+          errEl.textContent = data.erro || "Não foi possível resetar a senha.";
+          return;
+        }
+        // A nova senha já foi salva no banco — agora envia por e-mail via EmailJS.
+        if (window.emailjs && EMAILJS_SERVICE_ID.indexOf("TROQUE_") !== 0) {
+          await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email: data.email,
+            to_name: data.nome,
+            login: data.login,
+            nova_senha: data.nova_senha
+          });
+          okEl.textContent = "Nova senha enviada para o seu e-mail!";
+        } else {
+          // EmailJS ainda não configurado: avisa a administradora no console
+          // e mostra um aviso no lugar de falhar silenciosamente.
+          console.warn("EmailJS não configurado — nova senha gerada mas não enviada por e-mail:", data);
+          errEl.textContent = "Senha redefinida, mas o envio de e-mail ainda não foi configurado. Contate a administradora.";
+          return;
+        }
+        document.getElementById("user-login-input").value = login;
+        setTimeout(fecharResetSenha, 2500);
+      } catch (e) {
+        errEl.textContent = e.message || "Erro ao enviar. Tente novamente.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Enviar nova senha";
       }
     }
 
@@ -7362,6 +7497,7 @@ const PORTARIAS_DATA = {
           return `<tr>
             <td>${escapeHtmlRegra(u.nome)}</td>
             <td>${escapeHtmlRegra(u.login)}</td>
+            <td>${escapeHtmlRegra(u.email || "—")}</td>
             <td class="users-perm-check">${permIcon(p.tutoriais)}</td>
             <td class="users-perm-check">${permIcon(p.comparativo)}</td>
             <td class="users-perm-check">${permIcon(p.regras)}</td>
@@ -7374,7 +7510,7 @@ const PORTARIAS_DATA = {
               <button onclick="excluirUsuarioConfirm('${u.id}')">Excluir</button>
             </td>
           </tr>`;
-        }).join("") || `<tr><td colspan="10" style="text-align:center;color:var(--texto-muted);padding:20px;">Nenhum usuário cadastrado</td></tr>`;
+        }).join("") || `<tr><td colspan="11" style="text-align:center;color:var(--texto-muted);padding:20px;">Nenhum usuário cadastrado</td></tr>`;
         window._usuariosCache = data.usuarios || [];
       } catch (e) {
         setUsersMsg(e.message || "Erro ao carregar usuários.", "erro");
@@ -7399,6 +7535,7 @@ const PORTARIAS_DATA = {
       document.getElementById("users-form-senha-hint").textContent = "";
       document.getElementById("users-form-nome").value = "";
       document.getElementById("users-form-login").value = "";
+      document.getElementById("users-form-email").value = "";
       document.getElementById("users-form-senha").value = "";
       document.getElementById("users-form-senha").placeholder = "Obrigatória para novo usuário";
       ["tutoriais", "comparativo", "regras", "portarias", "cursos", "painel"].forEach(a => {
@@ -7415,6 +7552,7 @@ const PORTARIAS_DATA = {
       document.getElementById("users-form-senha-hint").textContent = "(deixe em branco para manter)";
       document.getElementById("users-form-nome").value = u.nome;
       document.getElementById("users-form-login").value = u.login;
+      document.getElementById("users-form-email").value = u.email || "";
       document.getElementById("users-form-senha").value = "";
       document.getElementById("users-form-senha").placeholder = "Nova senha (opcional)";
       const p = u.permissoes || {};
@@ -7432,6 +7570,7 @@ const PORTARIAS_DATA = {
       if (!adminSenha) return;
       const nome = document.getElementById("users-form-nome").value.trim();
       const login = document.getElementById("users-form-login").value.trim();
+      const email = document.getElementById("users-form-email").value.trim();
       const senha = document.getElementById("users-form-senha").value;
       const perms = lerPermissoesForm();
       if (!nome || !login) {
@@ -7452,6 +7591,7 @@ const PORTARIAS_DATA = {
             p_nome: nome,
             p_login: login,
             p_senha: senha || null,
+            p_email: email || null,
             ...perms
           });
         } else {
@@ -7460,6 +7600,7 @@ const PORTARIAS_DATA = {
             p_nome: nome,
             p_login: login,
             p_senha: senha,
+            p_email: email || null,
             ...perms
           });
         }
