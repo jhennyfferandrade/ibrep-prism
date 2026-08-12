@@ -3925,14 +3925,62 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
 
     // ── NAVEGAÇÃO DE TELAS ──
-    function openPanel() {
+    // Todas as trocas de tela passam por irParaTela(), que além de mostrar/
+    // esconder os elementos certos, registra o estado no histórico do
+    // navegador (history.pushState). Assim a setinha "voltar" do navegador
+    // passa a funcionar igual ao botão "← Voltar ao início" do HTML.
+    // Quando a troca vem de um popstate (usuário clicou voltar/avançar),
+    // pushHistory é false para não empilhar um novo estado em cima.
+    function irParaTela(tela, pushHistory) {
+      if (pushHistory === undefined) pushHistory = true;
+
       document.getElementById("welcome-screen").style.display = "none";
+      document.getElementById("tutorial-screen").classList.remove("open");
+      document.getElementById("portarias-screen").classList.remove("open");
+      document.getElementById("regras-screen").classList.remove("open");
+      document.getElementById("comparativo-screen").classList.remove("open");
+      document.getElementById("cursos-screen").classList.remove("open");
+
+      switch (tela) {
+        case "welcome":
+          document.getElementById("welcome-screen").style.display = "flex";
+          break;
+        case "panel":
+          // O painel institucional fica "por baixo" da welcome-screen;
+          // basta a welcome-screen continuar escondida.
+          break;
+        case "tutorials":
+          document.getElementById("tutorial-screen").classList.add("open");
+          initTutorialsScreen();
+          break;
+        case "portarias":
+          document.getElementById("portarias-screen").classList.add("open");
+          break;
+        case "regras":
+          document.getElementById("regras-screen").classList.add("open");
+          initRegras();
+          break;
+        case "comparativo":
+          document.getElementById("comparativo-screen").classList.add("open");
+          break;
+        case "cursos":
+          document.getElementById("cursos-screen").classList.add("open");
+          initCursosScreen();
+          break;
+      }
+
+      if (pushHistory) {
+        history.pushState({ tela: tela }, "", "#" + tela);
+      }
     }
-    function openTutorials() {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("tutorial-screen").classList.add("open");
-      initTutorialsScreen();
-    }
+
+    function openPanel() { irParaTela("panel"); }
+    function openTutorials() { irParaTela("tutorials"); }
+    function openPortarias() { irParaTela("portarias"); }
+    function openRegras() { irParaTela("regras"); }
+    function openComparativo() { irParaTela("comparativo"); }
+    function openCursos() { irParaTela("cursos"); }
+    function backToWelcome() { irParaTela("welcome"); }
 
     // Monta a lista de categorias a partir do objeto TUTORIAIS (em vez de
     // botões fixos no HTML), para que categorias adicionadas pelo admin
@@ -3961,32 +4009,18 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         btn.addEventListener("click", () => setTutCat(btn, btn.getAttribute("data-cat")));
       });
     }
-    function openPortarias() {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("portarias-screen").classList.add("open");
-    }
-    function openRegras() {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("regras-screen").classList.add("open");
-      initRegras();
-    }
-    function openComparativo() {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("comparativo-screen").classList.add("open");
-    }
-    function openCursos() {
-      document.getElementById("welcome-screen").style.display = "none";
-      document.getElementById("cursos-screen").classList.add("open");
-      initCursosScreen();
-    }
-    function backToWelcome() {
-      document.getElementById("tutorial-screen").classList.remove("open");
-      document.getElementById("portarias-screen").classList.remove("open");
-      document.getElementById("regras-screen").classList.remove("open");
-      document.getElementById("comparativo-screen").classList.remove("open");
-      document.getElementById("cursos-screen").classList.remove("open");
-      document.getElementById("welcome-screen").style.display = "flex";
-    }
+
+    // Estado inicial no histórico (a tela de boas-vindas), para que o
+    // primeiro clique em "voltar" já tenha algo consistente para onde ir.
+    history.replaceState({ tela: "welcome" }, "", "#welcome");
+
+    // Suporte à setinha "voltar"/"avançar" do navegador: quando o histórico
+    // muda por causa do usuário (não por um clique dentro do painel), refaz
+    // a mesma troca de tela, mas sem empilhar um novo estado.
+    window.addEventListener("popstate", (e) => {
+      const tela = (e.state && e.state.tela) || "welcome";
+      irParaTela(tela, false);
+    });
 
     // ══════════════════════════════════════
     // CURSOS POR INSTITUIÇÃO — navegação por estado → instituição → curso
