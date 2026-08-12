@@ -2596,10 +2596,371 @@
       70% { opacity: 1; }
       100% { opacity: 0; }
     }
+
+    /* ── LOGIN DE USUÁRIO ── */
+    #user-login-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 30, 46, .55);
+      backdrop-filter: blur(6px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #user-login-overlay.hidden {
+      display: none;
+    }
+
+    .user-login-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 36px 32px 28px;
+      width: min(400px, 92vw);
+      box-shadow: 0 24px 64px rgba(124, 92, 255, .18);
+      text-align: center;
+    }
+
+    .user-login-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .user-login-card p {
+      font-size: 13px;
+      color: var(--texto-sec);
+      margin-bottom: 20px;
+    }
+
+    .user-login-card input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .user-login-card input:focus {
+      outline: none;
+      border-color: var(--roxo);
+    }
+
+    .user-login-error {
+      color: #e74c3c;
+      font-size: 12px;
+      min-height: 18px;
+      margin-bottom: 8px;
+    }
+
+    .user-login-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--roxo);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .user-login-btn:hover {
+      background: var(--roxo-hover);
+    }
+
+    .user-login-btn:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .welcome-user-bar {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--texto-sec);
+    }
+
+    .welcome-user-bar button {
+      border: 1px solid var(--cinza-borda);
+      background: #fff;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px;
+      cursor: pointer;
+      color: var(--texto-sec);
+    }
+
+    .welcome-user-bar button:hover {
+      border-color: var(--roxo);
+      color: var(--roxo);
+    }
+
+    .welcome-btn.hidden-area {
+      display: none !important;
+    }
+
+    /* ── GESTÃO DE USUÁRIOS (admin) ── */
+    #users-admin-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 30, 46, .45);
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #users-admin-overlay.open {
+      display: flex;
+    }
+
+    .users-admin-card {
+      background: #fff;
+      border-radius: 16px;
+      width: min(860px, 96vw);
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .15);
+    }
+
+    .users-admin-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--cinza-borda);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .users-admin-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .users-admin-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .users-table th,
+    .users-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--cinza-borda);
+      text-align: left;
+    }
+
+    .users-table th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--texto-muted);
+    }
+
+    .users-perm-check {
+      text-align: center;
+    }
+
+    .users-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .users-actions button {
+      border: none;
+      background: var(--cinza-light);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .users-form {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--cinza-borda);
+    }
+
+    .users-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .users-form-grid label {
+      display: block;
+      font-size: 11px;
+      color: var(--texto-sec);
+      margin-bottom: 4px;
+    }
+
+    .users-form-grid input[type="text"],
+    .users-form-grid input[type="password"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--cinza-borda);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+    }
+
+    .users-perms-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 12px 0;
+      font-size: 12px;
+    }
+
+    .users-perms-row label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .users-form-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .users-form-actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .users-btn-save {
+      background: var(--roxo);
+      color: #fff;
+    }
+
+    .users-btn-cancel {
+      background: var(--cinza-light);
+      color: var(--texto-sec);
+    }
+
+    .users-msg {
+      font-size: 12px;
+      min-height: 18px;
+      margin-bottom: 8px;
+    }
+
+    .users-msg.erro {
+      color: #e74c3c;
+    }
+
+    .users-msg.ok {
+      color: #27ae60;
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+     🔐 LOGIN DE USUÁRIO — autenticação via Supabase
+     ══════════════════════════════════════════════════════════════════ -->
+  <div id="user-login-overlay">
+    <div class="user-login-card">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+        alt="IBREP" style="height:28px;margin-bottom:16px;">
+      <h3>Entrar no IBREP Prism</h3>
+      <p>Use seu login e senha para acessar as áreas liberadas.</p>
+      <input type="text" id="user-login-input" placeholder="Login" autocomplete="username"
+        onkeydown="if(event.key==='Enter') document.getElementById('user-password-input').focus()">
+      <input type="password" id="user-password-input" placeholder="Senha" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') tentarLoginUsuario()">
+      <div class="user-login-error" id="user-login-error"></div>
+      <button class="user-login-btn" id="user-login-btn" onclick="tentarLoginUsuario()">Entrar</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+     👥 GESTÃO DE USUÁRIOS — só no modo admin
+     ══════════════════════════════════════════════════════════════════ -->
+  <div id="users-admin-overlay">
+    <div class="users-admin-card">
+      <div class="users-admin-header">
+        <h3>👥 Usuários e permissões</h3>
+        <button class="admin-login-cancel" onclick="fecharGestaoUsuarios()">✕ Fechar</button>
+      </div>
+      <div class="users-admin-body">
+        <div class="users-msg" id="users-admin-msg"></div>
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Login</th>
+              <th class="users-perm-check">🎬</th>
+              <th class="users-perm-check">📊</th>
+              <th class="users-perm-check">📖</th>
+              <th class="users-perm-check">📜</th>
+              <th class="users-perm-check">🎓</th>
+              <th class="users-perm-check">🏛️</th>
+              <th class="users-perm-check">Admin</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+        <div class="users-form" id="users-form">
+          <h4 id="users-form-title" style="font-size:14px;margin-bottom:12px;">Novo usuário</h4>
+          <div class="users-form-grid">
+            <div>
+              <label>Nome</label>
+              <input type="text" id="users-form-nome">
+            </div>
+            <div>
+              <label>Login</label>
+              <input type="text" id="users-form-login">
+            </div>
+            <div>
+              <label>Senha <span id="users-form-senha-hint" style="font-weight:400;color:var(--texto-muted)"></span></label>
+              <input type="password" id="users-form-senha" placeholder="Obrigatória para novo usuário">
+            </div>
+          </div>
+          <div class="users-perms-row">
+            <label><input type="checkbox" id="users-perm-tutoriais"> Tutoriais</label>
+            <label><input type="checkbox" id="users-perm-comparativo"> Comparativo</label>
+            <label><input type="checkbox" id="users-perm-regras"> Regras</label>
+            <label><input type="checkbox" id="users-perm-portarias"> Atos Normativos</label>
+            <label><input type="checkbox" id="users-perm-cursos"> Cursos</label>
+            <label><input type="checkbox" id="users-perm-painel"> Painel</label>
+            <label><input type="checkbox" id="users-perm-is-admin"> Administradora</label>
+          </div>
+          <div class="users-form-actions">
+            <button class="users-btn-save" onclick="salvarUsuarioForm()">Salvar</button>
+            <button class="users-btn-cancel" onclick="limparUsuarioForm()">Limpar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════════════════════════════
      🔒 MODO ADMIN — login e barra flutuante de edição
@@ -2608,7 +2969,7 @@
     <div class="admin-login-card">
       <div class="admin-login-icon">🔒</div>
       <h3>Área do Administrador</h3>
-      <p>Digite a senha para habilitar a edição direta no site.</p>
+      <p>Digite a senha de administradora para habilitar a edição. A verificação é feita no servidor.</p>
       <input type="password" id="admin-password-input" placeholder="Senha" autocomplete="off"
         onkeydown="if(event.key==='Enter') tentarLoginAdmin()">
       <div class="admin-login-error" id="admin-login-error"></div>
@@ -2619,10 +2980,11 @@
     </div>
   </div>
 
-  <div class="admin-lock-link" id="admin-lock-link" onclick="abrirLoginAdmin()">🔒 Área do administrador</div>
+  <div class="admin-lock-link" id="admin-lock-link" style="display:none" onclick="abrirLoginAdmin()">🔒 Área do administrador</div>
 
   <div id="admin-toolbar">
     <span class="admin-toolbar-label"><span class="admin-toolbar-dot"></span> Modo admin ativo — alterações salvas automaticamente</span>
+    <button class="admin-toolbar-btn primary" onclick="abrirGestaoUsuarios()">👥 Usuários</button>
     <button class="admin-toolbar-btn" onclick="sairAdmin()">Sair</button>
   </div>
 
@@ -3184,7 +3546,11 @@
   <!-- ══════════════════════════════════════
      TELA DE BOAS-VINDAS
 ══════════════════════════════════════ -->
-  <div id="welcome-screen">
+  <div id="welcome-screen" style="display:none">
+    <div class="welcome-user-bar" id="welcome-user-bar">
+      <span id="welcome-user-name"></span>
+      <button onclick="logoutUsuario()">Sair</button>
+    </div>
     <img class="welcome-logo"
       src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
       alt="IBREP">
@@ -3194,32 +3560,32 @@
       Sua central de gestão institucional.
     </div>
     <div class="welcome-buttons">
-      <button class="welcome-btn" onclick="openTutorials()">
+      <button class="welcome-btn" id="btn-area-tutoriais" data-area="tutoriais" onclick="openTutorials()">
         <div class="welcome-btn-icon">🎬</div>
         <div class="welcome-btn-label">Tutoriais</div>
         <div class="welcome-btn-desc">Passo a passo em vídeo<br>para usar o Oráculo</div>
       </button>
-      <button class="welcome-btn" onclick="openComparativo()">
+      <button class="welcome-btn" id="btn-area-comparativo" data-area="comparativo" onclick="openComparativo()">
         <div class="welcome-btn-icon">📊</div>
         <div class="welcome-btn-label">Comparativo de Estados</div>
         <div class="welcome-btn-desc">Duração, provas, carga horária<br>e diploma por estado</div>
       </button>
-      <button class="welcome-btn" onclick="openRegras()">
+      <button class="welcome-btn" id="btn-area-regras" data-area="regras" onclick="openRegras()">
         <div class="welcome-btn-icon">📖</div>
         <div class="welcome-btn-label">Regras do Atendimento</div>
         <div class="welcome-btn-desc">Categorias, tópicos e mensagens<br>padrão para o atendimento</div>
       </button>
-      <button class="welcome-btn" onclick="openPortarias()">
+      <button class="welcome-btn" id="btn-area-portarias" data-area="portarias" onclick="openPortarias()">
         <div class="welcome-btn-icon">📜</div>
         <div class="welcome-btn-label">Atos Normativos</div>
         <div class="welcome-btn-desc">Pareceres, portarias e situação<br>de cada estado</div>
       </button>
-      <button class="welcome-btn" onclick="openCursos()">
+      <button class="welcome-btn" id="btn-area-cursos" data-area="cursos" onclick="openCursos()">
         <div class="welcome-btn-icon">🎓</div>
         <div class="welcome-btn-label">Cursos por Instituição</div>
         <div class="welcome-btn-desc">Currículo, disciplinas, AVAs<br>e certificados por instituição</div>
       </button>
-      <button class="welcome-btn " onclick="openPanel()">
+      <button class="welcome-btn" id="btn-area-painel" data-area="painel" onclick="openPanel()">
         <div class="welcome-btn-icon">🏛️</div>
         <div class="welcome-btn-label">Painel Institucional</div>
         <div class="welcome-btn-desc">Mantenedoras, instituições,<br>polos e locais de provas</div>
@@ -3979,12 +4345,12 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       }
     }
 
-    function openPanel() { irParaTela("panel"); }
-    function openTutorials() { irParaTela("tutorials"); }
-    function openPortarias() { irParaTela("portarias"); }
-    function openRegras() { irParaTela("regras"); }
-    function openComparativo() { irParaTela("comparativo"); }
-    function openCursos() { irParaTela("cursos"); }
+    function openPanel() { if (!exigirPermissao("painel")) return; irParaTela("panel"); }
+    function openTutorials() { if (!exigirPermissao("tutoriais")) return; irParaTela("tutorials"); }
+    function openPortarias() { if (!exigirPermissao("portarias")) return; irParaTela("portarias"); }
+    function openRegras() { if (!exigirPermissao("regras")) return; irParaTela("regras"); }
+    function openComparativo() { if (!exigirPermissao("comparativo")) return; irParaTela("comparativo"); }
+    function openCursos() { if (!exigirPermissao("cursos")) return; irParaTela("cursos"); }
     function backToWelcome() { irParaTela("welcome"); }
 
     // Monta a lista de categorias a partir do objeto TUTORIAIS (em vez de
@@ -6639,26 +7005,147 @@ const PORTARIAS_DATA = {
     setSection("mantenedoras");
 
     // ══════════════════════════════════════════════════════════════════
-    // 🔒 MODO ADMIN — login, edição inline e exportação do HTML atualizado
+    // 🔐 AUTENTICAÇÃO — Supabase (login de usuário + admin + permissões)
     // ══════════════════════════════════════════════════════════════════
-    //
-    // Como funciona:
-    // 1) O botão "🔒 Área do administrador" (canto inferior direito) pede uma senha.
-    // 2) Depois de logado, aparecem lápis/campos editáveis nas telas de Regras do
-    //    Atendimento, Atos Normativos, Comparativo de Estados e Painel Institucional.
-    // 3) Toda alteração já fica valendo na hora, na tela.
-    // 4) Quando terminar os ajustes, clique em "⬇️ Baixar HTML atualizado" — isso
-    //    gera um novo arquivo .html, já com tudo que foi editado, pronto para
-    //    substituir o arquivo atual e enviar para o time.
-    //
-    // IMPORTANTE: como este arquivo não tem servidor por trás, essa senha é só uma
-    // trava simples para o dia a dia — ela roda no navegador de quem abrir o
-    // arquivo, então não deve ser tratada como segurança de verdade (alguém com
-    // conhecimento técnico poderia contornar). Para trocar a senha, edite a linha
-    // abaixo:
-    const ADMIN_PASSWORD = "ibrep2026";
 
+    const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5aWlpanJzeGZjdXVmZ2lleWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1Mzk2MDAsImV4cCI6MjEwMjExNTYwMH0.rt5AuRzfQlUwcyACFP1uwYJPFslDGIKVED3N8m4RQ1s";
+
+    let currentUser = null;
+    let adminSenha = null;
     let adminMode = false;
+    let usersEditId = null;
+
+    async function supabaseRpc(fn, params) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(params)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || data.erro || `Erro ${res.status}`);
+      }
+      return data;
+    }
+
+    function salvarSessaoUsuario(user) {
+      sessionStorage.setItem("ibrep_user", JSON.stringify(user));
+    }
+
+    function carregarSessaoUsuario() {
+      try {
+        const raw = sessionStorage.getItem("ibrep_user");
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function temPermissao(area) {
+      if (!currentUser) return false;
+      if (currentUser.is_admin) return true;
+      return !!(currentUser.permissoes && currentUser.permissoes[area]);
+    }
+
+    function exigirPermissao(area) {
+      if (temPermissao(area)) return true;
+      alert("Você não tem permissão para acessar esta área.");
+      return false;
+    }
+
+    function aplicarPermissoes() {
+      const areas = ["tutoriais", "comparativo", "regras", "portarias", "cursos", "painel"];
+      areas.forEach(area => {
+        const btn = document.getElementById(`btn-area-${area}`);
+        if (!btn) return;
+        btn.classList.toggle("hidden-area", !temPermissao(area));
+      });
+      const nomeEl = document.getElementById("welcome-user-name");
+      if (nomeEl && currentUser) {
+        nomeEl.textContent = currentUser.nome || currentUser.login;
+      }
+    }
+
+    function mostrarLoginUsuario() {
+      document.getElementById("user-login-overlay").classList.remove("hidden");
+      document.getElementById("welcome-screen").style.display = "none";
+      document.getElementById("admin-lock-link").style.display = "none";
+    }
+
+    function esconderLoginUsuario() {
+      document.getElementById("user-login-overlay").classList.add("hidden");
+      document.getElementById("welcome-screen").style.display = "flex";
+      document.getElementById("admin-lock-link").style.display = "flex";
+    }
+
+    async function tentarLoginUsuario() {
+      const login = document.getElementById("user-login-input").value.trim();
+      const senha = document.getElementById("user-password-input").value;
+      const errEl = document.getElementById("user-login-error");
+      const btn = document.getElementById("user-login-btn");
+      errEl.textContent = "";
+      if (!login || !senha) {
+        errEl.textContent = "Preencha login e senha.";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Entrando…";
+      try {
+        const data = await supabaseRpc("login_usuario", { p_login: login, p_senha: senha });
+        if (!data.ok) {
+          errEl.textContent = data.erro || "Login ou senha incorretos.";
+          return;
+        }
+        currentUser = {
+          id: data.id,
+          nome: data.nome,
+          login: data.login,
+          is_admin: data.is_admin,
+          permissoes: data.permissoes
+        };
+        salvarSessaoUsuario(currentUser);
+        esconderLoginUsuario();
+        aplicarPermissoes();
+      } catch (e) {
+        errEl.textContent = e.message || "Erro ao conectar. Verifique sua internet.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Entrar";
+      }
+    }
+
+    function logoutUsuario() {
+      currentUser = null;
+      adminSenha = null;
+      sessionStorage.removeItem("ibrep_user");
+      sairAdmin();
+      mostrarLoginUsuario();
+      document.getElementById("user-login-input").value = "";
+      document.getElementById("user-password-input").value = "";
+      document.getElementById("user-login-error").textContent = "";
+      irParaTela("welcome", false);
+    }
+
+    function initAuth() {
+      currentUser = carregarSessaoUsuario();
+      if (currentUser) {
+        esconderLoginUsuario();
+        aplicarPermissoes();
+      } else {
+        mostrarLoginUsuario();
+      }
+    }
+
+    initAuth();
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🔒 MODO ADMIN — senha validada no Supabase, edição inline
+    // ══════════════════════════════════════════════════════════════════
 
     function abrirLoginAdmin() {
       document.getElementById("admin-login-error").textContent = "";
@@ -6671,24 +7158,35 @@ const PORTARIAS_DATA = {
       document.getElementById("admin-login-overlay").classList.remove("open");
     }
 
-    function tentarLoginAdmin() {
+    async function tentarLoginAdmin() {
       const val = document.getElementById("admin-password-input").value;
-      if (val === ADMIN_PASSWORD) {
-        localStorage.setItem("ibrep_admin_unlocked", "1");
+      const errEl = document.getElementById("admin-login-error");
+      errEl.textContent = "";
+      if (!val) {
+        errEl.textContent = "Digite a senha.";
+        return;
+      }
+      try {
+        const data = await supabaseRpc("login_admin", { p_senha: val });
+        if (!data.ok) {
+          errEl.textContent = data.erro || "Senha incorreta.";
+          return;
+        }
+        adminSenha = val;
         fecharLoginAdmin();
         ativarModoAdmin();
-      } else {
-        document.getElementById("admin-login-error").textContent = "Senha incorreta. Tente novamente.";
+      } catch (e) {
+        errEl.textContent = e.message || "Erro ao validar senha.";
       }
     }
 
     function sairAdmin() {
-      localStorage.removeItem("ibrep_admin_unlocked");
+      adminSenha = null;
       adminMode = false;
       document.body.classList.remove("admin-mode");
       document.getElementById("admin-toolbar").classList.remove("open");
       document.getElementById("admin-lock-link").style.display = "flex";
-      // atualiza as telas abertas para remover os controles de edição
+      fecharGestaoUsuarios();
       refrescarTelaAtual();
     }
 
@@ -6698,6 +7196,181 @@ const PORTARIAS_DATA = {
       document.getElementById("admin-toolbar").classList.add("open");
       document.getElementById("admin-lock-link").style.display = "none";
       refrescarTelaAtual();
+    }
+
+    // ── Gestão de usuários ──
+
+    function abrirGestaoUsuarios() {
+      if (!adminSenha) {
+        abrirLoginAdmin();
+        return;
+      }
+      document.getElementById("users-admin-overlay").classList.add("open");
+      limparUsuarioForm();
+      carregarListaUsuarios();
+    }
+
+    function fecharGestaoUsuarios() {
+      document.getElementById("users-admin-overlay").classList.remove("open");
+    }
+
+    function setUsersMsg(texto, tipo) {
+      const el = document.getElementById("users-admin-msg");
+      el.textContent = texto || "";
+      el.className = "users-msg" + (tipo ? " " + tipo : "");
+    }
+
+    function permIcon(val) {
+      return val ? "✅" : "—";
+    }
+
+    async function carregarListaUsuarios() {
+      if (!adminSenha) return;
+      setUsersMsg("Carregando…", "");
+      try {
+        const data = await supabaseRpc("listar_usuarios", { p_admin_senha: adminSenha });
+        if (!data.ok) {
+          setUsersMsg(data.erro || "Erro ao listar.", "erro");
+          return;
+        }
+        setUsersMsg("", "");
+        const tbody = document.getElementById("users-table-body");
+        tbody.innerHTML = (data.usuarios || []).map(u => {
+          const p = u.permissoes || {};
+          return `<tr>
+            <td>${escapeHtmlRegra(u.nome)}</td>
+            <td>${escapeHtmlRegra(u.login)}</td>
+            <td class="users-perm-check">${permIcon(p.tutoriais)}</td>
+            <td class="users-perm-check">${permIcon(p.comparativo)}</td>
+            <td class="users-perm-check">${permIcon(p.regras)}</td>
+            <td class="users-perm-check">${permIcon(p.portarias)}</td>
+            <td class="users-perm-check">${permIcon(p.cursos)}</td>
+            <td class="users-perm-check">${permIcon(p.painel)}</td>
+            <td class="users-perm-check">${u.is_admin ? "✅" : "—"}</td>
+            <td class="users-actions">
+              <button onclick="editarUsuarioForm('${u.id}')">Editar</button>
+              <button onclick="excluirUsuarioConfirm('${u.id}')">Excluir</button>
+            </td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="10" style="text-align:center;color:var(--texto-muted);padding:20px;">Nenhum usuário cadastrado</td></tr>`;
+        window._usuariosCache = data.usuarios || [];
+      } catch (e) {
+        setUsersMsg(e.message || "Erro ao carregar usuários.", "erro");
+      }
+    }
+
+    function lerPermissoesForm() {
+      return {
+        p_area_tutoriais: document.getElementById("users-perm-tutoriais").checked,
+        p_area_comparativo: document.getElementById("users-perm-comparativo").checked,
+        p_area_regras: document.getElementById("users-perm-regras").checked,
+        p_area_portarias: document.getElementById("users-perm-portarias").checked,
+        p_area_cursos: document.getElementById("users-perm-cursos").checked,
+        p_area_painel: document.getElementById("users-perm-painel").checked,
+        p_is_admin: document.getElementById("users-perm-is-admin").checked
+      };
+    }
+
+    function limparUsuarioForm() {
+      usersEditId = null;
+      document.getElementById("users-form-title").textContent = "Novo usuário";
+      document.getElementById("users-form-senha-hint").textContent = "";
+      document.getElementById("users-form-nome").value = "";
+      document.getElementById("users-form-login").value = "";
+      document.getElementById("users-form-senha").value = "";
+      document.getElementById("users-form-senha").placeholder = "Obrigatória para novo usuário";
+      ["tutoriais", "comparativo", "regras", "portarias", "cursos", "painel"].forEach(a => {
+        document.getElementById(`users-perm-${a}`).checked = false;
+      });
+      document.getElementById("users-perm-is-admin").checked = false;
+    }
+
+    function editarUsuarioForm(id) {
+      const u = (window._usuariosCache || []).find(x => x.id === id);
+      if (!u) return;
+      usersEditId = id;
+      document.getElementById("users-form-title").textContent = "Editar usuário";
+      document.getElementById("users-form-senha-hint").textContent = "(deixe em branco para manter)";
+      document.getElementById("users-form-nome").value = u.nome;
+      document.getElementById("users-form-login").value = u.login;
+      document.getElementById("users-form-senha").value = "";
+      document.getElementById("users-form-senha").placeholder = "Nova senha (opcional)";
+      const p = u.permissoes || {};
+      document.getElementById("users-perm-tutoriais").checked = !!p.tutoriais;
+      document.getElementById("users-perm-comparativo").checked = !!p.comparativo;
+      document.getElementById("users-perm-regras").checked = !!p.regras;
+      document.getElementById("users-perm-portarias").checked = !!p.portarias;
+      document.getElementById("users-perm-cursos").checked = !!p.cursos;
+      document.getElementById("users-perm-painel").checked = !!p.painel;
+      document.getElementById("users-perm-is-admin").checked = !!u.is_admin;
+      document.getElementById("users-form").scrollIntoView({ behavior: "smooth" });
+    }
+
+    async function salvarUsuarioForm() {
+      if (!adminSenha) return;
+      const nome = document.getElementById("users-form-nome").value.trim();
+      const login = document.getElementById("users-form-login").value.trim();
+      const senha = document.getElementById("users-form-senha").value;
+      const perms = lerPermissoesForm();
+      if (!nome || !login) {
+        setUsersMsg("Nome e login são obrigatórios.", "erro");
+        return;
+      }
+      if (!usersEditId && !senha) {
+        setUsersMsg("Senha é obrigatória para novo usuário.", "erro");
+        return;
+      }
+      setUsersMsg("Salvando…", "");
+      try {
+        let data;
+        if (usersEditId) {
+          data = await supabaseRpc("editar_usuario", {
+            p_admin_senha: adminSenha,
+            p_id: usersEditId,
+            p_nome: nome,
+            p_login: login,
+            p_senha: senha || null,
+            ...perms
+          });
+        } else {
+          data = await supabaseRpc("criar_usuario", {
+            p_admin_senha: adminSenha,
+            p_nome: nome,
+            p_login: login,
+            p_senha: senha,
+            ...perms
+          });
+        }
+        if (!data.ok) {
+          setUsersMsg(data.erro || "Erro ao salvar.", "erro");
+          return;
+        }
+        setUsersMsg(usersEditId ? "Usuário atualizado!" : "Usuário criado!", "ok");
+        limparUsuarioForm();
+        carregarListaUsuarios();
+      } catch (e) {
+        setUsersMsg(e.message || "Erro ao salvar.", "erro");
+      }
+    }
+
+    async function excluirUsuarioConfirm(id) {
+      if (!adminSenha) return;
+      const u = (window._usuariosCache || []).find(x => x.id === id);
+      const nome = u ? u.nome : "este usuário";
+      if (!confirm(`Excluir o usuário "${nome}"?`)) return;
+      setUsersMsg("Excluindo…", "");
+      try {
+        const data = await supabaseRpc("excluir_usuario", { p_admin_senha: adminSenha, p_id: id });
+        if (!data.ok) {
+          setUsersMsg(data.erro || "Erro ao excluir.", "erro");
+          return;
+        }
+        setUsersMsg("Usuário excluído.", "ok");
+        if (usersEditId === id) limparUsuarioForm();
+        carregarListaUsuarios();
+      } catch (e) {
+        setUsersMsg(e.message || "Erro ao excluir.", "erro");
+      }
     }
 
     // Re-renderiza a tela que estiver aberta no momento, para que os controles
@@ -6741,12 +7414,6 @@ const PORTARIAS_DATA = {
           if (item) renderDetail(item);
         }
       }
-    }
-
-    // ao carregar a página, mantém o admin logado se ele já tiver desbloqueado
-    // neste mesmo navegador anteriormente
-    if (localStorage.getItem("ibrep_admin_unlocked") === "1") {
-      ativarModoAdmin();
     }
 
     // ── Reescreve o texto-fonte de um bloco de dados (entre marcadores) para
