@@ -7016,6 +7016,19 @@ const PORTARIAS_DATA = {
     let adminMode = false;
     let usersEditId = null;
 
+    // ⚠️ CORREÇÃO DE BUG (recarregar a página travava o login/logout):
+    // essas duas variáveis precisam existir ANTES de initAuth() rodar,
+    // porque quando a página é recarregada com uma sessão já salva,
+    // initAuth() chama iniciarAtualizacaoAutomaticaPermissoes(), que usa
+    // _refreshPermInterval. Como ela antes só era declarada mais abaixo
+    // no arquivo (com "let"), o JavaScript lançava o erro "Cannot access
+    // '_refreshPermInterval' before initialization" bem no meio do
+    // carregamento — e esse mesmo erro travava também o botão "Sair"
+    // (que chama pararAtualizacaoAutomaticaPermissoes logo na primeira
+    // linha, sem try/catch), impedindo tanto o logout quanto a navegação.
+    let _refreshPermInterval = null;
+    const REFRESH_PERMISSOES_MS = 20000; // 20 segundos
+
     async function supabaseRpc(fn, params) {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
         method: "POST",
@@ -7139,7 +7152,11 @@ const PORTARIAS_DATA = {
       currentUser = null;
       adminSenha = null;
       adminMode = false;
-      pararAtualizacaoAutomaticaPermissoes();
+      try {
+        pararAtualizacaoAutomaticaPermissoes();
+      } catch (e) {
+        console.warn("Erro ao parar atualização automática durante logout:", e);
+      }
       sessionStorage.removeItem("ibrep_user");
 
       // sairAdmin() re-renderiza a tela atual (regras/portarias/comparativo/
@@ -7193,9 +7210,6 @@ const PORTARIAS_DATA = {
     // ficar em foco) para refletir mudanças feitas pela administradora
     // na hora, sem esperar o usuário sair e entrar de novo.
     // ══════════════════════════════════════════════════════════════════
-
-    let _refreshPermInterval = null;
-    const REFRESH_PERMISSOES_MS = 20000; // 20 segundos
 
     function iniciarAtualizacaoAutomaticaPermissoes() {
       if (_refreshPermInterval) clearInterval(_refreshPermInterval);
