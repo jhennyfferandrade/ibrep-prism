@@ -2622,8 +2622,7 @@
   <div class="admin-lock-link" id="admin-lock-link" onclick="abrirLoginAdmin()">🔒 Área do administrador</div>
 
   <div id="admin-toolbar">
-    <span class="admin-toolbar-label"><span class="admin-toolbar-dot"></span> Modo admin ativo</span>
-    <button class="admin-toolbar-btn primary" onclick="exportarHtmlAtualizado()">⬇️ Baixar HTML atualizado</button>
+    <span class="admin-toolbar-label"><span class="admin-toolbar-dot"></span> Modo admin ativo — alterações salvas automaticamente</span>
     <button class="admin-toolbar-btn" onclick="sairAdmin()">Sair</button>
   </div>
 
@@ -4168,7 +4167,17 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
     // Lê a base de dados a partir do bloco <script type="application/json"> —
     // basta editar aquele bloco no HTML para acrescentar/alterar informações.
-    const REGRAS_DATA = JSON.parse(document.getElementById("regras-data").textContent);
+    // Se o admin já tiver salvo alterações neste navegador (localStorage),
+    // elas são usadas no lugar dos dados padrão do arquivo.
+    const REGRAS_DATA = (function () {
+      const padrao = JSON.parse(document.getElementById("regras-data").textContent);
+      try {
+        const salvo = localStorage.getItem("ibrep_admin_data_regras");
+        return salvo ? JSON.parse(salvo) : padrao;
+      } catch (e) {
+        return padrao;
+      }
+    })();
 
     let regrasCategoriaAtual = null;
 
@@ -6705,6 +6714,10 @@ const PORTARIAS_DATA = {
     //    refletir o objeto JS atual — assim, ao exportar o HTML, as alterações
     //    feitas em tela já saem gravadas no código.
     function resyncDataBlock(marcador, objetoAtual) {
+      // 💾 Grava automaticamente no navegador (localStorage) — assim, o ajuste
+      //    feito pelo admin fica salvo ali mesmo, sem precisar baixar/trocar o HTML.
+      salvarNoLocalStorage(marcador, objetoAtual);
+
       const scripts = document.querySelectorAll("script:not([type])");
       for (const s of scripts) {
         const src = s.textContent;
@@ -6729,7 +6742,70 @@ const PORTARIAS_DATA = {
     function syncRegrasDataScript() {
       const el = document.getElementById("regras-data");
       if (el) el.textContent = JSON.stringify(REGRAS_DATA, null, 2);
+      // 💾 Grava automaticamente no navegador (localStorage)
+      salvarNoLocalStorage("regras", REGRAS_DATA);
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // 💾 PERSISTÊNCIA AUTOMÁTICA (localStorage) — sem precisar gerar/baixar HTML
+    //
+    // Cada bloco de dados (db, portarias, tutoriais, regras) é salvo no
+    // localStorage do navegador assim que o admin salva uma edição. Na
+    // próxima vez que a página for aberta NESTE MESMO navegador, os dados
+    // salvos são carregados automaticamente por cima dos dados padrão do
+    // arquivo.
+    //
+    // ⚠️ Importante: como o site está hospedado de forma estática (GitHub
+    // Pages), o localStorage guarda os dados apenas neste navegador/dispositivo.
+    // Ou seja, cada pessoa que acessa o painel em outro computador/navegador
+    // não vai ver as alterações feitas aqui — elas ficam só no aparelho do
+    // administrador que salvou. Se precisar que TODOS os visitantes vejam as
+    // mesmas alterações, aí sim seria necessário atualizar o arquivo HTML no
+    // GitHub (ou usar um banco de dados/backend).
+    // ══════════════════════════════════════════════════════════════════
+    const LS_PREFIX = "ibrep_admin_data_";
+
+    function salvarNoLocalStorage(marcador, objetoAtual) {
+      try {
+        localStorage.setItem(LS_PREFIX + marcador, JSON.stringify(objetoAtual));
+      } catch (e) {
+        console.warn("Não foi possível salvar no localStorage:", e);
+      }
+    }
+
+    function carregarDoLocalStorage(marcador) {
+      try {
+        const raw = localStorage.getItem(LS_PREFIX + marcador);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Aplica, por cima dos dados padrão em memória, qualquer alteração salva
+    // anteriormente pelo admin neste navegador.
+    function aplicarDadosSalvos() {
+      const salvosDb = carregarDoLocalStorage("db");
+      if (salvosDb) Object.assign(DB, salvosDb);
+
+      const salvosPortarias = carregarDoLocalStorage("portarias");
+      if (salvosPortarias) Object.assign(PORTARIAS_DATA, salvosPortarias);
+
+      const salvosTutoriais = carregarDoLocalStorage("tutoriais");
+      if (salvosTutoriais) Object.assign(TUTORIAIS, salvosTutoriais);
+
+      const salvosRegras = carregarDoLocalStorage("regras");
+      if (salvosRegras) {
+        if (Array.isArray(REGRAS_DATA) && Array.isArray(salvosRegras)) {
+          REGRAS_DATA.length = 0;
+          REGRAS_DATA.push(...salvosRegras);
+        } else {
+          Object.assign(REGRAS_DATA, salvosRegras);
+        }
+        syncRegrasDataScript();
+      }
+    }
+    aplicarDadosSalvos();
 
     function mostrarFlashSalvo(el) {
       if (!el) return;
@@ -7020,33 +7096,6 @@ const PORTARIAS_DATA = {
       });
     };
 
-    // ── Exportar HTML atualizado (com tudo o que foi editado nesta sessão) ──
-    function exportarHtmlAtualizado() {
-      // garante que os dados mais recentes estejam sincronizados no código-fonte
-      syncRegrasDataScript();
-      resyncDataBlock("portarias", PORTARIAS_DATA);
-      resyncDataBlock("db", DB);
-      resyncDataBlock("tutoriais", TUTORIAIS);
-
-      const clone = document.documentElement.cloneNode(true);
-      // remove o overlay de login e reseta o estado do modo admin no arquivo exportado,
-      // para que quem abrir o novo arquivo precise logar novamente
-      const overlay = clone.querySelector("#admin-login-overlay");
-      if (overlay) overlay.classList.remove("open");
-      const htmlFinal = "<!DOCTYPE html>\n" + clone.outerHTML;
-
-      const blob = new Blob([htmlFinal], { type: "text/html;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const agora = new Date();
-      const stamp = agora.toISOString().slice(0, 16).replace(/[-:T]/g, "").replace(/(\d{8})(\d{4})/, "$1-$2");
-      a.href = url;
-      a.download = `painel_ibrep_${stamp}.html`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
   </script>
 
 </body>
