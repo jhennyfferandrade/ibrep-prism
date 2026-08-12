@@ -3970,7 +3970,12 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       }
 
       if (pushHistory) {
-        history.pushState({ tela: tela }, "", "#" + tela);
+        // Não passamos uma URL (3º parâmetro) para o pushState: em alguns
+        // ambientes de preview/iframe (ex.: about:srcdoc) o navegador
+        // bloqueia a troca de URL com SecurityError. Sem o 3º parâmetro,
+        // só o estado é guardado no histórico, e a setinha de voltar
+        // funciona igual em qualquer lugar onde o arquivo for aberto.
+        history.pushState({ tela: tela }, "");
       }
     }
 
@@ -4012,7 +4017,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
     // Estado inicial no histórico (a tela de boas-vindas), para que o
     // primeiro clique em "voltar" já tenha algo consistente para onde ir.
-    history.replaceState({ tela: "welcome" }, "", "#welcome");
+    history.replaceState({ tela: "welcome" }, "");
 
     // Suporte à setinha "voltar"/"avançar" do navegador: quando o histórico
     // muda por causa do usuário (não por um clique dentro do painel), refaz
