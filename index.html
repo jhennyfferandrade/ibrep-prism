@@ -1060,9 +1060,23 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       z-index: 9999;
       gap: 0;
+      /* Rolagem própria: se o conteúdo (logo + botões + rodapé) for maior
+         que a altura da tela (zoom alto, fonte maior, tela pequena etc.),
+         a tela rola em vez de deixar o rodapé sobrepor os botões. */
+      overflow-y: auto;
+      padding: 24px 0;
+    }
+
+    /* Espaçadores flexíveis no lugar de justify-content:center: quando cabe
+       tudo, eles crescem igualmente e centralizam o conteúdo verticalmente;
+       quando o conteúdo não cabe, eles encolhem até o mínimo e o overflow-y
+       acima permite rolar até ver tudo — sem nada sobrepor nada. */
+    #welcome-screen::before,
+    #welcome-screen::after {
+      content: "";
+      flex: 1 0 16px;
     }
 
     .welcome-logo {
@@ -1168,10 +1182,12 @@
     }
 
     .welcome-footer {
-      position: absolute;
-      bottom: 24px;
+      flex-shrink: 0;
+      margin-top: 24px;
+      padding: 0 20px;
       font-size: 10px;
       color: var(--texto-muted);
+      text-align: center;
     }
 
     @media (max-width: 880px) {
@@ -1540,6 +1556,61 @@
     .tut-cat-btn.active .tut-cat-icon,
     .tut-cat-btn:hover .tut-cat-icon {
       background: var(--roxo-claro);
+    }
+
+    /* botão "Adicionar categoria" — só aparece no modo administrador */
+    .tut-add-cat-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 12px;
+      margin-top: 4px;
+      border-radius: 10px;
+      border: 1.5px dashed var(--roxo);
+      background: transparent;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--roxo);
+      width: 100%;
+      transition: background .12s;
+    }
+
+    .tut-add-cat-btn:hover {
+      background: var(--roxo-claro);
+    }
+
+    body.admin-mode .tut-add-cat-btn {
+      display: flex;
+    }
+
+    /* card "Adicionar vídeo" — mesma grade dos vídeos, só aparece no admin */
+    .tut-add-video-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 200px;
+      border-radius: 14px;
+      border: 1.5px dashed var(--roxo);
+      background: transparent;
+      cursor: pointer;
+      color: var(--roxo);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background .12s;
+    }
+
+    .tut-add-video-card:hover {
+      background: var(--roxo-claro);
+    }
+
+    .tut-add-video-card .icon {
+      font-size: 28px;
     }
 
     /* área de vídeos */
@@ -3177,30 +3248,8 @@
     <div class="tut-body">
       <aside class="tut-cats">
         <div class="tut-cats-label">Categorias</div>
-        <button class="tut-cat-btn active" onclick="setTutCat(this,'boas-vindas')">
-          <span class="tut-cat-icon">👋</span> Boas-vindas
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'painel')">
-          <span class="tut-cat-icon">🏛️</span> Painel Institucional
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'matriculas')">
-          <span class="tut-cat-icon">📋</span> Matrículas
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'certificados')">
-          <span class="tut-cat-icon">🎓</span> Certificados
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'provas')">
-          <span class="tut-cat-icon">📝</span> Provas e Avaliações
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'financeiro')">
-          <span class="tut-cat-icon">💰</span> Financeiro
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'relatorios')">
-          <span class="tut-cat-icon">📊</span> Relatórios
-        </button>
-        <button class="tut-cat-btn" onclick="setTutCat(this,'configuracoes')">
-          <span class="tut-cat-icon">⚙️</span> Configurações
-        </button>
+        <div id="tut-cats-list"></div>
+        <button class="tut-add-cat-btn" onclick="abrirNovaTutCategoria()">➕ Adicionar categoria</button>
         <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--cinza-borda);">
           <button class="tut-back" onclick="backToWelcome()" style="width:100%;justify-content:center;">
             ← Voltar ao início
@@ -3883,7 +3932,35 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     function openTutorials() {
       document.getElementById("welcome-screen").style.display = "none";
       document.getElementById("tutorial-screen").classList.add("open");
-      setTutCat(document.querySelector(".tut-cat-btn"), "boas-vindas");
+      initTutorialsScreen();
+    }
+
+    // Monta a lista de categorias a partir do objeto TUTORIAIS (em vez de
+    // botões fixos no HTML), para que categorias adicionadas pelo admin
+    // apareçam automaticamente, sem precisar tocar no código.
+    function initTutorialsScreen() {
+      renderTutCats();
+      const chave = (tutCategoriaAtual && TUTORIAIS[tutCategoriaAtual]) ? tutCategoriaAtual : Object.keys(TUTORIAIS)[0];
+      const btn = document.querySelector(`.tut-cat-btn[data-cat="${chave}"]`);
+      if (btn) setTutCat(btn, chave);
+    }
+
+    function renderTutCats() {
+      const cont = document.getElementById("tut-cats-list");
+      if (!cont) return;
+      let html = "";
+      Object.keys(TUTORIAIS).forEach(key => {
+        const cat = TUTORIAIS[key];
+        const ativo = key === tutCategoriaAtual ? "active" : "";
+        html += `
+          <button class="tut-cat-btn ${ativo}" data-cat="${key}">
+            <span class="tut-cat-icon">${cat.icon || "📁"}</span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}
+          </button>`;
+      });
+      cont.innerHTML = html;
+      cont.querySelectorAll(".tut-cat-btn").forEach(btn => {
+        btn.addEventListener("click", () => setTutCat(btn, btn.getAttribute("data-cat")));
+      });
     }
     function openPortarias() {
       document.getElementById("welcome-screen").style.display = "none";
@@ -3930,13 +4007,33 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       return CURSOS_UF_LABEL[uf] || (uf || "").toUpperCase();
     }
 
+    // O campo "estado" de cada instituição reflete o endereço legal da
+    // mantenedora (ex.: várias unidades/polos e EADs de outros estados usam
+    // o endereço de Florianópolis/SC por questão de documentação). Isso não
+    // representa o estado real onde aquele polo/curso atua, então aqui em
+    // "Cursos por Instituição" agrupamos pelo estado real de cada unidade,
+    // usando este mapa por idinstituicao. Só afeta esta tela — os dados
+    // cadastrais/jurídicos (mantenedora, portarias etc.) continuam intactos.
+    const CURSOS_ESTADO_REAL = {
+      69: "Distrito Federal",  // DIST FEDERAL (POLO)
+      72: "Goiás",             // GOIÁS (POLO)
+      75: "Distrito Federal",  // GOIÁS/EAD -> pertence ao Distrito Federal
+      73: "Pernambuco",        // PERNAMBUCO (POLO)
+      74: "Bahia",             // BAHIA (POLO)
+      4:  "Paraná",            // PARANA/EAD
+      52: "Rio Grande do Sul", // RGSUL/EAD
+    };
+    function cursosEstadoReal(inst) {
+      return CURSOS_ESTADO_REAL[inst.idinstituicao] || inst.estado;
+    }
+
     function initCursosScreen() {
-      const estados = Array.from(new Set(DB.instituicoes.map(i => i.estado).filter(Boolean)));
+      const estados = Array.from(new Set(DB.instituicoes.map(i => cursosEstadoReal(i)).filter(Boolean)));
       // Ordena pelo menor idinstituicao de cada estado, para refletir a ordem
       // de cadastro (ex.: Santa Catarina = id 1 aparece primeiro).
       estados.sort((a, b) => {
-        const minA = Math.min(...DB.instituicoes.filter(i => i.estado === a).map(i => i.idinstituicao));
-        const minB = Math.min(...DB.instituicoes.filter(i => i.estado === b).map(i => i.idinstituicao));
+        const minA = Math.min(...DB.instituicoes.filter(i => cursosEstadoReal(i) === a).map(i => i.idinstituicao));
+        const minB = Math.min(...DB.instituicoes.filter(i => cursosEstadoReal(i) === b).map(i => i.idinstituicao));
         return minA - minB;
       });
       cursosEstadosList = estados;
@@ -3955,7 +4052,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       const cont = document.getElementById("cursos-estados-list");
       let html = "";
       estados.forEach((uf, idx) => {
-        const qtd = DB.instituicoes.filter(i => i.estado === uf).length;
+        const qtd = DB.instituicoes.filter(i => cursosEstadoReal(i) === uf).length;
         const ativo = uf === cursosEstadoAtual ? "active" : "";
         html += `
           <button class="regras-cat-btn ${ativo}" data-uf-idx="${idx}">
@@ -4004,7 +4101,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           (i.cidade || "").toLowerCase().includes(q));
         titleEl.textContent = `Resultados para "${q}"`;
       } else {
-        itens = DB.instituicoes.filter(i => i.estado === cursosEstadoAtual);
+        itens = DB.instituicoes.filter(i => cursosEstadoReal(i) === cursosEstadoAtual);
         titleEl.textContent = cursosEstadoAtual ? cursosUfLabel(cursosEstadoAtual) : "Instituições";
       }
       countEl.textContent = itens.length + (itens.length === 1 ? " instituição" : " instituições");
@@ -4040,7 +4137,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           <div class="regras-detail-header">
             <div class="regras-detail-icon">🏢</div>
             <div>
-              <div class="regras-detail-breadcrumb">${inst.estado || ""}${inst.cidade ? " · " + inst.cidade : ""}</div>
+              <div class="regras-detail-breadcrumb">${cursosEstadoReal(inst) || ""}${inst.cidade ? " · " + inst.cidade : ""}</div>
               <h2>${inst.nome_abreviado || inst.nome}</h2>
             </div>
           </div>
@@ -4630,6 +4727,8 @@ const PORTARIAS_DATA = {
 // @DATA_START:tutoriais
     const TUTORIAIS = {
       "boas-vindas": {
+        icon: "👋",
+        label: "Boas-vindas",
         titulo: "👋 Boas-vindas ao Oráculo",
         desc: "Conheça a plataforma e saiba por onde começar.",
         videos: [
@@ -4638,6 +4737,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "painel": {
+        icon: "🏛️",
+        label: "Painel Institucional",
         titulo: "🏛️ Painel Institucional",
         desc: "Como consultar e navegar pelos dados de mantenedoras, instituições, polos e locais de provas.",
         videos: [
@@ -4647,6 +4748,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "matriculas": {
+        icon: "📋",
+        label: "Matrículas",
         titulo: "📋 Matrículas",
         desc: "Passo a passo para realizar, consultar e gerenciar matrículas de alunos.",
         videos: [
@@ -4656,6 +4759,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "certificados": {
+        icon: "🎓",
+        label: "Certificados",
         titulo: "🎓 Certificados",
         desc: "Geração, consulta e envio de certificados para alunos concluintes.",
         videos: [
@@ -4664,6 +4769,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "provas": {
+        icon: "📝",
+        label: "Provas e Avaliações",
         titulo: "📝 Provas e Avaliações",
         desc: "Cadastro, aplicação e resultado de provas presenciais e online.",
         videos: [
@@ -4673,6 +4780,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "financeiro": {
+        icon: "💰",
+        label: "Financeiro",
         titulo: "💰 Financeiro",
         desc: "Gestão de pagamentos, inadimplência e repasses.",
         videos: [
@@ -4681,6 +4790,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "relatorios": {
+        icon: "📊",
+        label: "Relatórios",
         titulo: "📊 Relatórios",
         desc: "Geração e exportação de relatórios gerenciais.",
         videos: [
@@ -4689,6 +4800,8 @@ const PORTARIAS_DATA = {
         ]
       },
       "configuracoes": {
+        icon: "⚙️",
+        label: "Configurações",
         titulo: "⚙️ Configurações",
         desc: "Ajustes de perfil, usuários e parâmetros do sistema.",
         videos: [
@@ -4703,14 +4816,15 @@ const PORTARIAS_DATA = {
 
     function setTutCat(btn, cat) {
       document.querySelectorAll(".tut-cat-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+      if (btn) btn.classList.add("active");
       tutCategoriaAtual = cat;
       const data = TUTORIAIS[cat];
       const area = document.getElementById("tut-content");
       if (!data) { area.innerHTML = `<div class="tut-empty">📂 Categoria não encontrada</div>`; return; }
 
       const editCatBtn = adminMode
-        ? `<button class="admin-edit-btn" style="margin-left:8px;" onclick="abrirEdicaoTutCategoria('${cat}')">✏️ Editar</button>`
+        ? `<button class="admin-edit-btn" style="margin-left:8px;" onclick="abrirEdicaoTutCategoria('${cat}')">✏️ Editar</button>
+           <button class="admin-edit-btn" style="margin-left:6px;" onclick="abrirNovoTutVideo('${cat}')">➕ Novo vídeo</button>`
         : "";
 
       let html = `
@@ -4756,6 +4870,14 @@ const PORTARIAS_DATA = {
         }
       });
 
+      if (adminMode) {
+        html += `
+      <button class="tut-add-video-card" onclick="abrirNovoTutVideo('${cat}')">
+        <span class="icon">➕</span>
+        Adicionar vídeo
+      </button>`;
+      }
+
       html += `</div>`;
       area.innerHTML = html;
     }
@@ -4791,9 +4913,11 @@ const PORTARIAS_DATA = {
       if (!data) return;
       data.titulo = document.getElementById("admin-tutcat-titulo").value.trim();
       data.desc = document.getElementById("admin-tutcat-desc").value.trim();
-      const btnAtivo = document.querySelector(`.tut-cat-btn[onclick*="'${cat}'"]`);
-      if (btnAtivo) setTutCat(btnAtivo, cat);
+      renderTutCats();
+      const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cat}"]`);
+      setTutCat(btnAtivo, cat);
       mostrarFlashSalvo(document.querySelector("#tut-content"));
+      resyncDataBlock("tutoriais", TUTORIAIS);
     }
 
     function abrirEdicaoTutVideo(cat, idx) {
@@ -4834,9 +4958,109 @@ const PORTARIAS_DATA = {
       v.titulo = document.getElementById("admin-tutvid-titulo").value.trim();
       v.desc = document.getElementById("admin-tutvid-desc").value.trim();
       v.url = document.getElementById("admin-tutvid-url").value.trim();
-      const btnAtivo = document.querySelector(`.tut-cat-btn[onclick*="'${cat}'"]`);
-      if (btnAtivo) setTutCat(btnAtivo, cat);
+      const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cat}"]`);
+      setTutCat(btnAtivo, cat);
       mostrarFlashSalvo(document.querySelector("#tut-content"));
+      resyncDataBlock("tutoriais", TUTORIAIS);
+    }
+
+    // ── CRIAÇÃO: nova categoria de tutoriais (emoji + nome, sem mexer em HTML) ──
+    function abrirNovaTutCategoria() {
+      const area = document.getElementById("tut-content");
+      area.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">➕</div>
+            <div><h2>Nova categoria</h2></div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Emoji da categoria</label>
+              <input type="text" id="admin-newcat-icon" placeholder="Ex.: 📁" maxlength="4" style="max-width:80px;">
+              <label>Nome da categoria</label>
+              <input type="text" id="admin-newcat-nome" placeholder="Ex.: Ouvidoria">
+              <div style="display:flex;gap:8px;">
+                <button class="admin-edit-btn save" onclick="salvarNovaTutCategoria()">💾 Salvar</button>
+                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="initTutorialsScreen()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      setTimeout(() => document.getElementById("admin-newcat-icon")?.focus(), 50);
+    }
+
+    function salvarNovaTutCategoria() {
+      const icon = document.getElementById("admin-newcat-icon").value.trim() || "📁";
+      const nome = document.getElementById("admin-newcat-nome").value.trim();
+      if (!nome) {
+        alert("Digite um nome para a categoria.");
+        return;
+      }
+      // gera uma chave única a partir do nome (sem acentos/espaços), evitando
+      // colisão com uma categoria já existente
+      let base = nome.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "categoria";
+      let key = base, n = 2;
+      while (TUTORIAIS[key]) { key = `${base}-${n++}`; }
+
+      TUTORIAIS[key] = {
+        icon,
+        label: nome,
+        titulo: `${icon} ${nome}`,
+        desc: "",
+        videos: []
+      };
+
+      renderTutCats();
+      resyncDataBlock("tutoriais", TUTORIAIS);
+      const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${key}"]`);
+      setTutCat(btnAtivo, key);
+      mostrarFlashSalvo(document.querySelector("#tut-content"));
+    }
+
+    // ── CRIAÇÃO: novo card de vídeo dentro de uma categoria, sem mexer em HTML ──
+    function abrirNovoTutVideo(cat) {
+      const area = document.getElementById("tut-content");
+      area.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">➕</div>
+            <div><h2>Novo vídeo</h2></div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Etiqueta (tag)</label>
+              <input type="text" id="admin-tutvid-tag">
+              <label>Título do vídeo</label>
+              <input type="text" id="admin-tutvid-titulo">
+              <label>Descrição do vídeo</label>
+              <textarea id="admin-tutvid-desc"></textarea>
+              <label>URL do vídeo (formato embed do YouTube, deixe em branco para "Em breve")</label>
+              <input type="text" id="admin-tutvid-url">
+              <div style="display:flex;gap:8px;">
+                <button class="admin-edit-btn save" onclick="salvarNovoTutVideo('${cat}')">💾 Salvar</button>
+                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn[data-cat=\\'${cat}\\']').click()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      setTimeout(() => document.getElementById("admin-tutvid-tag")?.focus(), 50);
+    }
+
+    function salvarNovoTutVideo(cat) {
+      const data = TUTORIAIS[cat];
+      if (!data) return;
+      data.videos.push({
+        tag: document.getElementById("admin-tutvid-tag").value.trim(),
+        titulo: document.getElementById("admin-tutvid-titulo").value.trim() || "Novo vídeo",
+        desc: document.getElementById("admin-tutvid-desc").value.trim(),
+        url: document.getElementById("admin-tutvid-url").value.trim(),
+      });
+      const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cat}"]`);
+      setTutCat(btnAtivo, cat);
+      mostrarFlashSalvo(document.querySelector("#tut-content"));
+      resyncDataBlock("tutoriais", TUTORIAIS);
     }
 
 // @DATA_START:db
@@ -6456,8 +6680,9 @@ const PORTARIAS_DATA = {
         aplicarEdicaoComparativo();
       }
       if (document.getElementById("tutorial-screen").classList.contains("open") && tutCategoriaAtual) {
-        const btnAtivo = document.querySelector(`.tut-cat-btn[onclick*="'${tutCategoriaAtual}'"]`);
-        if (btnAtivo) setTutCat(btnAtivo, tutCategoriaAtual);
+        renderTutCats();
+        const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${tutCategoriaAtual}"]`);
+        setTutCat(btnAtivo, tutCategoriaAtual);
       }
       const activeSectionBtn = document.querySelector(".nav-btn.active");
       if (activeSectionBtn && document.getElementById("detail-pane").querySelector(".detail-card")) {
