@@ -7084,7 +7084,11 @@ const PORTARIAS_DATA = {
 
     function mostrarLoginUsuario() {
       document.getElementById("user-login-overlay").classList.remove("hidden");
-      document.getElementById("welcome-screen").style.display = "none";
+      // A tela de boas-vindas fica por baixo do overlay de login (como
+      // fundo desfocado) — NÃO deve ser escondida aqui. Escondê-la fazia
+      // aparecer o painel institucional por baixo do login, em vez da
+      // tela inicial.
+      document.getElementById("welcome-screen").style.display = "flex";
       document.getElementById("admin-lock-link").style.display = "none";
     }
 
