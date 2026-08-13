@@ -1540,6 +1540,59 @@
       color: var(--roxo);
     }
 
+    /* lixinho de excluir categoria — só aparece no modo administrador */
+    .tut-cat-del {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 12px;
+      opacity: .55;
+      padding: 2px 4px;
+      border-radius: 6px;
+    }
+    .tut-cat-del:hover {
+      opacity: 1;
+      background: #fde2e2;
+    }
+
+    /* ── Botões genéricos de admin (excluir/adicionar linha/coluna etc.) ── */
+    .admin-danger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #fde2e2;
+      color: #b42318;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .admin-danger-btn:hover {
+      background: #f8b4b4;
+    }
+    .admin-dashed-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 9px;
+      border: 1.5px dashed var(--roxo);
+      background: transparent;
+      color: var(--roxo);
+      font-family: 'Poppins', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .admin-dashed-btn:hover {
+      background: var(--roxo-claro);
+    }
+
     .tut-cat-icon {
       width: 30px;
       height: 30px;
@@ -1584,6 +1637,52 @@
 
     body.admin-mode .tut-add-cat-btn {
       display: flex;
+    }
+
+    /* elementos que só aparecem no modo administrador (padrão genérico) */
+    .regras-admin-only { display: none; }
+    body.admin-mode .regras-admin-only { display: flex; }
+    .comp-admin-only { display: none; }
+    body.admin-mode .comp-admin-only { display: flex; }
+    .comp-admin-actions {
+      display: none;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .comp-col-head { position: relative; }
+    .comp-row-label { position: relative; }
+    .comp-col-del, .comp-row-del {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 12px;
+      opacity: .6;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 6px;
+    }
+    .comp-col-del:hover, .comp-row-del:hover {
+      opacity: 1;
+      background: rgba(255,255,255,.25);
+    }
+    .comp-col-head-inner { min-height: 18px; }
+    td.comp-cell.admin-editable, th .comp-col-head-inner[contenteditable="true"] {
+      outline: 1.5px dashed rgba(122, 90, 248, .5);
+      outline-offset: -2px;
+      cursor: text;
+    }
+
+    .regras-cat-del, .regras-item-del {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 12px;
+      opacity: .55;
+      padding: 2px 4px;
+      border-radius: 6px;
+    }
+    .regras-cat-del:hover, .regras-item-del:hover {
+      opacity: 1;
+      background: #fde2e2;
     }
 
     /* card "Adicionar vídeo" — mesma grade dos vídeos, só aparece no admin */
@@ -4018,6 +4117,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         </div>
         <div class="regras-cats-label">Tópicos</div>
         <div class="regras-cats-list" id="regras-cats-list"></div>
+        <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin-top:8px;" onclick="abrirNovoRegrasTopico()">➕ Adicionar tópico</button>
       </aside>
 
       <!-- COLUNA 2 — subtítulos / mensagens da categoria -->
@@ -4027,6 +4127,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           <div class="regras-list-header-count" id="regras-list-count"></div>
         </div>
         <div class="regras-list-items" id="regras-list-items"></div>
+        <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin:8px;width:calc(100% - 16px);" onclick="abrirNovaRegrasMensagem()">➕ Adicionar mensagem</button>
       </div>
 
       <!-- COLUNA 3 — conteúdo da mensagem, pronta para copiar e enviar -->
@@ -4058,6 +4159,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       <aside class="regras-cats-pane">
         <div class="regras-cats-label">Estados</div>
         <div class="regras-cats-list" id="cursos-estados-list"></div>
+        <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin-top:8px;" onclick="adicionarEstadoCursos()">➕ Adicionar estado</button>
       </aside>
 
       <!-- COLUNA 2 — instituições do estado selecionado -->
@@ -4070,6 +4172,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           <div class="regras-list-header-count" id="cursos-inst-count"></div>
         </div>
         <div class="regras-list-items" id="cursos-inst-items"></div>
+        <button class="admin-dashed-btn regras-admin-only" style="width:calc(100% - 16px);margin:8px;" onclick="adicionarInstituicaoCursos()">➕ Adicionar instituição</button>
       </div>
 
       <!-- COLUNA 3 — cursos da instituição selecionada -->
@@ -4105,100 +4208,12 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       </div>
 
       <div class="comp-table-wrap">
-        <table class="comp-table">
-          <thead>
-            <tr>
-              <th class="comp-row-label" style="background:#5a5e78;">Característica</th>
-              <th class="comp-col-head">
-                <span class="comp-badge-topo">TTI+</span><br>
-                SC - PR/EAD RGSUL
-              </th>
-              <th class="comp-col-head">Paraná - Bahia</th>
-              <th class="comp-col-head">Distrito Federal GO/EAD</th>
-              <th class="comp-col-head">São Paulo</th>
-              <th class="comp-col-head">Pernambuco</th>
-              <th class="comp-col-head">Goiás</th>
-              <th class="comp-col-head tti360">
-                <span class="comp-badge-topo">SC - PR/EAD - RGSUL PETROLINA</span><br>
-                TTI 360
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="comp-row-label"><span class="comp-row-icon">⏳</span>Duração</td>
-              <td class="comp-cell">de 6 à 8 meses</td>
-              <td class="comp-cell">de 8 à 12 meses</td>
-              <td class="comp-cell">de 6 à 8 meses</td>
-              <td class="comp-cell">de 8 à 12 meses</td>
-              <td class="comp-cell">de 6 à 8 meses</td>
-              <td class="comp-cell">de 6 à 8 meses</td>
-              <td class="comp-cell tti360">de 6 à 12 meses</td>
-            </tr>
-            <tr>
-              <td class="comp-row-label"><span class="comp-row-icon">📝</span>Provas</td>
-              <td class="comp-cell">4 provas online<br>1 presencial<br>Média 6</td>
-              <td class="comp-cell">4 provas presencial<br>Média 5</td>
-              <td class="comp-cell">4 provas online<br>1 presencial<br>Média 6</td>
-              <td class="comp-cell">
-                <span class="comp-cell-badge">Após documentação completa</span><br>
-                4 provas presencial<br>Média 5
-              </td>
-              <td class="comp-cell">4 provas presencial<br>Média 5</td>
-              <td class="comp-cell">4 provas online<br>1 presencial<br>Média 6</td>
-              <td class="comp-cell tti360">4 provas presencial<br>+ AVI online<br>Média 5</td>
-            </tr>
-            <tr>
-              <td class="comp-row-label"><span class="comp-row-icon">🎓</span>Modalidade</td>
-              <td class="comp-cell">EAD + prova presencial</td>
-              <td class="comp-cell">EAD + provas presenciais<br>+ atividade obrigatória</td>
-              <td class="comp-cell">EAD + prova presencial</td>
-              <td class="comp-cell">EAD + provas presenciais<br>+ atividade obrigatória</td>
-              <td class="comp-cell">EAD + provas presenciais<br>+ atividade obrigatória</td>
-              <td class="comp-cell">EAD + prova presencial</td>
-              <td class="comp-cell tti360">EAD + prova presencial<br>+ atividade não obrigatória</td>
-            </tr>
-            <tr>
-              <td class="comp-row-label"><span class="comp-row-icon">⏱️</span>Carga Horária</td>
-              <td class="comp-cell">800h online<br>160h estágio obrigatório</td>
-              <td class="comp-cell">800h online<br>60h estágio obrigatório</td>
-              <td class="comp-cell">800h online<br>160h estágio obrigatório</td>
-              <td class="comp-cell">800h online<br>160h estágio obrigatório</td>
-              <td class="comp-cell">800h online<br>160h estágio obrigatório</td>
-              <td class="comp-cell">800h online<br>160h estágio obrigatório</td>
-              <td class="comp-cell tti360">800h presencial + online<br>80h estágio obrigatório</td>
-            </tr>
-            <tr>
-              <td class="comp-row-label"><span class="comp-row-icon">📄</span>Diploma</td>
-              <td class="comp-cell">até 15 dias</td>
-              <td class="comp-cell">
-                <span class="comp-cell-badge">Diploma físico</span><br>
-                até 60 dias
-              </td>
-              <td class="comp-cell">até 15 dias</td>
-              <td class="comp-cell">até 90 dias</td>
-              <td class="comp-cell">até 15 dias</td>
-              <td class="comp-cell">até 15 dias</td>
-              <td class="comp-cell tti360">até 15 dias</td>
-            </tr>
-            <tr>
-              <td class="comp-row-label"><span class="comp-row-icon">⭐</span>Diferenciais</td>
-              <td class="comp-cell">—</td>
-              <td class="comp-cell">—</td>
-              <td class="comp-cell">—</td>
-              <td class="comp-cell">—</td>
-              <td class="comp-cell">—</td>
-              <td class="comp-cell">—</td>
-              <td class="comp-cell tti360">
-                <ul class="comp-extra-list">
-                  <li>Ambientação</li>
-                  <li>Aulas com Tutor</li>
-                  <li>AVI incluso</li>
-                </ul>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <table class="comp-table" id="comp-table"></table>
+      </div>
+
+      <div class="comp-admin-actions comp-admin-only">
+        <button class="admin-dashed-btn" onclick="adicionarLinhaComparativo()">➕ Adicionar linha</button>
+        <button class="admin-dashed-btn" onclick="adicionarColunaComparativo()">➕ Adicionar coluna</button>
       </div>
 
       <div class="comp-legend">
@@ -4273,6 +4288,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           <input type="text" id="search-input" placeholder="Buscar..." oninput="filterList()">
         </div>
         <div class="list-items" id="list-items"></div>
+        <button class="admin-dashed-btn comp-admin-only" id="btn-add-registro" style="width:calc(100% - 32px);margin:0 16px 16px;" onclick="abrirNovoRegistro()">➕ Adicionar registro</button>
       </div>
 
       <!-- DETAIL -->
@@ -4328,6 +4344,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           break;
         case "comparativo":
           document.getElementById("comparativo-screen").classList.add("open");
+          renderComparativoTable();
           break;
         case "cursos":
           document.getElementById("cursos-screen").classList.add("open");
@@ -4343,6 +4360,10 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         // funciona igual em qualquer lugar onde o arquivo for aberto.
         history.pushState({ tela: tela }, "");
       }
+
+      // 🔁 Lembra qual tela está aberta, para restaurar no recarregamento
+      // (F5) da página — ver bloco "restaurarEstadoAoRecarregar" mais abaixo.
+      try { sessionStorage.setItem("ibrep_tela_atual", tela); } catch (e) {}
     }
 
     function openPanel() { if (!exigirPermissao("painel")) return; irParaTela("panel"); }
@@ -4370,15 +4391,46 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       Object.keys(TUTORIAIS).forEach(key => {
         const cat = TUTORIAIS[key];
         const ativo = key === tutCategoriaAtual ? "active" : "";
+        const delBtn = adminMode
+          ? `<span class="tut-cat-del" data-del-cat="${key}" title="Excluir categoria">🗑️</span>`
+          : "";
         html += `
           <button class="tut-cat-btn ${ativo}" data-cat="${key}">
-            <span class="tut-cat-icon">${cat.icon || "📁"}</span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}
+            <span class="tut-cat-icon">${cat.icon || "📁"}</span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}${delBtn}
           </button>`;
       });
       cont.innerHTML = html;
       cont.querySelectorAll(".tut-cat-btn").forEach(btn => {
-        btn.addEventListener("click", () => setTutCat(btn, btn.getAttribute("data-cat")));
+        btn.addEventListener("click", (e) => {
+          if (e.target.closest("[data-del-cat]")) return; // clique foi no lixinho, não troca de categoria
+          setTutCat(btn, btn.getAttribute("data-cat"));
+        });
       });
+      cont.querySelectorAll("[data-del-cat]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          excluirTutCategoria(el.getAttribute("data-del-cat"));
+        });
+      });
+    }
+
+    // ── EXCLUSÃO: categoria de tutoriais ──
+    function excluirTutCategoria(cat) {
+      const data = TUTORIAIS[cat];
+      if (!data) return;
+      if (!confirm(`Excluir a categoria "${data.label || data.titulo || cat}" e todos os vídeos dela? Essa ação não pode ser desfeita.`)) return;
+      delete TUTORIAIS[cat];
+      resyncDataBlock("tutoriais", TUTORIAIS);
+      const chaves = Object.keys(TUTORIAIS);
+      renderTutCats();
+      if (chaves.length) {
+        const proxima = chaves[0];
+        const btn = document.querySelector(`.tut-cat-btn[data-cat="${proxima}"]`);
+        setTutCat(btn, proxima);
+      } else {
+        tutCategoriaAtual = null;
+        document.getElementById("tut-content").innerHTML = `<div class="tut-empty">📂 Nenhuma categoria cadastrada ainda</div>`;
+      }
     }
 
     // Estado inicial no histórico (a tela de boas-vindas), para que o
@@ -4431,17 +4483,27 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       return CURSOS_ESTADO_REAL[inst.idinstituicao] || inst.estado;
     }
 
+    // Estados adicionados manualmente pelo admin (aparecem na coluna mesmo
+    // sem nenhuma instituição cadastrada ainda).
+// @DATA_START:cursosestados
+    const CURSOS_ESTADOS_MANUAL = [];
+// @DATA_END:cursosestados
+
     function initCursosScreen() {
-      const estados = Array.from(new Set(DB.instituicoes.map(i => cursosEstadoReal(i)).filter(Boolean)));
+      const estadosComInst = Array.from(new Set(DB.instituicoes.map(i => cursosEstadoReal(i)).filter(Boolean)));
+      const estados = Array.from(new Set([...estadosComInst, ...CURSOS_ESTADOS_MANUAL]));
       // Ordena pelo menor idinstituicao de cada estado, para refletir a ordem
-      // de cadastro (ex.: Santa Catarina = id 1 aparece primeiro).
+      // de cadastro (ex.: Santa Catarina = id 1 aparece primeiro). Estados
+      // sem nenhuma instituição (adicionados manualmente) vão para o final.
       estados.sort((a, b) => {
-        const minA = Math.min(...DB.instituicoes.filter(i => cursosEstadoReal(i) === a).map(i => i.idinstituicao));
-        const minB = Math.min(...DB.instituicoes.filter(i => cursosEstadoReal(i) === b).map(i => i.idinstituicao));
+        const idsA = DB.instituicoes.filter(i => cursosEstadoReal(i) === a).map(i => i.idinstituicao);
+        const idsB = DB.instituicoes.filter(i => cursosEstadoReal(i) === b).map(i => i.idinstituicao);
+        const minA = idsA.length ? Math.min(...idsA) : Infinity;
+        const minB = idsB.length ? Math.min(...idsB) : Infinity;
         return minA - minB;
       });
       cursosEstadosList = estados;
-      cursosEstadoAtual = estados[0] || null;
+      cursosEstadoAtual = (cursosEstadoAtual && estados.includes(cursosEstadoAtual)) ? cursosEstadoAtual : (estados[0] || null);
       document.getElementById("cursos-inst-search").value = "";
       renderCursosEstados(estados);
       renderCursosInstList();
@@ -4452,27 +4514,89 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         </div>`;
     }
 
+    // ── CRIAÇÃO/EXCLUSÃO: estados e instituições em Cursos por Instituição ──
+    function adicionarEstadoCursos() {
+      const nome = prompt("Nome do novo estado:", "");
+      if (nome === null) return;
+      const nomeLimpo = nome.trim();
+      if (!nomeLimpo) { alert("Digite um nome para o estado."); return; }
+      if (cursosEstadosList.includes(nomeLimpo)) { alert("Esse estado já existe na lista."); return; }
+      CURSOS_ESTADOS_MANUAL.push(nomeLimpo);
+      resyncDataBlock("cursosestados", CURSOS_ESTADOS_MANUAL);
+      cursosEstadoAtual = nomeLimpo;
+      initCursosScreen();
+    }
+
+    function excluirEstadoCursos(uf) {
+      const qtd = DB.instituicoes.filter(i => cursosEstadoReal(i) === uf).length;
+      const aviso = qtd > 0 ? ` Isso vai excluir também ${qtd} instituição(ões) cadastrada(s) nele.` : "";
+      if (!confirm(`Excluir o estado "${cursosUfLabel(uf)}"?${aviso}`)) return;
+
+      if (qtd > 0) {
+        const idsRemover = DB.instituicoes.filter(i => cursosEstadoReal(i) === uf).map(i => i.idinstituicao);
+        DB.instituicoes = DB.instituicoes.filter(i => !idsRemover.includes(i.idinstituicao));
+        resyncDataBlock("db", DB);
+      }
+      CURSOS_ESTADOS_MANUAL.splice(CURSOS_ESTADOS_MANUAL.indexOf(uf), 1);
+      resyncDataBlock("cursosestados", CURSOS_ESTADOS_MANUAL);
+      cursosEstadoAtual = null;
+      initCursosScreen();
+    }
+
+    function adicionarInstituicaoCursos() {
+      if (!cursosEstadoAtual) { alert("Selecione ou adicione um estado primeiro."); return; }
+      const mantenedoraPadrao = DB.mantenedoras[0];
+      if (!mantenedoraPadrao) { alert("Cadastre uma mantenedora antes de adicionar instituições."); return; }
+      const nome = prompt(`Nome da nova instituição em ${cursosUfLabel(cursosEstadoAtual)}:`, "");
+      if (nome === null) return;
+      const nomeLimpo = nome.trim() || "Nova instituição";
+      const novoId = proximoId("instituicoes", "idinstituicao");
+      DB.instituicoes.push({
+        idinstituicao: novoId,
+        idmantenedora: mantenedoraPadrao.idmantenedora,
+        nome: nomeLimpo,
+        nome_abreviado: nomeLimpo,
+        estado: cursosEstadoAtual
+      });
+      resyncDataBlock("db", DB);
+      initCursosScreen();
+      selectCursosEstado(cursosEstadoAtual);
+    }
+
+
     function renderCursosEstados(estados) {
       const cont = document.getElementById("cursos-estados-list");
       let html = "";
       estados.forEach((uf, idx) => {
         const qtd = DB.instituicoes.filter(i => cursosEstadoReal(i) === uf).length;
         const ativo = uf === cursosEstadoAtual ? "active" : "";
+        const delBtn = adminMode
+          ? `<span class="regras-cat-del" data-del-uf-idx="${idx}" title="Excluir estado">🗑️</span>`
+          : "";
         html += `
           <button class="regras-cat-btn ${ativo}" data-uf-idx="${idx}">
             <span class="regras-cat-num">📍</span>
             <span class="regras-cat-label">${cursosUfLabel(uf)}</span>
             <span class="regras-cat-count">${qtd}</span>
+            ${delBtn}
           </button>`;
       });
-      cont.innerHTML = html;
+      cont.innerHTML = html || `<div class="regras-empty-list">Nenhum estado cadastrado</div>`;
       // Listeners adicionados via JS (em vez de onclick inline) para evitar
       // problemas com nomes de estado que têm espaços/acentos, que antes
       // quebravam o atributo onclick e impediam o clique de funcionar.
       cont.querySelectorAll(".regras-cat-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+          if (e.target.closest("[data-del-uf-idx]")) return;
           const idx = Number(btn.getAttribute("data-uf-idx"));
           selectCursosEstado(cursosEstadosList[idx]);
+        });
+      });
+      cont.querySelectorAll("[data-del-uf-idx]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = Number(el.getAttribute("data-del-uf-idx"));
+          excluirEstadoCursos(cursosEstadosList[idx]);
         });
       });
     }
@@ -4513,6 +4637,9 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       let html = "";
       itens.forEach(inst => {
         const qtdCursos = getCursosForInst(inst).length;
+        const delBtn = adminMode
+          ? `<span class="regras-item-del" data-del-inst="${inst.idinstituicao}" title="Excluir instituição">🗑️</span>`
+          : "";
         html += `
           <div class="regras-item" onclick="selectCursosInst(${inst.idinstituicao}, this)">
             <div class="regras-item-icon">🏢</div>
@@ -4520,9 +4647,17 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
               <div class="regras-item-title">${inst.nome_abreviado || inst.nome}</div>
               <div class="regras-item-preview">${inst.cidade || "—"} · ${qtdCursos} curso${qtdCursos === 1 ? "" : "s"} disponíve${qtdCursos === 1 ? "l" : "is"}</div>
             </div>
+            ${delBtn}
           </div>`;
       });
       listEl.innerHTML = html || `<div class="regras-empty-list">Nenhuma instituição encontrada</div>`;
+      listEl.querySelectorAll("[data-del-inst]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          excluirRegistro("instituicoes", Number(el.getAttribute("data-del-inst")));
+          initCursosScreen();
+        });
+      });
     }
 
     function selectCursosInst(idinstituicao, el) {
@@ -4607,9 +4742,21 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
     function initRegras() {
       const cats = REGRAS_DATA.categorias;
-      if (!cats.length) return;
-      regrasCategoriaAtual = cats[0].id;
       document.getElementById("regras-search-input").value = "";
+      if (!cats.length) {
+        regrasCategoriaAtual = null;
+        renderRegrasCats();
+        document.getElementById("regras-list-title").textContent = "—";
+        document.getElementById("regras-list-count").textContent = "";
+        document.getElementById("regras-list-items").innerHTML = `<div class="regras-empty-list">Nenhum tópico cadastrado</div>`;
+        document.getElementById("regras-detail-pane").innerHTML = `
+          <div class="regras-empty-state">
+            <div class="icon">👈</div>
+            <p>Adicione um tópico para começar</p>
+          </div>`;
+        return;
+      }
+      regrasCategoriaAtual = cats[0].id;
       renderRegrasCats();
       renderRegrasList();
       document.getElementById("regras-detail-pane").innerHTML = `
@@ -4624,14 +4771,30 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       let html = "";
       REGRAS_DATA.categorias.forEach(cat => {
         const ativo = cat.id === regrasCategoriaAtual ? "active" : "";
+        const delBtn = adminMode
+          ? `<span class="regras-cat-del" data-del-topico="${cat.id}" title="Excluir tópico">🗑️</span>`
+          : "";
         html += `
-          <button class="regras-cat-btn ${ativo}" onclick="selectRegrasCategoria('${cat.id}')">
+          <button class="regras-cat-btn ${ativo}" data-cat-id="${cat.id}">
             <span class="regras-cat-num">${cat.numero}</span>
             <span class="regras-cat-label">${cat.titulo}</span>
             <span class="regras-cat-count">${cat.itens.length}</span>
+            ${delBtn}
           </button>`;
       });
-      cont.innerHTML = html;
+      cont.innerHTML = html || `<div class="regras-empty-list">Nenhum tópico cadastrado</div>`;
+      cont.querySelectorAll(".regras-cat-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          if (e.target.closest("[data-del-topico]")) return;
+          selectRegrasCategoria(btn.getAttribute("data-cat-id"));
+        });
+      });
+      cont.querySelectorAll("[data-del-topico]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          excluirRegrasTopico(el.getAttribute("data-del-topico"));
+        });
+      });
     }
 
     function selectRegrasCategoria(id) {
@@ -4646,10 +4809,42 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         </div>`;
     }
 
+    // ── CRIAÇÃO/EXCLUSÃO: tópicos (categorias) das Regras de Atendimento ──
+    function abrirNovoRegrasTopico() {
+      const nome = prompt("Nome do novo tópico:");
+      if (nome === null) return;
+      const nomeLimpo = nome.trim();
+      if (!nomeLimpo) { alert("Digite um nome para o tópico."); return; }
+      const maiorNumero = REGRAS_DATA.categorias.reduce((max, c) => Math.max(max, Number(c.numero) || 0), 0);
+      const novoId = "topico-" + Date.now();
+      REGRAS_DATA.categorias.push({
+        id: novoId,
+        numero: maiorNumero + 1,
+        titulo: nomeLimpo,
+        itens: []
+      });
+      syncRegrasDataScript();
+      regrasCategoriaAtual = novoId;
+      renderRegrasCats();
+      renderRegrasList();
+    }
+
+    function excluirRegrasTopico(id) {
+      const cat = REGRAS_DATA.categorias.find(c => c.id === id);
+      if (!cat) return;
+      if (!confirm(`Excluir o tópico "${cat.titulo}" e todas as ${cat.itens.length} mensagem(ns) dele? Essa ação não pode ser desfeita.`)) return;
+      REGRAS_DATA.categorias = REGRAS_DATA.categorias.filter(c => c.id !== id);
+      syncRegrasDataScript();
+      initRegras();
+    }
+
     function buildRegrasItemRow(cat, item, comCategoria, indice) {
       const label = item.subtitulo ? item.subtitulo : `Mensagem ${indice + 1}`;
       const previewBruto = item.conteudo.replace(/\s+/g, " ").trim();
       const preview = previewBruto.length > 90 ? previewBruto.slice(0, 90) + "…" : previewBruto;
+      const delBtn = adminMode
+        ? `<span class="regras-item-del" data-del-msg-cat="${cat.id}" data-del-msg-item="${item.id}" title="Excluir mensagem">🗑️</span>`
+        : "";
       return `
         <div class="regras-item" onclick="selectRegrasItem('${cat.id}','${item.id}',this)">
           <div class="regras-item-icon">${item.subtitulo ? "📌" : "💬"}</div>
@@ -4658,6 +4853,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
             <div class="regras-item-title">${escapeHtmlRegra(label)}</div>
             <div class="regras-item-preview">${escapeHtmlRegra(preview)}</div>
           </div>
+          ${delBtn}
         </div>`;
     }
 
@@ -4668,6 +4864,13 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       const countEl = document.getElementById("regras-list-count");
       let html = "";
       let count = 0;
+
+      if (!REGRAS_DATA.categorias.length) {
+        titleEl.textContent = "—";
+        countEl.textContent = "";
+        listEl.innerHTML = `<div class="regras-empty-list">Nenhum tópico cadastrado</div>`;
+        return;
+      }
 
       if (q) {
         REGRAS_DATA.categorias.forEach(cat => {
@@ -4681,6 +4884,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         titleEl.textContent = `Resultados para "${q}"`;
       } else {
         const cat = REGRAS_DATA.categorias.find(c => c.id === regrasCategoriaAtual) || REGRAS_DATA.categorias[0];
+        regrasCategoriaAtual = cat.id;
         titleEl.textContent = `${cat.numero}. ${cat.titulo}`;
         cat.itens.forEach((item, idx) => {
           count++;
@@ -4690,6 +4894,43 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
       countEl.textContent = count + (count === 1 ? " item" : " itens");
       listEl.innerHTML = html || `<div class="regras-empty-list">Nenhum resultado encontrado</div>`;
+      listEl.querySelectorAll("[data-del-msg-cat]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          excluirRegrasMensagem(el.getAttribute("data-del-msg-cat"), el.getAttribute("data-del-msg-item"));
+        });
+      });
+    }
+
+    // ── CRIAÇÃO/EXCLUSÃO: mensagens dentro de um tópico ──
+    function abrirNovaRegrasMensagem() {
+      if (!regrasCategoriaAtual) { alert("Crie ou selecione um tópico primeiro."); return; }
+      const cat = REGRAS_DATA.categorias.find(c => c.id === regrasCategoriaAtual);
+      if (!cat) return;
+      const novoId = "msg-" + Date.now();
+      cat.itens.push({ id: novoId, subtitulo: null, conteudo: "" });
+      syncRegrasDataScript();
+      renderRegrasCats();
+      renderRegrasList();
+      const el = document.querySelector(`#regras-list-items .regras-item[onclick*="'${novoId}'"]`);
+      abrirEdicaoRegra(cat.id, novoId);
+      if (el) el.classList.add("active");
+    }
+
+    function excluirRegrasMensagem(catId, itemId) {
+      const cat = REGRAS_DATA.categorias.find(c => c.id === catId);
+      const item = cat && cat.itens.find(i => i.id === itemId);
+      if (!item) return;
+      if (!confirm(`Excluir a mensagem "${item.subtitulo || "sem subtítulo"}"?`)) return;
+      cat.itens = cat.itens.filter(i => i.id !== itemId);
+      syncRegrasDataScript();
+      renderRegrasCats();
+      renderRegrasList();
+      document.getElementById("regras-detail-pane").innerHTML = `
+        <div class="regras-empty-state">
+          <div class="icon">👈</div>
+          <p>Selecione um tópico para ver a mensagem</p>
+        </div>`;
     }
 
     function selectRegrasItem(catId, itemId, el) {
@@ -5011,6 +5252,13 @@ const PORTARIAS_DATA = {
       const pane = document.getElementById('port-detail-pane');
 
       if (!dados) {
+        const podeAdicionar = adminMode
+          ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;max-width:320px;">
+               <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>
+               <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>
+               <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>
+             </div>`
+          : "";
         pane.innerHTML = `
           <div class="port-detail-header">
             <div class="port-detail-title">${estado.nome} (${uf})</div>
@@ -5018,6 +5266,8 @@ const PORTARIAS_DATA = {
           <div class="port-empty" style="height:auto;padding:40px 0;">
             <div class="icon">📭</div>
             <p>Nenhuma portaria ou parecer cadastrado para este estado ainda.</p>
+            ${adminMode ? `<p style="font-size:12px;margin-top:4px;">Escolha abaixo o que deseja cadastrar:</p>` : ""}
+            ${podeAdicionar}
           </div>`;
         return;
       }
@@ -5226,6 +5476,81 @@ const PORTARIAS_DATA = {
     };
 // @DATA_END:tutoriais
 
+// @DATA_START:comparativo
+    const COMPARATIVO_DATA = {
+      cols: [
+        { id: "c1", html: '<span class="comp-badge-topo">TTI+</span><br>SC - PR/EAD RGSUL', tti360: false },
+        { id: "c2", html: "Paraná - Bahia", tti360: false },
+        { id: "c3", html: "Distrito Federal GO/EAD", tti360: false },
+        { id: "c4", html: "São Paulo", tti360: false },
+        { id: "c5", html: "Pernambuco", tti360: false },
+        { id: "c6", html: "Goiás", tti360: false },
+        { id: "c7", html: '<span class="comp-badge-topo">SC - PR/EAD - RGSUL PETROLINA</span><br>TTI 360', tti360: true },
+      ],
+      rows: [
+        {
+          id: "r1", icon: "⏳", label: "Duração",
+          cells: { c1: "de 6 à 8 meses", c2: "de 8 à 12 meses", c3: "de 6 à 8 meses", c4: "de 8 à 12 meses", c5: "de 6 à 8 meses", c6: "de 6 à 8 meses", c7: "de 6 à 12 meses" }
+        },
+        {
+          id: "r2", icon: "📝", label: "Provas",
+          cells: {
+            c1: "4 provas online<br>1 presencial<br>Média 6",
+            c2: "4 provas presencial<br>Média 5",
+            c3: "4 provas online<br>1 presencial<br>Média 6",
+            c4: '<span class="comp-cell-badge">Após documentação completa</span><br>4 provas presencial<br>Média 5',
+            c5: "4 provas presencial<br>Média 5",
+            c6: "4 provas online<br>1 presencial<br>Média 6",
+            c7: "4 provas presencial<br>+ AVI online<br>Média 5"
+          }
+        },
+        {
+          id: "r3", icon: "🎓", label: "Modalidade",
+          cells: {
+            c1: "EAD + prova presencial",
+            c2: "EAD + provas presenciais<br>+ atividade obrigatória",
+            c3: "EAD + prova presencial",
+            c4: "EAD + provas presenciais<br>+ atividade obrigatória",
+            c5: "EAD + provas presenciais<br>+ atividade obrigatória",
+            c6: "EAD + prova presencial",
+            c7: "EAD + prova presencial<br>+ atividade não obrigatória"
+          }
+        },
+        {
+          id: "r4", icon: "⏱️", label: "Carga Horária",
+          cells: {
+            c1: "800h online<br>160h estágio obrigatório",
+            c2: "800h online<br>60h estágio obrigatório",
+            c3: "800h online<br>160h estágio obrigatório",
+            c4: "800h online<br>160h estágio obrigatório",
+            c5: "800h online<br>160h estágio obrigatório",
+            c6: "800h online<br>160h estágio obrigatório",
+            c7: "800h presencial + online<br>80h estágio obrigatório"
+          }
+        },
+        {
+          id: "r5", icon: "📄", label: "Diploma",
+          cells: {
+            c1: "até 15 dias",
+            c2: '<span class="comp-cell-badge">Diploma físico</span><br>até 60 dias',
+            c3: "até 15 dias",
+            c4: "até 90 dias",
+            c5: "até 15 dias",
+            c6: "até 15 dias",
+            c7: "até 15 dias"
+          }
+        },
+        {
+          id: "r6", icon: "⭐", label: "Diferenciais",
+          cells: {
+            c1: "—", c2: "—", c3: "—", c4: "—", c5: "—", c6: "—",
+            c7: '<ul class="comp-extra-list"><li>Ambientação</li><li>Aulas com Tutor</li><li>AVI incluso</li></ul>'
+          }
+        },
+      ]
+    };
+// @DATA_END:comparativo
+
     let tutCategoriaAtual = null;
 
     function setTutCat(btn, cat) {
@@ -5250,7 +5575,8 @@ const PORTARIAS_DATA = {
 
       data.videos.forEach((v, idx) => {
         const editVideoBtn = adminMode
-          ? `<button class="admin-edit-btn" style="margin-top:6px;" onclick="abrirEdicaoTutVideo('${cat}', ${idx})">✏️ Editar</button>`
+          ? `<button class="admin-edit-btn" style="margin-top:6px;" onclick="abrirEdicaoTutVideo('${cat}', ${idx})">✏️ Editar</button>
+             <button class="admin-danger-btn" style="margin-top:6px;margin-left:6px;" onclick="excluirTutVideo('${cat}', ${idx})">🗑️ Excluir</button>`
           : "";
         if (v.url) {
           // vídeo real do YouTube
@@ -5376,6 +5702,18 @@ const PORTARIAS_DATA = {
       setTutCat(btnAtivo, cat);
       mostrarFlashSalvo(document.querySelector("#tut-content"));
       resyncDataBlock("tutoriais", TUTORIAIS);
+    }
+
+    // ── EXCLUSÃO: vídeo de uma categoria de tutoriais ──
+    function excluirTutVideo(cat, idx) {
+      const data = TUTORIAIS[cat];
+      const v = data && data.videos[idx];
+      if (!v) return;
+      if (!confirm(`Excluir o vídeo "${v.titulo || "sem título"}"?`)) return;
+      data.videos.splice(idx, 1);
+      resyncDataBlock("tutoriais", TUTORIAIS);
+      const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cat}"]`);
+      setTutCat(btnAtivo, cat);
     }
 
     // ── CRIAÇÃO: nova categoria de tutoriais (emoji + nome, sem mexer em HTML) ──
@@ -6917,11 +7255,19 @@ const PORTARIAS_DATA = {
       <p>Selecione um item para ver os detalhes</p>
     </div>`;
 
+      const addBtn = document.getElementById("btn-add-registro");
+
       if (section === "arvore") {
         document.getElementById("list-title").textContent = "Árvore Hierárquica";
         document.getElementById("search-input").placeholder = "Buscar mantenedora, instituição, polo ou local...";
+        if (addBtn) addBtn.style.display = "none";
         renderTree("");
         return;
+      }
+
+      if (addBtn) {
+        addBtn.style.display = "";
+        addBtn.textContent = "➕ Adicionar " + (cfg[section].label.replace(/s$/, "").toLowerCase() === "instituiçõe" ? "instituição" : cfg[section].label.toLowerCase().replace(/s$/, ""));
       }
 
       document.getElementById("search-input").placeholder = "Buscar...";
@@ -7313,6 +7659,7 @@ const PORTARIAS_DATA = {
           return;
         }
         adminSenha = val;
+        try { sessionStorage.setItem("ibrep_admin_senha", val); } catch (e) {}
         fecharLoginAdmin();
         ativarModoAdmin();
       } catch (e) {
@@ -7323,6 +7670,7 @@ const PORTARIAS_DATA = {
     function sairAdmin() {
       adminSenha = null;
       adminMode = false;
+      try { sessionStorage.removeItem("ibrep_admin_senha"); } catch (e) {}
       document.body.classList.remove("admin-mode");
       document.getElementById("admin-toolbar").classList.remove("open");
       atualizarVisibilidadeLinkAdmin();
@@ -7640,6 +7988,15 @@ const PORTARIAS_DATA = {
       const salvosTutoriais = carregarDoLocalStorage("tutoriais");
       if (salvosTutoriais) Object.assign(TUTORIAIS, salvosTutoriais);
 
+      const salvosComparativo = carregarDoLocalStorage("comparativo");
+      if (salvosComparativo) Object.assign(COMPARATIVO_DATA, salvosComparativo);
+
+      const salvosCursosEstados = carregarDoLocalStorage("cursosestados");
+      if (salvosCursosEstados && Array.isArray(salvosCursosEstados)) {
+        CURSOS_ESTADOS_MANUAL.length = 0;
+        CURSOS_ESTADOS_MANUAL.push(...salvosCursosEstados);
+      }
+
       const salvosRegras = carregarDoLocalStorage("regras");
       if (salvosRegras) {
         if (Array.isArray(REGRAS_DATA) && Array.isArray(salvosRegras)) {
@@ -7652,6 +8009,36 @@ const PORTARIAS_DATA = {
       }
     }
     aplicarDadosSalvos();
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🔁 RESTAURA TELA E MODO ADMIN AO RECARREGAR A PÁGINA (F5)
+    // Sem isso, recarregar sempre voltava para a tela inicial e derrubava
+    // o modo administrador. Agora: a tela em que o usuário estava (painel,
+    // tutoriais, atos normativos, regras, comparativo, cursos) e o modo
+    // admin (se estava ativo) são restaurados automaticamente. O admin só
+    // sai clicando em "Sair" — nunca só por recarregar a página.
+    // ══════════════════════════════════════════════════════════════════
+    (function restaurarEstadoAoRecarregar() {
+      if (!currentUser) return; // sem sessão de usuário, mostra o login normalmente
+
+      // 1) Restaura a tela em que o usuário estava
+      let telaSalva = null;
+      try { telaSalva = sessionStorage.getItem("ibrep_tela_atual"); } catch (e) {}
+      if (telaSalva && telaSalva !== "welcome") {
+        const area = telaParaArea(telaSalva);
+        if (!area || temPermissao(area)) {
+          irParaTela(telaSalva, false);
+        }
+      }
+
+      // 2) Restaura o modo administrador, se estava ativo
+      let senhaAdminSalva = null;
+      try { senhaAdminSalva = sessionStorage.getItem("ibrep_admin_senha"); } catch (e) {}
+      if (senhaAdminSalva) {
+        adminSenha = senhaAdminSalva;
+        ativarModoAdmin();
+      }
+    })();
 
     function mostrarFlashSalvo(el) {
       if (!el) return;
@@ -7680,6 +8067,12 @@ const PORTARIAS_DATA = {
       btn.textContent = "✏️ Editar";
       btn.onclick = () => abrirEdicaoRegra(catId, itemId);
       header.appendChild(btn);
+      const delBtn = document.createElement("button");
+      delBtn.className = "admin-danger-btn";
+      delBtn.style.marginLeft = "8px";
+      delBtn.textContent = "🗑️ Excluir";
+      delBtn.onclick = () => excluirRegrasMensagem(catId, itemId);
+      header.appendChild(delBtn);
     };
 
     function abrirEdicaoRegra(catId, itemId) {
@@ -7735,6 +8128,17 @@ const PORTARIAS_DATA = {
       const dados = PORTARIAS_DATA[uf];
       if (!dados) return;
 
+      // botão de excluir todos os dados cadastrados deste estado
+      const header = document.querySelector("#port-detail-pane .port-detail-header");
+      if (header) {
+        const delBtn = document.createElement("button");
+        delBtn.className = "admin-danger-btn";
+        delBtn.style.marginLeft = "auto";
+        delBtn.textContent = "🗑️ Excluir dados do estado";
+        delBtn.onclick = () => excluirDadosEstado(uf);
+        header.appendChild(delBtn);
+      }
+
       // botão de editar o quadro Secretário/Diretor
       const secoes = document.querySelectorAll("#port-detail-pane .port-section");
       secoes.forEach(sec => {
@@ -7759,6 +8163,44 @@ const PORTARIAS_DATA = {
         }
       });
     };
+
+    // ── CRIAÇÃO: dados de um estado que ainda não tem nada cadastrado ──
+    // O admin escolhe (independentemente) quais blocos quer adicionar:
+    // Fundamentação Legal, Secretário/Diretor responsável e/ou Unidade de
+    // Ensino. Cada bloco entra com um texto de exemplo, pronto para o
+    // admin editar clicando em "✏️ Editar" (mecanismo que já existe).
+    function criarBlocoEstado(uf, tipo) {
+      if (!PORTARIAS_DATA[uf]) PORTARIAS_DATA[uf] = {};
+      const dados = PORTARIAS_DATA[uf];
+      if (tipo === "fundamentacao") {
+        dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flBox(
+          flRow("Lei Principal", "Preencha aqui a lei/base legal") +
+          flRow("Resolução", "Preencha aqui a resolução aplicável") +
+          flRow("Autorização", "Preencha aqui o parecer/autorização") +
+          flRow("Validade", "Preencha aqui a validade")
+        );
+      } else if (tipo === "responsaveis") {
+        dados.responsaveis = { nomeSecretario: "", portariaSecretario: "", nomeDiretor: "", portariaDiretor: "" };
+      } else if (tipo === "unidade") {
+        dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flUnidade(
+          "Unidade de Ensino",
+          flRow("Parecer", "Preencha aqui o parecer da unidade") +
+          flRow("Portaria", "Preencha aqui a portaria"),
+          []
+        );
+      }
+      resyncDataBlock("portarias", PORTARIAS_DATA);
+      selectEstado(uf);
+    }
+
+    function excluirDadosEstado(uf) {
+      if (!PORTARIAS_DATA[uf]) return;
+      if (!confirm("Excluir TODOS os dados normativos cadastrados para este estado? Essa ação não pode ser desfeita.")) return;
+      delete PORTARIAS_DATA[uf];
+      resyncDataBlock("portarias", PORTARIAS_DATA);
+      selectEstado(uf);
+    }
+
 
     function abrirEdicaoResponsaveis(uf) {
       const dados = PORTARIAS_DATA[uf];
@@ -7818,17 +8260,143 @@ const PORTARIAS_DATA = {
       };
     }
 
-    // ── EDIÇÃO: Comparativo de Estados (células da tabela) ──
-    function aplicarEdicaoComparativo() {
-      document.querySelectorAll(".comp-table th, .comp-table td").forEach(cel => {
-        if (adminMode) {
-          cel.setAttribute("contenteditable", "true");
-          cel.classList.add("admin-editable");
-        } else {
-          cel.removeAttribute("contenteditable");
-          cel.classList.remove("admin-editable");
-        }
+    // ── COMPARATIVO DE ESTADOS: renderização, edição, linhas e colunas ──
+    function renderComparativoTable() {
+      const table = document.getElementById("comp-table");
+      if (!table) return;
+
+      let thead = `<tr><th class="comp-row-label" style="background:#5a5e78;">Característica</th>`;
+      COMPARATIVO_DATA.cols.forEach(col => {
+        const delBtn = adminMode
+          ? `<span class="comp-col-del" data-del-col="${col.id}" title="Excluir coluna">🗑️</span>`
+          : "";
+        thead += `
+          <th class="comp-col-head ${col.tti360 ? "tti360" : ""}">
+            <div class="comp-col-head-inner" ${adminMode ? 'contenteditable="true"' : ""} data-comp-col="${col.id}">${col.html}</div>
+            ${delBtn}
+          </th>`;
       });
+      thead += `</tr>`;
+
+      let tbody = "";
+      COMPARATIVO_DATA.rows.forEach(row => {
+        const delBtn = adminMode
+          ? `<span class="comp-row-del" data-del-row="${row.id}" title="Excluir linha">🗑️</span>`
+          : "";
+        tbody += `<tr>
+          <td class="comp-row-label">
+            <span class="comp-row-icon">${row.icon || ""}</span>
+            <span ${adminMode ? 'contenteditable="true"' : ""} data-comp-rowlabel="${row.id}">${escapeHtmlRegra(row.label)}</span>
+            ${delBtn}
+          </td>`;
+        COMPARATIVO_DATA.cols.forEach(col => {
+          const val = row.cells[col.id] !== undefined ? row.cells[col.id] : "—";
+          tbody += `<td class="comp-cell ${col.tti360 ? "tti360" : ""} ${adminMode ? "admin-editable" : ""}"
+            ${adminMode ? 'contenteditable="true"' : ""} data-comp-row="${row.id}" data-comp-col="${col.id}">${val}</td>`;
+        });
+        tbody += `</tr>`;
+      });
+
+      table.innerHTML = `<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+      wireComparativoEditing();
+    }
+
+    function wireComparativoEditing() {
+      if (!adminMode) return;
+      const table = document.getElementById("comp-table");
+
+      // Salva o conteúdo de uma célula ao sair dela (blur)
+      table.querySelectorAll("[data-comp-row][data-comp-col]").forEach(td => {
+        td.addEventListener("blur", () => {
+          const row = COMPARATIVO_DATA.rows.find(r => r.id === td.dataset.compRow);
+          if (!row) return;
+          row.cells[td.dataset.compCol] = td.innerHTML.trim();
+          resyncDataBlock("comparativo", COMPARATIVO_DATA);
+          mostrarFlashSalvo(td);
+        });
+      });
+
+      // Salva o título/nome do estado-coluna
+      table.querySelectorAll("[data-comp-col]:not([data-comp-row])").forEach(el => {
+        el.addEventListener("blur", () => {
+          const col = COMPARATIVO_DATA.cols.find(c => c.id === el.dataset.compCol);
+          if (!col) return;
+          col.html = el.innerHTML.trim();
+          resyncDataBlock("comparativo", COMPARATIVO_DATA);
+          mostrarFlashSalvo(el);
+        });
+      });
+
+      // Salva o nome da linha (característica)
+      table.querySelectorAll("[data-comp-rowlabel]").forEach(el => {
+        el.addEventListener("blur", () => {
+          const rowId = el.getAttribute("data-comp-rowlabel");
+          const row = COMPARATIVO_DATA.rows.find(r => r.id === rowId);
+          if (!row) return;
+          row.label = el.textContent.trim();
+          resyncDataBlock("comparativo", COMPARATIVO_DATA);
+          mostrarFlashSalvo(el);
+        });
+      });
+
+      // Exclusão de coluna
+      table.querySelectorAll("[data-del-col]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          excluirColunaComparativo(el.getAttribute("data-del-col"));
+        });
+      });
+
+      // Exclusão de linha
+      table.querySelectorAll("[data-del-row]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          excluirLinhaComparativo(el.getAttribute("data-del-row"));
+        });
+      });
+    }
+
+    function adicionarLinhaComparativo() {
+      const nome = prompt("Nome da nova característica (linha):", "Nova característica");
+      if (nome === null) return;
+      const id = "row-" + Date.now();
+      const cells = {};
+      COMPARATIVO_DATA.cols.forEach(c => { cells[c.id] = "—"; });
+      COMPARATIVO_DATA.rows.push({ id, icon: "✳️", label: nome.trim() || "Nova característica", cells });
+      resyncDataBlock("comparativo", COMPARATIVO_DATA);
+      renderComparativoTable();
+    }
+
+    function adicionarColunaComparativo() {
+      const nome = prompt("Nome do novo estado/plano (coluna):", "Novo estado");
+      if (nome === null) return;
+      const id = "col-" + Date.now();
+      COMPARATIVO_DATA.cols.push({ id, html: nome.trim() || "Novo estado", tti360: false });
+      COMPARATIVO_DATA.rows.forEach(r => { r.cells[id] = "—"; });
+      resyncDataBlock("comparativo", COMPARATIVO_DATA);
+      renderComparativoTable();
+    }
+
+    function excluirLinhaComparativo(id) {
+      const row = COMPARATIVO_DATA.rows.find(r => r.id === id);
+      if (!row) return;
+      if (!confirm(`Excluir a linha "${row.label}"?`)) return;
+      COMPARATIVO_DATA.rows = COMPARATIVO_DATA.rows.filter(r => r.id !== id);
+      resyncDataBlock("comparativo", COMPARATIVO_DATA);
+      renderComparativoTable();
+    }
+
+    function excluirColunaComparativo(id) {
+      if (COMPARATIVO_DATA.cols.length <= 1) { alert("É preciso manter ao menos uma coluna."); return; }
+      if (!confirm("Excluir esta coluna (estado/plano) da tabela?")) return;
+      COMPARATIVO_DATA.cols = COMPARATIVO_DATA.cols.filter(c => c.id !== id);
+      COMPARATIVO_DATA.rows.forEach(r => { delete r.cells[id]; });
+      resyncDataBlock("comparativo", COMPARATIVO_DATA);
+      renderComparativoTable();
+    }
+
+    function aplicarEdicaoComparativo() {
+      renderComparativoTable();
     }
     const _openComparativoOriginal = openComparativo;
     openComparativo = function () {
@@ -7940,7 +8508,128 @@ const PORTARIAS_DATA = {
           }
         });
       });
+
+      // botão de excluir este registro
+      const headerActions = document.querySelector("#detail-pane .detail-card-header");
+      if (headerActions) {
+        const delBtn = document.createElement("button");
+        delBtn.className = "admin-danger-btn";
+        delBtn.style.marginLeft = "auto";
+        delBtn.textContent = "🗑️ Excluir registro";
+        delBtn.onclick = () => excluirRegistro(currentSection, item[c.idKey]);
+        headerActions.appendChild(delBtn);
+      }
     };
+
+    // ── CRIAÇÃO/EXCLUSÃO: registros do Painel Institucional ──
+    // (Mantenedoras, Instituições, Polos, Locais de Provas — mesmas 4 seções)
+
+    // Mapeia, para cada seção, qual campo é a "chave estrangeira" obrigatória
+    // que liga o novo registro ao pai dele (ex.: uma instituição pertence a
+    // uma mantenedora). "parentSection" é onde procurar o pai; se null, a
+    // seção não depende de nenhuma outra (é o topo da hierarquia).
+    const REGISTRO_PARENT = {
+      mantenedoras: null,
+      instituicoes: { parentSection: "mantenedoras", fk: "idmantenedora", parentLabel: "mantenedora" },
+      polos: { parentSection: "instituicoes", fk: "idinstituicao", parentLabel: "instituição" },
+      locais: { parentSection: "polos", fk: "idpolo", parentLabel: "polo" }
+    };
+
+    function proximoId(section, idKey) {
+      const itens = DB[section] || [];
+      return itens.reduce((max, it) => Math.max(max, Number(it[idKey]) || 0), 0) + 1;
+    }
+
+    function abrirNovoRegistro(sectionParam) {
+      const section = sectionParam || currentSection;
+      if (section === "arvore") return;
+      const c = cfg[section];
+      const parentInfo = REGISTRO_PARENT[section];
+
+      // se a seção depende de um pai (ex: instituição depende de mantenedora),
+      // pede o ID do pai antes de tudo — sem isso o registro fica "órfão"
+      // e não aparece em nenhuma árvore/lista de cursos.
+      let fkValor = null;
+      if (parentInfo) {
+        const paisDisponiveis = (DB[parentInfo.parentSection] || [])
+          .map(p => `${p[cfg[parentInfo.parentSection].idKey]} — ${p[cfg[parentInfo.parentSection].nameKey] || p.nome || p.razao_social}`)
+          .join("\n");
+        const digitado = prompt(
+          `Qual o ID d${parentInfo.parentLabel === "instituição" ? "a" : "o"} ${parentInfo.parentLabel} deste novo registro?\n\nOpções disponíveis:\n${paisDisponiveis}`,
+          ""
+        );
+        if (digitado === null) return;
+        fkValor = Number(digitado.trim());
+        const paiExiste = (DB[parentInfo.parentSection] || []).some(p => p[cfg[parentInfo.parentSection].idKey] === fkValor);
+        if (!fkValor || !paiExiste) {
+          alert("ID inválido. Cadastro cancelado.");
+          return;
+        }
+      }
+
+      const nome = prompt(`Nome d${c.label.toLowerCase().startsWith("i") ? "a" : "a"} nov${c.label.match(/^(Mantenedoras|Instituições)/) ? "a" : "o"} ${c.label.replace(/s$/, "").toLowerCase()}:`, "");
+      if (nome === null) return;
+      const nomeLimpo = nome.trim() || "Novo registro";
+
+      const novoId = proximoId(section, c.idKey);
+      const novoItem = { [c.idKey]: novoId };
+      if (parentInfo) novoItem[parentInfo.fk] = fkValor;
+      novoItem[c.nameKey] = nomeLimpo;
+
+      DB[section].push(novoItem);
+      resyncDataBlock("db", DB);
+
+      if (section === currentSection) {
+        allItems = DB[section];
+        renderList(allItems);
+        const el = document.querySelector(`.list-item[data-id="${novoId}"]`);
+        if (el) {
+          document.querySelectorAll(".list-item").forEach(e => e.classList.remove("active"));
+          el.classList.add("active");
+          el.scrollIntoView({ block: "nearest" });
+        }
+        renderDetail(novoItem);
+      }
+    }
+
+    // Chaves estrangeiras que apontam PARA cada seção (usado para avisar
+    // sobre registros dependentes antes de excluir).
+    const REGISTROS_FILHOS = {
+      mantenedoras: [{ section: "instituicoes", fk: "idmantenedora" }],
+      instituicoes: [{ section: "polos", fk: "idinstituicao" }, { section: "locais", fk: "idinstituicao" }],
+      polos: [{ section: "locais", fk: "idpolo" }],
+      locais: []
+    };
+
+    function excluirRegistro(section, id) {
+      const c = cfg[section];
+      const item = (DB[section] || []).find(x => x[c.idKey] === id);
+      if (!item) return;
+      const nome = item[c.nameKey] || item.nome || item.razao_social || ("ID " + id);
+
+      const filhos = (REGISTROS_FILHOS[section] || []).reduce((total, rel) => {
+        return total + (DB[rel.section] || []).filter(x => x[rel.fk] === id).length;
+      }, 0);
+
+      const aviso = filhos > 0
+        ? `\n\n⚠️ Atenção: existem ${filhos} registro(s) vinculados a este (instituições/polos/locais) que ficarão sem referência. Eles NÃO serão excluídos automaticamente.`
+        : "";
+
+      if (!confirm(`Excluir "${nome}"?${aviso}`)) return;
+
+      DB[section] = DB[section].filter(x => x[c.idKey] !== id);
+      resyncDataBlock("db", DB);
+
+      if (section === currentSection) {
+        allItems = DB[section];
+        renderList(allItems);
+        document.getElementById("detail-pane").innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">👆</div>
+            <p>Selecione um item para ver os detalhes</p>
+          </div>`;
+      }
+    }
 
   </script>
 
