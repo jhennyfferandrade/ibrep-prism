@@ -1268,7 +1268,7 @@
     #br-map-svg {
       display: block;
       width: 100%;
-      max-width: 100%;
+      max-width: 420px;
       height: auto;
       margin: 0 auto;
       border: none;
@@ -1664,31 +1664,6 @@
     .comp-col-del:hover, .comp-row-del:hover {
       opacity: 1;
       background: rgba(255,255,255,.25);
-    }
-    .comp-col-move-group, .comp-row-move-group {
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      display: flex;
-      gap: 2px;
-      z-index: 3;
-    }
-    .comp-col-move, .comp-row-move {
-      font-size: 11px;
-      opacity: .6;
-      cursor: pointer;
-      padding: 2px 4px;
-      border-radius: 6px;
-      line-height: 1;
-    }
-    .comp-col-move:hover, .comp-row-move:hover {
-      opacity: 1;
-      background: rgba(255,255,255,.25);
-    }
-    .comp-col-move.disabled, .comp-row-move.disabled {
-      opacity: .2;
-      cursor: default;
-      pointer-events: none;
     }
     .comp-col-head-inner { min-height: 18px; }
     td.comp-cell.admin-editable, th .comp-col-head-inner[contenteditable="true"] {
@@ -2150,7 +2125,7 @@
       border-radius: 16px;
       border: 1px solid var(--cinza-borda);
       overflow: hidden;
-      width: 100%;
+      max-width: 780px;
     }
 
     .regras-detail-header {
@@ -2275,6 +2250,7 @@
     .comp-intro {
       font-size: 12.5px;
       color: var(--texto-sec);
+      max-width: 720px;
       line-height: 1.6;
       margin-bottom: 18px;
     }
@@ -3112,15 +3088,44 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════════
-     📌 REGRAS DO ATENDIMENTO
+     📌 BASE DE DADOS — REGRAS DO ATENDIMENTO
      ══════════════════════════════════════════════════════════════════
-     Os dados NÃO ficam mais aqui no HTML. Este bloco existe só como
-     placeholder (fica vazio) — o conteúdo real é carregado das tabelas
-     relacionais "regras_categorias" e "regras_mensagens" no Supabase
-     assim que a página abre, e as edições feitas no modo administrador
-     são salvas de volta nessas mesmas tabelas automaticamente.
+     Esta é a "planilha" de mensagens padrão do atendimento. Para ADICIONAR
+     uma nova informação, edite o JSON abaixo diretamente (é o mesmo
+     conteúdo do arquivo regras_atendimento.json).
+
+     Estrutura:
+     {
+       "categorias": [
+         {
+           "id": "identificador-unico-da-categoria",
+           "numero": "1",                 // número que aparece no título principal
+           "titulo": "Nome da Categoria",  // vira "1. Nome da Categoria" na tela
+           "itens": [
+             {
+               "id": "identificador-unico-do-item",
+               "subtitulo": "Nome do subtítulo" | null,  // null = mensagem direta, sem subtítulo
+               "conteudo": "Texto da mensagem que o atendente vai copiar e enviar"
+             }
+           ]
+         }
+       ]
+     }
+
+     Dicas de formatação dentro de "conteudo":
+       • \n\n cria um novo parágrafo
+       • \n cria uma quebra de linha simples
+       • *palavra* fica em **negrito** na tela
+       • links (http/https) viram clicáveis automaticamente
+
+     Para criar uma NOVA CATEGORIA, copie um bloco inteiro de "{ id, numero,
+     titulo, itens }" e cole dentro de "categorias", ajustando id/numero/titulo.
+     Para criar um NOVO ITEM/MENSAGEM, copie um bloco de dentro de "itens" e
+     cole na categoria desejada.
   ══════════════════════════════════════════════════════════════════ -->
-  <script type="application/json" id="regras-data">{"categorias":[]}</script>
+  <script type="application/json" id="regras-data">
+{"categorias": []}
+</script>
 
   <!-- ══════════════════════════════════════
      TELA DE BOAS-VINDAS
@@ -3936,7 +3941,9 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
     // Rótulos exibidos para cada estado, seguindo a mesma convenção de nomes
     // abreviados já usada em outras partes do painel (ex.: nome_abreviado).
-    const CURSOS_UF_LABEL = {};
+    const CURSOS_UF_LABEL = {
+      "Santa Catarina": "SANTA CATARINA"
+    };
     function cursosUfLabel(uf) {
       return CURSOS_UF_LABEL[uf] || (uf || "").toUpperCase();
     }
@@ -3948,18 +3955,17 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     // "Cursos por Instituição" agrupamos pelo estado real de cada unidade,
     // usando este mapa por idinstituicao. Só afeta esta tela — os dados
     // cadastrais/jurídicos (mantenedora, portarias etc.) continuam intactos.
-    const CURSOS_ESTADO_REAL = {};
+    // Estado real é mantido no relacionamento cursos_estados do Supabase.
+    let CURSOS_ESTADO_REAL = {};
     function cursosEstadoReal(inst) {
       return CURSOS_ESTADO_REAL[inst.idinstituicao] || inst.estado;
     }
-
-    // Estados adicionados manualmente pelo admin (aparecem na coluna mesmo
+// Estados adicionados manualmente pelo admin (aparecem na coluna mesmo
     // sem nenhuma instituição cadastrada ainda).
 // @DATA_START:cursosestados
-    const CURSOS_ESTADOS_MANUAL = [];
+    let CURSOS_ESTADOS_MANUAL = [];
 // @DATA_END:cursosestados
-
-    function initCursosScreen() {
+function initCursosScreen() {
       const estadosComInst = Array.from(new Set(DB.instituicoes.map(i => cursosEstadoReal(i)).filter(Boolean)));
       const estados = Array.from(new Set([...estadosComInst, ...CURSOS_ESTADOS_MANUAL]));
       // Ordena pelo menor idinstituicao de cada estado, para refletir a ordem
@@ -4179,9 +4185,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     // basta editar aquele bloco no HTML para acrescentar/alterar informações.
     // Se o admin já tiver salvo alterações neste navegador (localStorage),
     // elas são usadas no lugar dos dados padrão do arquivo.
-    // REGRAS_DATA agora é carregada do banco (Supabase) na inicialização —
-    // veja carregarConteudoRemoto(). Começa vazia até a carga terminar.
-    const REGRAS_DATA = { categorias: [] };
+    let REGRAS_DATA = { categorias: [] };
 
     let regrasCategoriaAtual = null;
 
@@ -4475,7 +4479,35 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
     // Posição de cada UF na grade (linha e coluna), aproximando a geografia real.
     // "col" vai de 1 a 8 (oeste → leste) e "row" de 1 a 9 (norte → sul).
-    const ESTADOS_GRID = [];
+    const ESTADOS_GRID = [
+      { uf: 'RR', nome: 'Roraima', row: 1, col: 3 },
+      { uf: 'AP', nome: 'Amapá', row: 1, col: 5 },
+      { uf: 'AM', nome: 'Amazonas', row: 2, col: 2 },
+      { uf: 'PA', nome: 'Pará', row: 2, col: 4 },
+      { uf: 'MA', nome: 'Maranhão', row: 2, col: 5 },
+      { uf: 'CE', nome: 'Ceará', row: 2, col: 7 },
+      { uf: 'RN', nome: 'Rio Grande do Norte', row: 2, col: 8 },
+      { uf: 'AC', nome: 'Acre', row: 3, col: 1 },
+      { uf: 'RO', nome: 'Rondônia', row: 3, col: 2 },
+      { uf: 'TO', nome: 'Tocantins', row: 3, col: 4 },
+      { uf: 'PI', nome: 'Piauí', row: 3, col: 6 },
+      { uf: 'PB', nome: 'Paraíba', row: 3, col: 8 },
+      { uf: 'PE', nome: 'Pernambuco', row: 4, col: 7 },
+      { uf: 'MT', nome: 'Mato Grosso', row: 4, col: 3 },
+      { uf: 'AL', nome: 'Alagoas', row: 4, col: 8 },
+      { uf: 'BA', nome: 'Bahia', row: 4, col: 6 },
+      { uf: 'SE', nome: 'Sergipe', row: 5, col: 7 },
+      { uf: 'MS', nome: 'Mato Grosso do Sul', row: 5, col: 3 },
+      { uf: 'GO', nome: 'Goiás', row: 5, col: 4 },
+      { uf: 'DF', nome: 'Distrito Federal', row: 5, col: 5 },
+      { uf: 'MG', nome: 'Minas Gerais', row: 6, col: 6 },
+      { uf: 'SP', nome: 'São Paulo', row: 6, col: 4 },
+      { uf: 'RJ', nome: 'Rio de Janeiro', row: 6, col: 7 },
+      { uf: 'ES', nome: 'Espírito Santo', row: 6, col: 8 },
+      { uf: 'PR', nome: 'Paraná', row: 7, col: 4 },
+      { uf: 'SC', nome: 'Santa Catarina', row: 8, col: 4 },
+      { uf: 'RS', nome: 'Rio Grande do Sul', row: 9, col: 4 },
+    ];
 
     // ─────────────────────────────────────────────────────────────
     // AQUI é onde você insere os dados burocráticos de cada estado.
@@ -4533,12 +4565,10 @@ function flResponsaveis(r) {
     </div>
   </div>`;
 }
-
 // @DATA_START:portarias
-const PORTARIAS_DATA = {};
+let PORTARIAS_DATA = {};
 // @DATA_END:portarias
-
-    function selectEstado(uf) {
+function selectEstado(uf) {
       document.querySelectorAll('#br-map-svg a.uf').forEach(a => a.classList.remove('active'));
       const target = document.querySelector(`#br-map-svg a.uf[data-uf="${uf}"]`);
       if (target) target.classList.add('active');
@@ -4549,7 +4579,7 @@ const PORTARIAS_DATA = {};
 
       if (!dados) {
         const podeAdicionar = adminMode
-          ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;max-width:320px;margin-left:auto;margin-right:auto;">
+          ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;max-width:320px;">
                <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>
                <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>
                <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>
@@ -4610,12 +4640,6 @@ const PORTARIAS_DATA = {};
         <div class="port-section">
           <div class="port-section-title">Portarias e Documentos</div>
           ${docsHtml}
-        </div>` : ''}
-        ${adminMode ? `
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;max-width:320px;margin-left:auto;margin-right:auto;">
-          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>
-          ${!dados.responsaveis ? `<button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>` : ''}
-          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>
         </div>` : ''}`;
     }
 
@@ -4691,14 +4715,12 @@ const PORTARIAS_DATA = {};
     // Para adicionar vídeos: coloque a URL do YouTube (formato embed) no campo "url"
     // Deixe url:"" para mostrar placeholder até ter o vídeo
 // @DATA_START:tutoriais
-    const TUTORIAIS = {};
+let TUTORIAIS = {};
 // @DATA_END:tutoriais
-
 // @DATA_START:comparativo
-    const COMPARATIVO_DATA = {};
+let COMPARATIVO_DATA = { cols: [], rows: [] };
 // @DATA_END:comparativo
-
-    let tutCategoriaAtual = null;
+let tutCategoriaAtual = null;
 
     function setTutCat(btn, cat) {
       document.querySelectorAll(".tut-cat-btn").forEach(b => b.classList.remove("active"));
@@ -4961,12 +4983,11 @@ const PORTARIAS_DATA = {};
       mostrarFlashSalvo(document.querySelector("#tut-content"));
       resyncDataBlock("tutoriais", TUTORIAIS);
     }
-
 // @DATA_START:db
+    // Dados institucionais carregados do Supabase em tempo de execução.
     const DB = { mantenedoras: [], instituicoes: [], polos: [], locais: [] };
 // @DATA_END:db
-
-    const cfg = {
+const cfg = {
       mantenedoras: { label: "Mantenedoras", idKey: "idmantenedora", nameKey: "razao_social" },
       instituicoes: { label: "Instituições", idKey: "idinstituicao", nameKey: "nome_abreviado" },
       polos: { label: "Polos", idKey: "idpolo", nameKey: "nome_fantasia" },
@@ -5018,63 +5039,56 @@ const PORTARIAS_DATA = {};
 
     // ── DADOS DE CURSOS POR INSTITUIÇÃO ──────────────────────────────────────
     // Cursos disponíveis para s instituição (id1 = mantenedora 1)
+let CURSOS_LIVRES = [];
 
-
-    const CURSOS_LIVRES = [];
 
     // TTI+ — disponível para estas instituições (por nome_abreviado)
-    const TTI_PLUS_INST = new Set();
+let TTI_PLUS_INST = new Set();
+
     // TTI 360 — disponível para estas instituições
-    const TTI_360_INST = new Set();
-
-    const CURSO_132 = { id: 132, nome: "TTI+FORMAÇÃO EM NEGÓCIOS IMOBILIÁRIOS" };
-    const CURSO_144 = { id: 144, nome: "TTI | CORRETOR 360" };
-
+let TTI_360_INST = new Set();
+const CURSO_132 = { id: 132, nome: "TTI+ FORMAÇÃO EM NEGÓCIOS IMOBILIÁRIOS" };
+const CURSO_144 = { id: 144, nome: "TTI | CORRETOR 360" };
     function getCursosForInst(inst) {
-      const cursosArr = [];
-
-      // Cursos livres apenas para a instituição ID 1
-      if (inst.idinstituicao === 1) {
-        cursosArr.push(...CURSOS_LIVRES);
-      }
-
-      const ab = inst.nome_abreviado || "";
-
-      if (TTI_PLUS_INST.has(ab)) cursosArr.push(CURSO_132);
-      if (TTI_360_INST.has(ab)) cursosArr.push(CURSO_144);
-
-      return cursosArr;
+      const ids = INSTITUICOES_CURSOS_MAP[inst.idinstituicao] || [];
+      return ids.map(id => CURSOS_CATALOGO.find(c => Number(c.id) === Number(id))).filter(Boolean);
     }
 
      // ── DISCIPLINAS POR CURSO ─────────────────────────────────────────────────
-    const DISCIPLINAS = {};
+let DISCIPLINAS = {};
+
 
     // ── AVAS POR CURRÍCULOS ────────────────────────────────────────────────────────
-    const AVAS = {};
+let AVAS = {};
+
 
     // ── CURRÍCULOS POR CURSO (alguns cursos têm currículo específico por instituição) ──
     // idinst:null = currículo genérico (vale para instituições que não têm currículo nomeado específico)
-    const CURRICULOS = {};
+let CURRICULOS = {};
+
 
     // ── DISCIPLINAS POR CURRÍCULO (idcurriculo → disciplinas) ──
     // Preencha aqui os currículos que têm disciplinas DIFERENTES entre si.
     // Se um curriculoId não estiver aqui, o painel usará as disciplinas gerais do curso.
-    const DISCIPLINAS_CURRICULO = {};
+let DISCIPLINAS_CURRICULO = {};
+
 
     // ── AVAS POR CURRÍCULO (idcurriculo → avas) ──
     // Se um curriculoId não estiver aqui, o painel usará os AVAs gerais do curso.
-    const AVAS_CURRICULO = {};
+let AVAS_CURRICULO = {};
+
 
     // ── CERTIFICADOS POR INSTITUIÇÃO E CURSO ─────────────────────────────────
+let CERTIFICADOS = {};
 
-
-    const CERTIFICADOS = {};
 
     // ── PROVAS IMPRESSAS POR INSTITUIÇÃO E CURSO (somente cursos 132 e 144) ──
-    const PROVAS_IMPRESSAS = {};
+let PROVAS_IMPRESSAS = {};
+
 
     // ── ATIVIDADE PRESENCIAL — pares "idinstituicao-idcurso" com atividade presencial = SIM ──
-    const ATIVIDADE_PRESENCIAL = new Set();
+let ATIVIDADE_PRESENCIAL = new Set();
+
 
     let activeCursoId = null;
     let activeInstId = null;
@@ -5598,7 +5612,7 @@ const PORTARIAS_DATA = {};
       }
     });
 
-    setSection("mantenedoras");
+    // A seção inicial é carregada após a leitura do Supabase.
 
     // ══════════════════════════════════════════════════════════════════
     // 🔐 AUTENTICAÇÃO — Supabase (login de usuário + admin + permissões)
@@ -5640,469 +5654,6 @@ const PORTARIAS_DATA = {};
         throw new Error(data.message || data.erro || `Erro ${res.status}`);
       }
       return data;
-    }
-
-    // ══════════════════════════════════════════════════════════════════
-    // 📥 CARREGA TODO O CONTEÚDO DO PAINEL A PARTIR DAS TABELAS RELACIONAIS
-    // Antes, tudo vinha de uma única tabela-gaveta "conteudo_painel" (via
-    // RPC obter_conteudo_tudo). Agora cada assunto tem sua própria tabela
-    // (mantenedoras, instituicoes, polos, locais_prova, cursos, curriculos,
-    // disciplinas, avas, tutorial_categorias/videos, portarias_credenciamento,
-    // regras_categorias/mensagens, comparativo_*). Esta função lê todas elas
-    // direto (PostgREST) e remonta os MESMOS objetos em memória que o resto
-    // do painel já usava — então nenhuma outra parte do código (telas,
-    // busca, árvore, edição) precisou mudar.
-    //
-    // ⚠️ CERTIFICADOS e PROVAS_IMPRESSAS ainda não têm tabela própria no
-    // modelo relacional novo (não fazem parte das 24 tabelas prioritárias
-    // migradas). Ficam vazios até existir uma tabela "certificados" /
-    // "provas_impressas" — quando existir, é só adicionar a leitura aqui.
-    // ══════════════════════════════════════════════════════════════════
-    let conteudoRemotoCarregado = false;
-    let conteudoRemotoErro = null;
-
-    function popularObjeto(alvo, novo) {
-      if (!novo || typeof novo !== "object") return;
-      for (const k of Object.keys(alvo)) delete alvo[k];
-      Object.assign(alvo, novo);
-    }
-    function popularArray(alvo, novo) {
-      if (!Array.isArray(novo)) return;
-      alvo.length = 0;
-      alvo.push(...novo);
-    }
-    function popularSet(alvo, novo) {
-      if (!Array.isArray(novo)) return;
-      alvo.clear();
-      novo.forEach(v => alvo.add(v));
-    }
-
-    // ── Helper genérico para ler/gravar direto nas tabelas via PostgREST ──
-    async function supabaseTable(method, tabela, { query = "", body = null, prefer = null } = {}) {
-      const headers = {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        "Content-Type": "application/json"
-      };
-      if (prefer) headers["Prefer"] = prefer;
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}${query ? "?" + query : ""}`, {
-        method,
-        headers,
-        body: body != null ? JSON.stringify(body) : undefined
-      });
-      if (!res.ok) {
-        const info = await res.json().catch(() => ({}));
-        throw new Error(info.message || info.hint || `Erro ${res.status} em "${tabela}"`);
-      }
-      if (res.status === 204) return null;
-      return res.json().catch(() => null);
-    }
-    async function selectAll(tabela, colunas = "*", extra = "") {
-      return (await supabaseTable("GET", tabela, { query: `select=${colunas}${extra ? "&" + extra : ""}` })) || [];
-    }
-
-    async function carregarConteudoRemoto() {
-      try {
-        const [
-          estados, mantenedoras, instituicoes, polos, locaisProva,
-          cursos, instituicoesCursos, cursosEstados,
-          curriculos, curriculosBlocos, disciplinas, blocosDisciplinas,
-          avas, cursosAvas, curriculosAvas,
-          portarias, tutCategorias, tutVideos,
-          regrasCategorias, regrasMensagens,
-          comparativos, comparativoColunas, comparativoLinhas, comparativoCelulas
-        ] = await Promise.all([
-          selectAll("estados", "*", "order=nome"),
-          selectAll("mantenedoras", "*", "order=id"),
-          selectAll("instituicoes", "*", "order=id"),
-          selectAll("polos", "*", "order=id"),
-          selectAll("locais_prova", "*", "order=id"),
-          selectAll("cursos", "*", "order=id"),
-          selectAll("instituicoes_cursos"),
-          selectAll("cursos_estados"),
-          selectAll("curriculos", "*", "order=id"),
-          selectAll("curriculos_blocos", "*", "order=ordem"),
-          selectAll("disciplinas", "*", "order=ordem"),
-          selectAll("blocos_disciplinas", "*", "order=ordem"),
-          selectAll("avas", "*", "order=id"),
-          selectAll("cursos_avas", "*", "order=ordem"),
-          selectAll("curriculos_avas", "*", "order=ordem"),
-          selectAll("portarias_credenciamento"),
-          selectAll("tutorial_categorias", "*", "order=ordem"),
-          selectAll("tutorial_videos", "*", "order=ordem"),
-          selectAll("regras_categorias", "*", "order=ordem"),
-          selectAll("regras_mensagens", "*", "order=ordem"),
-          selectAll("comparativo", "*", "order=id"),
-          selectAll("comparativo_colunas", "*", "order=ordem"),
-          selectAll("comparativo_linhas", "*", "order=ordem"),
-          selectAll("comparativo_celulas")
-        ]);
-
-        // ── estados (grade de UFs do mapa + rótulo abreviado por nome) ──
-        popularArray(ESTADOS_GRID, estados.map(e => ({ uf: e.uf, nome: e.nome })));
-        popularObjeto(CURSOS_UF_LABEL, Object.fromEntries(estados.map(e => [e.nome, e.uf])));
-
-        // ── Painel Institucional: mantenedoras / instituições / polos / locais ──
-        popularObjeto(DB, {
-          mantenedoras: mantenedoras.map(m => { const { id, ...r } = m; return { idmantenedora: id, ...r }; }),
-          instituicoes: instituicoes.map(i => { const { id, ...r } = i; return { idinstituicao: id, ...r }; }),
-          polos: polos.map(p => { const { id, ...r } = p; return { idpolo: id, ...r }; }),
-          locais: locaisProva.map(l => { const { id, ...r } = l; return { idlocal: id, ...r }; })
-        });
-
-        // ── Cursos por instituição (TTI+/360, cursos livres, atividade presencial) ──
-        popularArray(CURSOS_LIVRES, cursos.filter(c => c.tipo === "LIVRE").map(c => ({ id: c.id, nome: c.nome })));
-        const instPorId = Object.fromEntries(instituicoes.map(i => [i.id, i]));
-        const plusSet = [], c360Set = [], presencialSet = [];
-        instituicoesCursos.forEach(ic => {
-          const inst = instPorId[ic.idinstituicao];
-          const ab = inst ? inst.nome_abreviado : null;
-          if (ic.idcurso === 132 && ab) plusSet.push(ab);
-          if (ic.idcurso === 144 && ab) c360Set.push(ab);
-          if (ic.atividade_presencial_obrigatoria) presencialSet.push(`${ic.idinstituicao}-${ic.idcurso}`);
-        });
-        popularSet(TTI_PLUS_INST, plusSet);
-        popularSet(TTI_360_INST, c360Set);
-        popularSet(ATIVIDADE_PRESENCIAL, presencialSet);
-
-        // ── Estado real por instituição (tela "Cursos por Instituição") ──
-        const estadoRealObj = {};
-        cursosEstados.forEach(ce => { estadoRealObj[ce.idinstituicao] = ce.estado_real; });
-        popularObjeto(CURSOS_ESTADO_REAL, estadoRealObj);
-        // Estados manuais (sem nenhuma instituição vinculada) ainda não têm
-        // tabela própria no modelo relacional — por isso não são recarregados
-        // aqui; o que o admin adicionar fica valendo só na sessão atual.
-
-        // ── Currículos por curso ──
-        const curriculosPorCurso = {};
-        curriculos.forEach(c => {
-          (curriculosPorCurso[c.idcurso] = curriculosPorCurso[c.idcurso] || []).push({
-            id: c.id, idinst: c.idinstituicao, nome: c.nome,
-            carga_presencial: c.carga_presencial, carga_distancia: c.carga_distancia, carga_total: c.carga_total
-          });
-        });
-        popularObjeto(CURRICULOS, curriculosPorCurso);
-
-        // ── Disciplinas por curso (catálogo) ──
-        const disciplinasPorCurso = {};
-        disciplinas.forEach(d => {
-          (disciplinasPorCurso[d.idcurso] = disciplinasPorCurso[d.idcurso] || []).push({ id: d.id, nome: d.nome });
-        });
-        popularObjeto(DISCIPLINAS, disciplinasPorCurso);
-
-        // ── AVAs por curso ──
-        const avaPorId = Object.fromEntries(avas.map(a => [a.id, a]));
-        const avasPorCurso = {};
-        cursosAvas.forEach(ca => {
-          const ava = avaPorId[ca.idava]; if (!ava) return;
-          (avasPorCurso[ca.idcurso] = avasPorCurso[ca.idcurso] || []).push({ id: ava.id, nome: ava.nome });
-        });
-        popularObjeto(AVAS, avasPorCurso);
-
-        // ── Disciplinas por currículo (via blocos, quando o currículo tem blocos próprios) ──
-        const discPorId = Object.fromEntries(disciplinas.map(d => [d.id, d]));
-        const blocosPorCurriculo = {};
-        curriculosBlocos.forEach(cb => {
-          (blocosPorCurriculo[cb.idcurriculo] = blocosPorCurriculo[cb.idcurriculo] || []).push(cb.idbloco);
-        });
-        const discPorBloco = {};
-        blocosDisciplinas.forEach(bd => {
-          (discPorBloco[bd.idbloco] = discPorBloco[bd.idbloco] || []).push(bd.iddisciplina);
-        });
-        const disciplinasPorCurriculo = {};
-        Object.keys(blocosPorCurriculo).forEach(idCurriculo => {
-          const idsDisc = [];
-          blocosPorCurriculo[idCurriculo].forEach(idBloco => (discPorBloco[idBloco] || []).forEach(id => idsDisc.push(id)));
-          if (idsDisc.length) {
-            disciplinasPorCurriculo[idCurriculo] = idsDisc.map(id => discPorId[id]).filter(Boolean).map(d => ({ id: d.id, nome: d.nome }));
-          }
-        });
-        popularObjeto(DISCIPLINAS_CURRICULO, disciplinasPorCurriculo);
-
-        // ── AVAs por currículo ──
-        const avasPorCurriculo = {};
-        curriculosAvas.forEach(ca => {
-          const ava = avaPorId[ca.idava]; if (!ava) return;
-          (avasPorCurriculo[ca.idcurriculo] = avasPorCurriculo[ca.idcurriculo] || []).push({ id: ava.id, nome: ava.nome });
-        });
-        popularObjeto(AVAS_CURRICULO, avasPorCurriculo);
-
-        // ── Certificados / provas impressas — ver observação acima ──
-        popularObjeto(CERTIFICADOS, {});
-        popularObjeto(PROVAS_IMPRESSAS, {});
-
-        // ── Portarias / atos normativos por UF ──
-        const portariasObj = {};
-        portarias.forEach(p => {
-          portariasObj[p.uf] = {
-            status: p.status,
-            statusLabel: p.status_label,
-            fundamentacaoLegal: p.fundamentacao_legal,
-            responsaveis: p.nome_secretario ? {
-              nomeSecretario: p.nome_secretario, portariaSecretario: p.portaria_secretario,
-              nomeDiretor: p.nome_diretor, portariaDiretor: p.portaria_diretor
-            } : null
-          };
-        });
-        popularObjeto(PORTARIAS_DATA, portariasObj);
-
-        // ── Tutoriais ──
-        const videosPorCat = {};
-        tutVideos.forEach(v => {
-          (videosPorCat[v.idcategoria] = videosPorCat[v.idcategoria] || []).push({
-            tag: v.tag, titulo: v.titulo, desc: v.descricao, url: v.url
-          });
-        });
-        const tutObj = {};
-        tutCategorias.forEach(c => {
-          tutObj[c.codigo] = {
-            icon: c.icone, label: c.nome, titulo: c.titulo, desc: c.descricao,
-            videos: videosPorCat[c.id] || []
-          };
-        });
-        popularObjeto(TUTORIAIS, tutObj);
-
-        // ── Regras de atendimento ──
-        const itensPorCategoria = {};
-        regrasMensagens.forEach(m => {
-          (itensPorCategoria[m.idcategoria] = itensPorCategoria[m.idcategoria] || []).push({
-            id: m.codigo, subtitulo: m.titulo, conteudo: m.mensagem
-          });
-        });
-        const categoriasRegras = regrasCategorias.map(c => ({
-          id: String(c.id), numero: c.numero, titulo: c.nome, itens: itensPorCategoria[c.id] || []
-        }));
-        popularObjeto(REGRAS_DATA, { categorias: categoriasRegras });
-
-        // ── Comparativo (usa o primeiro comparativo cadastrado) ──
-        const compAtivo = comparativos[0];
-        if (compAtivo) {
-          const colunasDoComp = comparativoColunas.filter(c => c.idcomparativo === compAtivo.id);
-          const linhasDoComp = comparativoLinhas.filter(l => l.idcomparativo === compAtivo.id);
-          const codigoColunaPorId = Object.fromEntries(colunasDoComp.map(c => [c.id, c.codigo]));
-          const cols = colunasDoComp.map(c => ({ id: c.codigo, html: c.html_titulo || c.titulo, tti360: c.tti360 }));
-          const rows = linhasDoComp.map(l => {
-            const cells = {};
-            comparativoCelulas.filter(cel => cel.idlinha === l.id).forEach(cel => {
-              cells[codigoColunaPorId[cel.idcoluna]] = cel.html || cel.valor || "—";
-            });
-            return { id: l.codigo, icon: l.icone, label: l.titulo, cells };
-          });
-          popularObjeto(COMPARATIVO_DATA, { cols, rows, _idComparativo: compAtivo.id });
-        }
-
-        conteudoRemotoCarregado = true;
-      } catch (e) {
-        console.error("Falha ao carregar conteúdo do banco:", e);
-        conteudoRemotoErro = e;
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════
-    // 💾 GRAVA CADA BLOCO DE CONTEÚDO NAS TABELAS RELACIONAIS
-    // Mantém a mesma "assinatura" (marcador + objeto inteiro do bloco) que
-    // as telas de edição já chamavam via resyncDataBlock()/syncRegrasDataScript(),
-    // então nenhum ponto de edição no resto do arquivo precisou mudar — só o
-    // que acontece "por baixo" ao salvar. Cada marcador grava (upsert) as
-    // linhas atuais e apaga do banco as que não existem mais no bloco.
-    //
-    // ⚠️ Isso escreve direto nas tabelas com a chave anônima (mesma usada
-    // para leitura). Se o Supabase tiver Row Level Security bloqueando
-    // INSERT/UPDATE/DELETE para o papel "anon", é preciso liberar isso nas
-    // políticas das tabelas novas (ou trocar estas chamadas por RPCs
-    // SECURITY DEFINER, como já é feito em login_admin/salvar_conteudo, que
-    // validam a senha mestra no servidor antes de gravar).
-    // ══════════════════════════════════════════════════════════════════
-
-    async function upsertLista(tabela, linhas, colConflito = "id") {
-      if (!linhas.length) return [];
-      return await supabaseTable("POST", tabela, {
-        query: `on_conflict=${colConflito}`,
-        body: linhas,
-        prefer: "resolution=merge-duplicates,return=representation"
-      });
-    }
-    async function removerAusentes(tabela, idsAtuais, colId = "id") {
-      const existentes = await selectAll(tabela, colId);
-      const ausentes = (existentes || []).map(r => r[colId]).filter(id => !idsAtuais.includes(id));
-      for (const id of ausentes) {
-        await supabaseTable("DELETE", tabela, { query: `${colId}=eq.${encodeURIComponent(id)}` });
-      }
-    }
-
-    async function persistirDb() {
-      const semIdmant = DB.mantenedoras.map(({ idmantenedora, ...r }) => ({ id: idmantenedora, ...r }));
-      const semIdinst = DB.instituicoes.map(({ idinstituicao, ...r }) => ({ id: idinstituicao, ...r }));
-      const semIdpolo = DB.polos.map(({ idpolo, ...r }) => ({ id: idpolo, ...r }));
-      const semIdlocal = DB.locais.map(({ idlocal, ...r }) => ({ id: idlocal, ...r }));
-      await upsertLista("mantenedoras", semIdmant);
-      await upsertLista("instituicoes", semIdinst);
-      await upsertLista("polos", semIdpolo);
-      await upsertLista("locais_prova", semIdlocal);
-      await removerAusentes("mantenedoras", semIdmant.map(r => r.id));
-      await removerAusentes("instituicoes", semIdinst.map(r => r.id));
-      await removerAusentes("polos", semIdpolo.map(r => r.id));
-      await removerAusentes("locais_prova", semIdlocal.map(r => r.id));
-    }
-
-    async function persistirTutoriais() {
-      const catsExistentes = await selectAll("tutorial_categorias", "id,codigo");
-      const mapaIdPorCodigo = Object.fromEntries(catsExistentes.map(c => [c.codigo, c.id]));
-      const codigosAtuais = Object.keys(TUTORIAIS);
-
-      for (const codigo of codigosAtuais) {
-        const cat = TUTORIAIS[codigo];
-        const payloadCat = { codigo, icone: cat.icon, nome: cat.label || cat.titulo, titulo: cat.titulo, descricao: cat.desc };
-        if (mapaIdPorCodigo[codigo]) payloadCat.id = mapaIdPorCodigo[codigo];
-        const salvo = await supabaseTable("POST", "tutorial_categorias", {
-          query: "on_conflict=codigo", body: [payloadCat], prefer: "resolution=merge-duplicates,return=representation"
-        });
-        const idCat = (salvo && salvo[0] && salvo[0].id) || mapaIdPorCodigo[codigo];
-        mapaIdPorCodigo[codigo] = idCat;
-
-        await supabaseTable("DELETE", "tutorial_videos", { query: `idcategoria=eq.${idCat}` });
-        const videos = (cat.videos || []).map((v, i) => ({
-          idcategoria: idCat, tag: v.tag, titulo: v.titulo, descricao: v.desc, url: v.url || null, ordem: i + 1
-        }));
-        if (videos.length) await supabaseTable("POST", "tutorial_videos", { body: videos, prefer: "return=minimal" });
-      }
-
-      for (const codigo of Object.keys(mapaIdPorCodigo)) {
-        if (!codigosAtuais.includes(codigo)) {
-          const idCat = mapaIdPorCodigo[codigo];
-          await supabaseTable("DELETE", "tutorial_videos", { query: `idcategoria=eq.${idCat}` });
-          await supabaseTable("DELETE", "tutorial_categorias", { query: `id=eq.${idCat}` });
-        }
-      }
-    }
-
-    async function persistirPortarias() {
-      const linhas = Object.entries(PORTARIAS_DATA).map(([uf, d]) => ({
-        uf,
-        status: d.status || null,
-        status_label: d.statusLabel || null,
-        fundamentacao_legal: d.fundamentacaoLegal || null,
-        nome_secretario: d.responsaveis ? d.responsaveis.nomeSecretario : null,
-        portaria_secretario: d.responsaveis ? d.responsaveis.portariaSecretario : null,
-        nome_diretor: d.responsaveis ? d.responsaveis.nomeDiretor : null,
-        portaria_diretor: d.responsaveis ? d.responsaveis.portariaDiretor : null
-      }));
-      await upsertLista("portarias_credenciamento", linhas, "uf");
-      await removerAusentes("portarias_credenciamento", linhas.map(l => l.uf), "uf");
-    }
-
-    async function persistirComparativo() {
-      const idComparativo = COMPARATIVO_DATA._idComparativo || 1;
-      const colunas = COMPARATIVO_DATA.cols.map((c, i) => ({
-        idcomparativo: idComparativo, codigo: c.id, titulo: null, html_titulo: c.html, tti360: !!c.tti360, ordem: i + 1
-      }));
-      const linhas = COMPARATIVO_DATA.rows.map((r, i) => ({
-        idcomparativo: idComparativo, codigo: r.id, icone: r.icon || null, titulo: r.label, ordem: i + 1
-      }));
-
-      // Colunas/linhas precisam existir antes das células (FK numérica) — por
-      // isso apaga e regrava tudo do comparativo nesta ordem a cada save.
-      await supabaseTable("DELETE", "comparativo_celulas", { query: `idcomparativo=eq.${idComparativo}` });
-      await supabaseTable("DELETE", "comparativo_colunas", { query: `idcomparativo=eq.${idComparativo}` });
-      await supabaseTable("DELETE", "comparativo_linhas", { query: `idcomparativo=eq.${idComparativo}` });
-
-      const colunasSalvas = colunas.length
-        ? await supabaseTable("POST", "comparativo_colunas", { body: colunas, prefer: "return=representation" }) : [];
-      const linhasSalvas = linhas.length
-        ? await supabaseTable("POST", "comparativo_linhas", { body: linhas, prefer: "return=representation" }) : [];
-
-      const idColunaPorCodigo = Object.fromEntries(colunasSalvas.map(c => [c.codigo, c.id]));
-      const idLinhaPorCodigo = Object.fromEntries(linhasSalvas.map(l => [l.codigo, l.id]));
-
-      const celulas = [];
-      COMPARATIVO_DATA.rows.forEach(r => {
-        COMPARATIVO_DATA.cols.forEach(c => {
-          const val = r.cells[c.id];
-          if (val === undefined) return;
-          celulas.push({ idcomparativo: idComparativo, idlinha: idLinhaPorCodigo[r.id], idcoluna: idColunaPorCodigo[c.id], html: val });
-        });
-      });
-      if (celulas.length) await supabaseTable("POST", "comparativo_celulas", { body: celulas, prefer: "return=minimal" });
-    }
-
-    async function persistirRegras() {
-      const catsExistentes = await selectAll("regras_categorias", "id");
-      const idsNumericosExistentes = new Set(catsExistentes.map(c => c.id));
-      const idsAtuais = [];
-
-      for (const [i, cat] of REGRAS_DATA.categorias.entries()) {
-        const idNumerico = Number(cat.id);
-        const payload = { numero: cat.numero, nome: cat.titulo, ordem: i + 1, codigo: `cat-${cat.id}` };
-        // categoria criada no painel tem id não-numérico (ex.: "topico-172..."):
-        // deixa o banco gerar o id novo e atualiza o objeto em memória depois.
-        const temIdValido = Number.isFinite(idNumerico) && idsNumericosExistentes.has(idNumerico);
-        if (temIdValido) payload.id = idNumerico;
-        const salvo = await supabaseTable("POST", "regras_categorias", {
-          query: "on_conflict=id", body: [payload], prefer: "resolution=merge-duplicates,return=representation"
-        });
-        const idCat = salvo[0].id;
-        if (!temIdValido) cat.id = String(idCat);
-        idsAtuais.push(idCat);
-
-        await supabaseTable("DELETE", "regras_mensagens", { query: `idcategoria=eq.${idCat}` });
-        const msgs = cat.itens.map((item, j) => ({
-          codigo: String(item.id), idcategoria: idCat, titulo: item.subtitulo || null, mensagem: item.conteudo, ordem: j + 1
-        }));
-        if (msgs.length) await supabaseTable("POST", "regras_mensagens", {
-          query: "on_conflict=codigo", body: msgs, prefer: "resolution=merge-duplicates,return=minimal"
-        });
-      }
-
-      for (const idCat of idsNumericosExistentes) {
-        if (!idsAtuais.includes(idCat)) {
-          await supabaseTable("DELETE", "regras_mensagens", { query: `idcategoria=eq.${idCat}` });
-          await supabaseTable("DELETE", "regras_categorias", { query: `id=eq.${idCat}` });
-        }
-      }
-    }
-
-    // Roteia cada marcador para a rotina de gravação da(s) tabela(s)
-    // correspondente(s). Mantido com o mesmo nome/assinatura de antes para
-    // não precisar tocar nos ~28 pontos do painel que chamam
-    // resyncDataBlock()/salvarConteudoRemoto() ao salvar uma edição.
-    async function salvarConteudoRemoto(marcador) {
-      try {
-        switch (marcador) {
-          case "db": await persistirDb(); break;
-          case "tutoriais": await persistirTutoriais(); break;
-          case "portarias": await persistirPortarias(); break;
-          case "comparativo": await persistirComparativo(); break;
-          case "regras": await persistirRegras(); break;
-          case "cursosestados":
-            // Estados adicionados manualmente (sem instituição) ainda não
-            // têm tabela própria no modelo relacional — fica só nesta sessão.
-            console.warn('"cursosestados" ainda não tem tabela relacional própria; alteração não persistida no banco.');
-            return { ok: true };
-          default:
-            console.warn(`Marcador de salvamento desconhecido: "${marcador}"`);
-            return { ok: false, erro: "marcador desconhecido" };
-        }
-        return { ok: true };
-      } catch (e) {
-        console.error(`Erro ao salvar "${marcador}" no banco:`, e);
-        alert("⚠️ Erro ao salvar no banco de dados: " + (e.message || String(e)));
-        return { ok: false, erro: String(e) };
-      }
-    }
-
-    // Overlay simples de carregamento, mostrado enquanto os dados vêm do
-    // banco pela primeira vez (evita telas em branco/quebradas).
-    function mostrarOverlayCarregando() {
-      if (document.getElementById("ibrep-loading-overlay")) return;
-      const div = document.createElement("div");
-      div.id = "ibrep-loading-overlay";
-      div.style.cssText = "position:fixed;inset:0;z-index:99999;background:#f4f5f9;display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;color:#6b6f8a;font-size:14px;flex-direction:column;gap:12px;";
-      div.innerHTML = `<div style="width:34px;height:34px;border:3px solid #e2e4ef;border-top-color:#7c5cff;border-radius:50%;animation:ibrep-spin 0.8s linear infinite;"></div><span>Carregando painel…</span><style>@keyframes ibrep-spin{to{transform:rotate(360deg)}}</style>`;
-      document.body.appendChild(div);
-    }
-    function esconderOverlayCarregando() {
-      const el = document.getElementById("ibrep-loading-overlay");
-      if (el) el.remove();
     }
 
     function salvarSessaoUsuario(user) {
@@ -6261,8 +5812,22 @@ const PORTARIAS_DATA = {};
       }
     }
 
-    // (initAuth() agora roda dentro do boot assíncrono lá embaixo, depois
-    // que os dados vierem do banco — ver bootIBREP())
+    async function bootPainelDados() {
+      const ok = await carregarDadosSupabase();
+      if (ok) {
+        setSection("mantenedoras");
+        // Restaura a tela depois que os dados já estiverem disponíveis.
+        try {
+          const telaSalva = sessionStorage.getItem("ibrep_tela_atual");
+          if (telaSalva && telaSalva !== "welcome" && typeof irParaTela === "function") {
+            const area = telaParaArea(telaSalva);
+            if (!area || temPermissao(area)) irParaTela(telaSalva, false);
+          }
+        } catch (_) {}
+      }
+    }
+    initAuth();
+    bootPainelDados();
 
     // ══════════════════════════════════════════════════════════════════
     // 🔄 ATUALIZAÇÃO AUTOMÁTICA DE PERMISSÕES — sem precisar deslogar
@@ -6618,88 +6183,225 @@ const PORTARIAS_DATA = {};
       }
     }
 
-    // ── Aplica uma alteração feita pelo admin e grava no banco (Supabase).
-    //    Antes isso reescrevia o próprio HTML e/ou salvava no localStorage
-    //    do navegador; agora o banco é a única fonte de verdade, então
-    //    qualquer pessoa que abrir o painel (em qualquer computador) já vê
-    //    a alteração assim que ela for salva aqui.
+    // ══════════════════════════════════════════════════════════════════
+    // ☁️ CAMADA DE DADOS — SUPABASE / MODELO RELACIONAL
+    // O HTML não guarda mais os cadastros. Tudo é carregado e salvo por
+    // RPCs no Supabase. O JavaScript mantém apenas um cache em memória para
+    // renderizar as telas existentes.
+    // ══════════════════════════════════════════════════════════════════
+    let SUPABASE_DATA_READY = false;
+    let _lastDbSnapshot = null;
+
+    async function supabaseTableRpc(name, payload = {}) {
+      return await supabaseRpc(name, payload);
+    }
+
+    function normalizarRelacional(data) {
+      data = data || {};
+      DB.mantenedoras = Array.isArray(data.mantenedoras) ? data.mantenedoras : [];
+      DB.instituicoes = Array.isArray(data.instituicoes) ? data.instituicoes : [];
+      DB.polos = Array.isArray(data.polos) ? data.polos : [];
+      DB.locais = Array.isArray(data.locais_prova) ? data.locais_prova : [];
+
+      CURSOS_CATALOGO = Array.isArray(data.cursos) ? data.cursos : [];
+      INSTITUICOES_CURSOS_MAP = {};
+      (data.instituicoes_cursos || []).forEach(r => {
+        const iid = Number(r.idinstituicao);
+        if (!iid) return;
+        (INSTITUICOES_CURSOS_MAP[iid] ||= []).push(Number(r.idcurso));
+      });
+
+      CURSOS_ESTADO_REAL = {};
+      (data.cursos_estados || []).forEach(r => {
+        if (r.idinstituicao != null && r.estado_real) CURSOS_ESTADO_REAL[Number(r.idinstituicao)] = r.estado_real;
+      });
+      CURSOS_ESTADOS_MANUAL = (data.cursos_estados_manuais || []).map(r => r.estado || r.nome).filter(Boolean);
+
+      CURRICULOS = {};
+      (data.curriculos || []).forEach(c => {
+        const idcurso = Number(c.idcurso);
+        if (!idcurso) return;
+        (CURRICULOS[idcurso] ||= []).push({
+          id: Number(c.id), nome: c.nome, idinst: c.idinst == null ? null : Number(c.idinst),
+          carga_presencial: c.carga_presencial, carga_distancia: c.carga_distancia, carga_total: c.carga_total
+        });
+      });
+
+      DISCIPLINAS = {};
+      (data.disciplinas || []).forEach(d => {
+        const cid = Number(d.idcurso);
+        if (!cid) return;
+        (DISCIPLINAS[cid] ||= []).push({ id: Number(d.id), nome: d.nome });
+      });
+
+      DISCIPLINAS_CURRICULO = {};
+      (data.curriculos_blocos_disciplinas || []).forEach(r => {
+        const cur = Number(r.idcurriculo);
+        if (!cur) return;
+        (DISCIPLINAS_CURRICULO[cur] ||= []).push({
+          id: Number(r.iddisciplina), nome: r.nome || r.disciplina_nome || "", ordem: r.ordem
+        });
+      });
+      // Se a RPC devolver somente relações, completa os nomes das disciplinas.
+      const discById = {};
+      (data.disciplinas || []).forEach(d => discById[Number(d.id)] = d.nome);
+      Object.values(DISCIPLINAS_CURRICULO).forEach(arr => arr.forEach(d => { if (!d.nome) d.nome = discById[d.id] || ""; }));
+
+      AVAS = {};
+      (data.cursos_avas || []).forEach(r => {
+        const cid = Number(r.idcurso);
+        if (!cid) return;
+        (AVAS[cid] ||= []).push({ id: Number(r.idava), nome: r.nome || r.ava_nome || "" });
+      });
+      AVAS_CURRICULO = {};
+      (data.curriculos_avas || []).forEach(r => {
+        const cid = Number(r.idcurriculo);
+        if (!cid) return;
+        (AVAS_CURRICULO[cid] ||= []).push({ id: Number(r.idava), nome: r.nome || r.ava_nome || "" });
+      });
+
+      CERTIFICADOS = {};
+      (data.certificados || []).forEach(r => {
+        const iid = Number(r.idinstituicao), cid = Number(r.idcurso);
+        if (!iid || !cid) return;
+        (((CERTIFICADOS[iid] ||= {})[cid] ||= [])).push({ id: r.id, nome: r.nome });
+      });
+      PROVAS_IMPRESSAS = {};
+      (data.provas_impressas || []).forEach(r => {
+        const iid = Number(r.idinstituicao), cid = Number(r.idcurso);
+        if (!iid || !cid) return;
+        (((PROVAS_IMPRESSAS[iid] ||= {})[cid] ||= [])).push({ id: r.id, nome: r.nome, iddisciplina: r.iddisciplina });
+      });
+      ATIVIDADE_PRESENCIAL = new Set((data.atividade_presencial || []).map(r => `${r.idinstituicao}-${r.idcurso}`));
+
+      PORTARIAS_DATA = {};
+      (data.portarias || []).forEach(p => {
+        const uf = p.uf || p.estado;
+        if (uf) PORTARIAS_DATA[uf] = p.dados || p.conteudo || p;
+      });
+
+      TUTORIAIS = {};
+      (data.tutorial_categorias || []).forEach(c => {
+        TUTORIAIS[c.codigo || String(c.id)] = {
+          id: c.id, icon: c.icone || c.icon || "📁", label: c.nome || c.label || c.codigo,
+          titulo: c.titulo || c.nome || c.label || c.codigo, desc: c.descricao || c.desc || "", videos: []
+        };
+      });
+      (data.tutorial_videos || []).forEach(v => {
+        const cat = (data.tutorial_categorias || []).find(c => Number(c.id) === Number(v.idcategoria));
+        const key = cat ? (cat.codigo || String(cat.id)) : null;
+        if (key && TUTORIAIS[key]) TUTORIAIS[key].videos.push({ id: v.id, tag: v.tag || "", titulo: v.titulo || "Novo vídeo", desc: v.descricao || v.desc || "", url: v.url || "" });
+      });
+
+      REGRAS_DATA = { categorias: [] };
+      const cats = data.regras_categorias || [];
+      const tops = data.regras_topicos || [];
+      const msgs = data.regras_mensagens || [];
+      REGRAS_DATA.categorias = cats.map(c => ({ ...c, id: c.id, subtitulos: tops.filter(t => Number(t.idcategoria) === Number(c.id)).map(t => ({
+        ...t, id: t.id, titulo: t.nome || t.titulo, mensagens: msgs.filter(m => Number(m.idtopico) === Number(t.id))
+      })) }));
+
+      COMPARATIVO_DATA = {
+        cols: (data.comparativo_colunas || []).map(c => ({ id: c.codigo || String(c.id), db_id: c.id, html: c.html_titulo || c.titulo || c.html || "", tti360: !!c.tti360 })),
+        rows: (data.comparativo_linhas || []).map(r => ({ id: r.codigo || String(r.id), db_id: r.id, icon: r.icone || r.icon || "✳️", label: r.titulo || r.label || "", cells: {} }))
+      };
+      const colMap = {};
+      (data.comparativo_colunas || []).forEach(c => colMap[c.id] = c.codigo || String(c.id));
+      (data.comparativo_celulas || []).forEach(cell => {
+        const row = COMPARATIVO_DATA.rows.find(r => Number(r.db_id) === Number(cell.idlinha));
+        if (row) row.cells[colMap[cell.idcoluna] || String(cell.idcoluna)] = cell.html || cell.valor || "";
+      });
+
+      _lastDbSnapshot = JSON.parse(JSON.stringify(DB));
+      SUPABASE_DATA_READY = true;
+    }
+
+    function mostrarFlashGlobal(msg, tipo = "ok") {
+      const host = document.getElementById("detail-pane") || document.body;
+      const el = document.createElement("div");
+      el.className = "flash-salvo";
+      el.textContent = msg;
+      el.style.cssText = "position:fixed;right:24px;bottom:24px;z-index:99999;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid var(--cinza-borda);box-shadow:0 8px 30px rgba(0,0,0,.12);font:500 12px Poppins,sans-serif;color:" + (tipo === "erro" ? "#b42318" : "#287a4b") + ";";
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    async function carregarDadosSupabase() {
+      try {
+        const data = await supabaseTableRpc("painel_carregar_relacional", {});
+        normalizarRelacional(data && data.data ? data.data : data);
+        if (typeof setSection === "function") setSection(currentSection || "mantenedoras");
+        return true;
+      } catch (e) {
+        console.error("Falha ao carregar dados do painel:", e);
+        mostrarFlashGlobal?.("Não foi possível carregar os dados do painel. Verifique as RPCs do Supabase.", "erro");
+        return false;
+      }
+    }
+
+    function snapshotAllData() {
+      const cols = (COMPARATIVO_DATA.cols || []).map(c => ({ codigo: c.id, titulo: c.html, html_titulo: c.html, tti360: !!c.tti360 }));
+      const colIdByCode = {}; cols.forEach(c => colIdByCode[c.codigo] = c.codigo);
+      const rows = (COMPARATIVO_DATA.rows || []).map(r => ({ codigo: r.id, titulo: r.label, icone: r.icon }));
+      const rowIdByCode = {}; rows.forEach(r => rowIdByCode[r.codigo] = r.codigo);
+      const cells = [];
+      (COMPARATIVO_DATA.rows || []).forEach(r => Object.entries(r.cells || {}).forEach(([col, val]) => cells.push({ idlinha: r.id, idcoluna: col, valor: val, html: val })));
+
+      return {
+        mantenedoras: DB.mantenedoras,
+        instituicoes: DB.instituicoes,
+        polos: DB.polos,
+        locais_prova: DB.locais,
+        cursos: CURSOS_CATALOGO,
+        instituicoes_cursos: Object.entries(INSTITUICOES_CURSOS_MAP).flatMap(([idinstituicao, ids]) => ids.map(idcurso => ({ idinstituicao: Number(idinstituicao), idcurso: Number(idcurso) }))),
+        cursos_estados: Object.entries(CURSOS_ESTADO_REAL).map(([idinstituicao, estado_real]) => ({ idinstituicao: Number(idinstituicao), estado_real })),
+        cursos_estados_manuais: CURSOS_ESTADOS_MANUAL.map(estado => ({ estado })),
+        curriculos: Object.entries(CURRICULOS).flatMap(([idcurso, arr]) => arr.map(c => ({ ...c, idcurso: Number(idcurso), idinst: c.idinst ?? null }))),
+        disciplinas: Object.entries(DISCIPLINAS).flatMap(([idcurso, arr]) => arr.map(d => ({ ...d, idcurso: Number(idcurso) }))),
+        curriculos_blocos_disciplinas: Object.entries(DISCIPLINAS_CURRICULO).flatMap(([idcurriculo, arr]) => arr.map((d, i) => ({ idcurriculo: Number(idcurriculo), iddisciplina: Number(d.id), nome: d.nome, ordem: d.ordem ?? i + 1 }))),
+        avas: Object.values(AVAS).flatMap(arr => arr),
+        cursos_avas: Object.entries(AVAS).flatMap(([idcurso, arr]) => arr.map(a => ({ idcurso: Number(idcurso), idava: Number(a.id), nome: a.nome }))),
+        curriculos_avas: Object.entries(AVAS_CURRICULO).flatMap(([idcurriculo, arr]) => arr.map(a => ({ idcurriculo: Number(idcurriculo), idava: Number(a.id), nome: a.nome }))),
+        certificados: Object.entries(CERTIFICADOS).flatMap(([idinstituicao, cursos]) => Object.entries(cursos).flatMap(([idcurso, arr]) => arr.map(c => ({ ...c, idinstituicao: Number(idinstituicao), idcurso: Number(idcurso) })))),
+        provas_impressas: Object.entries(PROVAS_IMPRESSAS).flatMap(([idinstituicao, cursos]) => Object.entries(cursos).flatMap(([idcurso, arr]) => arr.map(p => ({ ...p, idinstituicao: Number(idinstituicao), idcurso: Number(idcurso) })))),
+        atividade_presencial: Array.from(ATIVIDADE_PRESENCIAL).map(v => { const [idinstituicao,idcurso]=String(v).split("-"); return { idinstituicao:Number(idinstituicao), idcurso:Number(idcurso) }; }),
+        portarias: Object.entries(PORTARIAS_DATA).map(([uf,dados]) => ({ uf, dados })),
+        tutorial_categorias: Object.entries(TUTORIAIS).map(([codigo,c],i) => ({ id:c.id, codigo, nome:c.label || codigo, titulo:c.titulo || c.label || codigo, descricao:c.desc || "", icone:c.icon || "📁", ordem:i+1 })),
+        tutorial_videos: Object.entries(TUTORIAIS).flatMap(([codigo,c]) => c.videos.map((v,i) => ({ id:v.id, codigo, idcategoria:c.id, tag:v.tag || "", titulo:v.titulo, descricao:v.desc || "", url:v.url || "", ordem:i+1 }))),
+        regras_categorias: REGRAS_DATA.categorias || [],
+        regras_topicos: (REGRAS_DATA.categorias || []).flatMap(c => (c.subtitulos || []).map(t => ({ ...t, idcategoria:c.id }))),
+        regras_mensagens: (REGRAS_DATA.categorias || []).flatMap(c => (c.subtitulos || []).flatMap(t => (t.mensagens || []).map(m => ({ ...m, idtopico:t.id })))),
+        comparativo: [{ id:1, nome:"Comparativo de cursos" }],
+        comparativo_colunas: cols,
+        comparativo_linhas: rows,
+        comparativo_celulas: cells
+      };
+    }
+
+    let _saveTimer = null;
     function resyncDataBlock(marcador, objetoAtual) {
-      salvarConteudoRemoto(marcador, objetoAtual);
-      return true;
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(async () => {
+        if (!SUPABASE_DATA_READY) return;
+        try {
+          await supabaseTableRpc("painel_salvar_relacional", { p_dados: snapshotAllData() });
+          _lastDbSnapshot = JSON.parse(JSON.stringify(DB));
+        } catch (e) {
+          console.error("Erro ao salvar no Supabase:", e);
+          mostrarFlashGlobal?.("Erro ao salvar no banco de dados.", "erro");
+        }
+      }, 150);
     }
 
     function syncRegrasDataScript() {
-      salvarConteudoRemoto("regras", REGRAS_DATA);
+      const el = document.getElementById("regras-data");
+      if (el) el.textContent = "{}";
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // 💾 PERSISTÊNCIA AUTOMÁTICA (localStorage) — sem precisar gerar/baixar HTML
-    //
-    // Cada bloco de dados (db, portarias, tutoriais, regras) é salvo no
-    // localStorage do navegador assim que o admin salva uma edição. Na
-    // próxima vez que a página for aberta NESTE MESMO navegador, os dados
-    // salvos são carregados automaticamente por cima dos dados padrão do
-    // arquivo.
-    //
-    // ⚠️ Importante: como o site está hospedado de forma estática (GitHub
-    // Pages), o localStorage guarda os dados apenas neste navegador/dispositivo.
-    // Ou seja, cada pessoa que acessa o painel em outro computador/navegador
-    // não vai ver as alterações feitas aqui — elas ficam só no aparelho do
-    // administrador que salvou. Se precisar que TODOS os visitantes vejam as
-    // mesmas alterações, aí sim seria necessário atualizar o arquivo HTML no
-    // GitHub (ou usar um banco de dados/backend).
-    // ══════════════════════════════════════════════════════════════════
-    const LS_PREFIX = "ibrep_admin_data_";
+    function salvarNoLocalStorage() { /* desativado: dados persistem somente no Supabase */ }
+    function carregarDoLocalStorage() { return null; }
+    function aplicarDadosSalvos() { /* compatibilidade com versões antigas: sem localStorage */ }
 
-    function salvarNoLocalStorage(marcador, objetoAtual) {
-      try {
-        localStorage.setItem(LS_PREFIX + marcador, JSON.stringify(objetoAtual));
-      } catch (e) {
-        console.warn("Não foi possível salvar no localStorage:", e);
-      }
-    }
-
-    function carregarDoLocalStorage(marcador) {
-      try {
-        const raw = localStorage.getItem(LS_PREFIX + marcador);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    // Aplica, por cima dos dados padrão em memória, qualquer alteração salva
-    // anteriormente pelo admin neste navegador.
-    function aplicarDadosSalvos() {
-      const salvosDb = carregarDoLocalStorage("db");
-      if (salvosDb) Object.assign(DB, salvosDb);
-
-      const salvosPortarias = carregarDoLocalStorage("portarias");
-      if (salvosPortarias) Object.assign(PORTARIAS_DATA, salvosPortarias);
-
-      const salvosTutoriais = carregarDoLocalStorage("tutoriais");
-      if (salvosTutoriais) Object.assign(TUTORIAIS, salvosTutoriais);
-
-      const salvosComparativo = carregarDoLocalStorage("comparativo");
-      if (salvosComparativo) Object.assign(COMPARATIVO_DATA, salvosComparativo);
-
-      const salvosCursosEstados = carregarDoLocalStorage("cursosestados");
-      if (salvosCursosEstados && Array.isArray(salvosCursosEstados)) {
-        CURSOS_ESTADOS_MANUAL.length = 0;
-        CURSOS_ESTADOS_MANUAL.push(...salvosCursosEstados);
-      }
-
-      const salvosRegras = carregarDoLocalStorage("regras");
-      if (salvosRegras) {
-        if (Array.isArray(REGRAS_DATA) && Array.isArray(salvosRegras)) {
-          REGRAS_DATA.length = 0;
-          REGRAS_DATA.push(...salvosRegras);
-        } else {
-          Object.assign(REGRAS_DATA, salvosRegras);
-        }
-        syncRegrasDataScript();
-      }
-    }
     // ══════════════════════════════════════════════════════════════════
     // 🔁 RESTAURA TELA E MODO ADMIN AO RECARREGAR A PÁGINA (F5)
     // Sem isso, recarregar sempre voltava para a tela inicial e derrubava
@@ -6708,7 +6410,7 @@ const PORTARIAS_DATA = {};
     // admin (se estava ativo) são restaurados automaticamente. O admin só
     // sai clicando em "Sair" — nunca só por recarregar a página.
     // ══════════════════════════════════════════════════════════════════
-    function restaurarEstadoAoRecarregar() {
+    (function restaurarEstadoAoRecarregar() {
       if (!currentUser) return; // sem sessão de usuário, mostra o login normalmente
 
       // 1) Restaura a tela em que o usuário estava
@@ -6728,30 +6430,7 @@ const PORTARIAS_DATA = {};
         adminSenha = senhaAdminSalva;
         ativarModoAdmin();
       }
-    }
-
-    // ══════════════════════════════════════════════════════════════════
-    // 🚀 BOOT DO PAINEL — busca todo o conteúdo no Supabase antes de
-    // liberar a tela (login ou telas já com sessão salva). Mostra um
-    // overlay simples de "Carregando…" enquanto isso, para não aparecer
-    // nada em branco/quebrado.
-    // ══════════════════════════════════════════════════════════════════
-    async function bootIBREP() {
-      mostrarOverlayCarregando();
-      await carregarConteudoRemoto();
-      // (aplicarDadosSalvos() removida do boot: antes ela sobrepunha os
-      // dados com o que estivesse salvo no localStorage deste navegador.
-      // Agora o banco (Supabase) é a única fonte de verdade, então isso
-      // não é mais necessário — e evitava que outros dispositivos vissem
-      // dados desatualizados presos no localStorage de um navegador só.)
-      initAuth();
-      restaurarEstadoAoRecarregar();
-      esconderOverlayCarregando();
-      if (conteudoRemotoErro) {
-        alert("⚠️ Não foi possível carregar os dados do painel do banco. Verifique sua conexão e recarregue a página.");
-      }
-    }
-    bootIBREP();
+    })();
 
     function mostrarFlashSalvo(el) {
       if (!el) return;
@@ -6979,19 +6658,12 @@ const PORTARIAS_DATA = {};
       if (!table) return;
 
       let thead = `<tr><th class="comp-row-label" style="background:#5a5e78;">Característica</th>`;
-      COMPARATIVO_DATA.cols.forEach((col, colIdx) => {
+      COMPARATIVO_DATA.cols.forEach(col => {
         const delBtn = adminMode
           ? `<span class="comp-col-del" data-del-col="${col.id}" title="Excluir coluna">🗑️</span>`
           : "";
-        const moveBtns = adminMode
-          ? `<span class="comp-col-move-group">
-               <span class="comp-col-move ${colIdx === 0 ? "disabled" : ""}" data-move-col-left="${col.id}" title="Mover coluna para a esquerda">◀️</span>
-               <span class="comp-col-move ${colIdx === COMPARATIVO_DATA.cols.length - 1 ? "disabled" : ""}" data-move-col-right="${col.id}" title="Mover coluna para a direita">▶️</span>
-             </span>`
-          : "";
         thead += `
           <th class="comp-col-head ${col.tti360 ? "tti360" : ""}">
-            ${moveBtns}
             <div class="comp-col-head-inner" ${adminMode ? 'contenteditable="true"' : ""} data-comp-col="${col.id}">${col.html}</div>
             ${delBtn}
           </th>`;
@@ -6999,19 +6671,12 @@ const PORTARIAS_DATA = {};
       thead += `</tr>`;
 
       let tbody = "";
-      COMPARATIVO_DATA.rows.forEach((row, rowIdx) => {
+      COMPARATIVO_DATA.rows.forEach(row => {
         const delBtn = adminMode
           ? `<span class="comp-row-del" data-del-row="${row.id}" title="Excluir linha">🗑️</span>`
           : "";
-        const moveBtns = adminMode
-          ? `<span class="comp-row-move-group">
-               <span class="comp-row-move ${rowIdx === 0 ? "disabled" : ""}" data-move-row-up="${row.id}" title="Mover linha para cima">🔼</span>
-               <span class="comp-row-move ${rowIdx === COMPARATIVO_DATA.rows.length - 1 ? "disabled" : ""}" data-move-row-down="${row.id}" title="Mover linha para baixo">🔽</span>
-             </span>`
-          : "";
         tbody += `<tr>
           <td class="comp-row-label">
-            ${moveBtns}
             <span class="comp-row-icon">${row.icon || ""}</span>
             <span ${adminMode ? 'contenteditable="true"' : ""} data-comp-rowlabel="${row.id}">${escapeHtmlRegra(row.label)}</span>
             ${delBtn}
@@ -7081,56 +6746,6 @@ const PORTARIAS_DATA = {};
           excluirLinhaComparativo(el.getAttribute("data-del-row"));
         });
       });
-
-      // Mover coluna para a esquerda / direita
-      table.querySelectorAll("[data-move-col-left]").forEach(el => {
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          moverColunaComparativo(el.getAttribute("data-move-col-left"), -1);
-        });
-      });
-      table.querySelectorAll("[data-move-col-right]").forEach(el => {
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          moverColunaComparativo(el.getAttribute("data-move-col-right"), 1);
-        });
-      });
-
-      // Mover linha para cima / baixo
-      table.querySelectorAll("[data-move-row-up]").forEach(el => {
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          moverLinhaComparativo(el.getAttribute("data-move-row-up"), -1);
-        });
-      });
-      table.querySelectorAll("[data-move-row-down]").forEach(el => {
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          moverLinhaComparativo(el.getAttribute("data-move-row-down"), 1);
-        });
-      });
-    }
-
-    function moverColunaComparativo(id, direcao) {
-      const idx = COMPARATIVO_DATA.cols.findIndex(c => c.id === id);
-      if (idx === -1) return;
-      const novoIdx = idx + direcao;
-      if (novoIdx < 0 || novoIdx >= COMPARATIVO_DATA.cols.length) return;
-      const cols = COMPARATIVO_DATA.cols;
-      [cols[idx], cols[novoIdx]] = [cols[novoIdx], cols[idx]];
-      resyncDataBlock("comparativo", COMPARATIVO_DATA);
-      renderComparativoTable();
-    }
-
-    function moverLinhaComparativo(id, direcao) {
-      const idx = COMPARATIVO_DATA.rows.findIndex(r => r.id === id);
-      if (idx === -1) return;
-      const novoIdx = idx + direcao;
-      if (novoIdx < 0 || novoIdx >= COMPARATIVO_DATA.rows.length) return;
-      const rows = COMPARATIVO_DATA.rows;
-      [rows[idx], rows[novoIdx]] = [rows[novoIdx], rows[idx]];
-      resyncDataBlock("comparativo", COMPARATIVO_DATA);
-      renderComparativoTable();
     }
 
     function adicionarLinhaComparativo() {
@@ -7183,13 +6798,11 @@ const PORTARIAS_DATA = {};
 
     // Mapeia cada campo de ID (chave estrangeira) para a seção e chave de ID
     // do registro de origem, usado para navegar até lá e editar o nome na fonte.
-    // Isto é estrutura fixa do modelo relacional (mantenedora → instituição →
-    // polo → local), não dado editável — por isso fica fixo aqui no código
-    // em vez de vir do banco (antes vinha de conteudo_painel.fk_origem).
     const FK_ORIGEM = {
       idmantenedora: { secao: "mantenedoras", idKey: "idmantenedora" },
       idinstituicao: { secao: "instituicoes", idKey: "idinstituicao" },
-      idpolo: { secao: "polos", idKey: "idpolo" }
+      idpolo: { secao: "polos", idKey: "idpolo" },
+      idlocal: { secao: "locais", idKey: "idlocal" },
     };
 
     // Navega até o registro de origem (ex: a mantenedora dona do ID) para que
@@ -7307,11 +6920,11 @@ const PORTARIAS_DATA = {};
     // que liga o novo registro ao pai dele (ex.: uma instituição pertence a
     // uma mantenedora). "parentSection" é onde procurar o pai; se null, a
     // seção não depende de nenhuma outra (é o topo da hierarquia).
-    // Também é estrutura fixa da hierarquia (não vem mais do banco).
     const REGISTRO_PARENT = {
-      instituicoes: { parentSection: "mantenedoras", parentLabel: "mantenedora", fk: "idmantenedora" },
-      polos: { parentSection: "instituicoes", parentLabel: "instituição", fk: "idinstituicao" },
-      locais: { parentSection: "instituicoes", parentLabel: "instituição", fk: "idinstituicao" }
+      mantenedoras: null,
+      instituicoes: { parentSection: "mantenedoras", fk: "idmantenedora", parentLabel: "mantenedora" },
+      polos: { parentSection: "instituicoes", fk: "idinstituicao", parentLabel: "instituição" },
+      locais: { parentSection: "polos", fk: "idpolo", parentLabel: "polo" }
     };
 
     function proximoId(section, idKey) {
@@ -7373,9 +6986,8 @@ const PORTARIAS_DATA = {};
 
     // Chaves estrangeiras que apontam PARA cada seção (usado para avisar
     // sobre registros dependentes antes de excluir).
-    // Também é estrutura fixa da hierarquia (não vem mais do banco).
     const REGISTROS_FILHOS = {
-      mantenedoras: [{ section: "instituicoes", fk: "idmantenedora" }, { section: "polos", fk: "idmantenedora" }],
+      mantenedoras: [{ section: "instituicoes", fk: "idmantenedora" }],
       instituicoes: [{ section: "polos", fk: "idinstituicao" }, { section: "locais", fk: "idinstituicao" }],
       polos: [{ section: "locais", fk: "idpolo" }],
       locais: []
