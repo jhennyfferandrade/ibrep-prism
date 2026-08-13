@@ -1665,6 +1665,31 @@
       opacity: 1;
       background: rgba(255,255,255,.25);
     }
+    .comp-col-move-group, .comp-row-move-group {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      display: flex;
+      gap: 2px;
+      z-index: 3;
+    }
+    .comp-col-move, .comp-row-move {
+      font-size: 11px;
+      opacity: .6;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .comp-col-move:hover, .comp-row-move:hover {
+      opacity: 1;
+      background: rgba(255,255,255,.25);
+    }
+    .comp-col-move.disabled, .comp-row-move.disabled {
+      opacity: .2;
+      cursor: default;
+      pointer-events: none;
+    }
     .comp-col-head-inner { min-height: 18px; }
     td.comp-cell.admin-editable, th .comp-col-head-inner[contenteditable="true"] {
       outline: 1.5px dashed rgba(122, 90, 248, .5);
@@ -5314,6 +5339,12 @@ const PORTARIAS_DATA = {
         <div class="port-section">
           <div class="port-section-title">Portarias e Documentos</div>
           ${docsHtml}
+        </div>` : ''}
+        ${adminMode ? `
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;max-width:320px;">
+          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>
+          ${!dados.responsaveis ? `<button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>` : ''}
+          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>
         </div>` : ''}`;
     }
 
@@ -8266,12 +8297,19 @@ const PORTARIAS_DATA = {
       if (!table) return;
 
       let thead = `<tr><th class="comp-row-label" style="background:#5a5e78;">Característica</th>`;
-      COMPARATIVO_DATA.cols.forEach(col => {
+      COMPARATIVO_DATA.cols.forEach((col, colIdx) => {
         const delBtn = adminMode
           ? `<span class="comp-col-del" data-del-col="${col.id}" title="Excluir coluna">🗑️</span>`
           : "";
+        const moveBtns = adminMode
+          ? `<span class="comp-col-move-group">
+               <span class="comp-col-move ${colIdx === 0 ? "disabled" : ""}" data-move-col-left="${col.id}" title="Mover coluna para a esquerda">◀️</span>
+               <span class="comp-col-move ${colIdx === COMPARATIVO_DATA.cols.length - 1 ? "disabled" : ""}" data-move-col-right="${col.id}" title="Mover coluna para a direita">▶️</span>
+             </span>`
+          : "";
         thead += `
           <th class="comp-col-head ${col.tti360 ? "tti360" : ""}">
+            ${moveBtns}
             <div class="comp-col-head-inner" ${adminMode ? 'contenteditable="true"' : ""} data-comp-col="${col.id}">${col.html}</div>
             ${delBtn}
           </th>`;
@@ -8279,12 +8317,19 @@ const PORTARIAS_DATA = {
       thead += `</tr>`;
 
       let tbody = "";
-      COMPARATIVO_DATA.rows.forEach(row => {
+      COMPARATIVO_DATA.rows.forEach((row, rowIdx) => {
         const delBtn = adminMode
           ? `<span class="comp-row-del" data-del-row="${row.id}" title="Excluir linha">🗑️</span>`
           : "";
+        const moveBtns = adminMode
+          ? `<span class="comp-row-move-group">
+               <span class="comp-row-move ${rowIdx === 0 ? "disabled" : ""}" data-move-row-up="${row.id}" title="Mover linha para cima">🔼</span>
+               <span class="comp-row-move ${rowIdx === COMPARATIVO_DATA.rows.length - 1 ? "disabled" : ""}" data-move-row-down="${row.id}" title="Mover linha para baixo">🔽</span>
+             </span>`
+          : "";
         tbody += `<tr>
           <td class="comp-row-label">
+            ${moveBtns}
             <span class="comp-row-icon">${row.icon || ""}</span>
             <span ${adminMode ? 'contenteditable="true"' : ""} data-comp-rowlabel="${row.id}">${escapeHtmlRegra(row.label)}</span>
             ${delBtn}
@@ -8354,6 +8399,56 @@ const PORTARIAS_DATA = {
           excluirLinhaComparativo(el.getAttribute("data-del-row"));
         });
       });
+
+      // Mover coluna para a esquerda / direita
+      table.querySelectorAll("[data-move-col-left]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moverColunaComparativo(el.getAttribute("data-move-col-left"), -1);
+        });
+      });
+      table.querySelectorAll("[data-move-col-right]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moverColunaComparativo(el.getAttribute("data-move-col-right"), 1);
+        });
+      });
+
+      // Mover linha para cima / baixo
+      table.querySelectorAll("[data-move-row-up]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moverLinhaComparativo(el.getAttribute("data-move-row-up"), -1);
+        });
+      });
+      table.querySelectorAll("[data-move-row-down]").forEach(el => {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moverLinhaComparativo(el.getAttribute("data-move-row-down"), 1);
+        });
+      });
+    }
+
+    function moverColunaComparativo(id, direcao) {
+      const idx = COMPARATIVO_DATA.cols.findIndex(c => c.id === id);
+      if (idx === -1) return;
+      const novoIdx = idx + direcao;
+      if (novoIdx < 0 || novoIdx >= COMPARATIVO_DATA.cols.length) return;
+      const cols = COMPARATIVO_DATA.cols;
+      [cols[idx], cols[novoIdx]] = [cols[novoIdx], cols[idx]];
+      resyncDataBlock("comparativo", COMPARATIVO_DATA);
+      renderComparativoTable();
+    }
+
+    function moverLinhaComparativo(id, direcao) {
+      const idx = COMPARATIVO_DATA.rows.findIndex(r => r.id === id);
+      if (idx === -1) return;
+      const novoIdx = idx + direcao;
+      if (novoIdx < 0 || novoIdx >= COMPARATIVO_DATA.rows.length) return;
+      const rows = COMPARATIVO_DATA.rows;
+      [rows[idx], rows[novoIdx]] = [rows[novoIdx], rows[idx]];
+      resyncDataBlock("comparativo", COMPARATIVO_DATA);
+      renderComparativoTable();
     }
 
     function adicionarLinhaComparativo() {
