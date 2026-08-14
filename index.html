@@ -3180,7 +3180,6 @@
      Para criar um NOVO ITEM/MENSAGEM, copie um bloco de dentro de "itens" e
      cole na categoria desejada.
   ══════════════════════════════════════════════════════════════════ -->
-  <script type="application/json" id="regras-data">{"categorias":[]}</script>
 
   <!-- ══════════════════════════════════════
      TELA DE BOAS-VINDAS
@@ -3854,84 +3853,54 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
        ao recarregar a página).
   ══════════════════════════════════════════════════════════════════ -->
   <script>
-    const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_hpnB4vMacusgInT-topwfg_Dxe79QrV";
-    const SUPABASE_TABLE = "painel_dados";
-    const LS_PREFIX = "ibrep_admin_data_";
+const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_hpnB4vMacusgInT-topwfg_Dxe79QrV";
+const SUPABASE_TABLE = "painel_dados";
+const LS_PREFIX = "ibrep_admin_data_";
 
-    function carregarScriptExterno(src) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-
-    // Corre uma promessa contra um prazo máximo, pra nunca deixar o
-    // usuário esperando pra sempre se a nuvem estiver fora do ar.
-    function comPrazoMaximo(promessa, ms) {
-      return Promise.race([
-        promessa,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("tempo esgotado")), ms))
-      ]);
-    }
-
-    async function iniciarPainel() {
-      // 1) Busca os dados mais recentes da nuvem (assíncrono — não trava)
-      try {
-        const resp = await comPrazoMaximo(
-          fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
-          }),
-          6000
-        );
-        if (resp.ok) {
-          const linhas = await resp.json();
-          window.__IBREP_REMOTE_DATA__ = {};
-          linhas.forEach(linha => {
-            if (linha && linha.chave) window.__IBREP_REMOTE_DATA__[linha.chave] = linha.valor;
-          });
-        } else {
-          console.warn("Supabase: não foi possível carregar os dados (status " + resp.status + "). Usando dados locais/padrão deste navegador.");
+async function iniciarPainel() {
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`,
+      {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
         }
-      } catch (e) {
-        console.warn("Supabase: falha ao conectar (ou demorou demais). Usando dados locais/padrão deste navegador.", e);
       }
+    );
 
-      // 2) "Acorda" o script principal (estava inerte como text/plain) —
-      //    a partir daqui ele executa normalmente, do jeito que sempre executou.
-      const original = document.getElementById("app-main-script");
-      if (original) {
-        const novo = document.createElement("script");
-        novo.textContent = original.textContent;
-        original.replaceWith(novo);
+    if (!resp.ok) throw new Error(`Supabase HTTP ${resp.status}`);
+
+    const linhas = await resp.json();
+    window.__IBREP_REMOTE_DATA__ = {};
+    for (const linha of linhas) {
+      if (linha && linha.chave) {
+        window.__IBREP_REMOTE_DATA__[linha.chave] = linha.valor;
       }
+    }
 
-      // 3) Só agora tira a telinha de carregamento — o painel já está pronto
+    const s = document.createElement("script");
+    s.src = "./ibrep-app.min.js";
+    s.defer = true;
+    s.onload = () => {
       const overlay = document.getElementById("cloud-loading-overlay");
       if (overlay) overlay.remove();
+    };
+    s.onerror = () => {
+      console.error("IBREP: não foi possível carregar a aplicação.");
+    };
+    document.head.appendChild(s);
+  } catch (e) {
+    console.error("IBREP: não foi possível carregar os dados do Supabase.", e);
+    const overlay = document.getElementById("cloud-loading-overlay");
+    if (overlay) overlay.remove();
+  }
+}
+iniciarPainel();
+</script>
 
-      // 4) Carrega a biblioteca de tempo real e liga a sincronização ao vivo
-      //    (não bloqueia nada — o painel já está usável desde o passo 3)
-      try {
-        await carregarScriptExterno("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
-        if (typeof window.iniciarSincronizacaoEmTempoReal === "function") {
-          window.iniciarSincronizacaoEmTempoReal();
-        }
-      } catch (e) {
-        console.warn("Supabase: não foi possível carregar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
-      }
-    }
-
-    iniciarPainel();
-  </script>
-
- 
+  
 
 </body>
 
