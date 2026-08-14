@@ -4349,6 +4349,46 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════════════════════════
+       🌐 SINCRONIZAÇÃO EM NUVEM (Supabase)
+       Este bloco roda ANTES do restante do painel (script principal logo
+       abaixo), buscando de forma síncrona os dados mais recentes salvos
+       por QUALQUER usuário/dispositivo e colocando-os no localStorage —
+       assim, quando o script principal ler o localStorage (como já fazia),
+       ele já enxerga os dados atualizados da nuvem, não só os deste
+       navegador.
+  ══════════════════════════════════════════════════════════════════ -->
+  <script>
+    const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_hpnB4vMacusgInT-topwfg_Dxe79QrV";
+    const SUPABASE_TABLE = "painel_dados";
+    const LS_PREFIX = "ibrep_admin_data_";
+
+    (function carregarDadosDaNuvemAntesDeIniciar() {
+      try {
+        const xhr = new XMLHttpRequest();
+        // Síncrono (3º parâmetro "false") de propósito: precisamos que os
+        // dados estejam no localStorage ANTES do script principal ler de lá.
+        xhr.open("GET", `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, false);
+        xhr.setRequestHeader("apikey", SUPABASE_ANON_KEY);
+        xhr.setRequestHeader("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
+        xhr.send(null);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const linhas = JSON.parse(xhr.responseText);
+          linhas.forEach(linha => {
+            try {
+              localStorage.setItem(LS_PREFIX + linha.chave, JSON.stringify(linha.valor));
+            } catch (e) { /* localStorage indisponível — segue com o que já tinha */ }
+          });
+        } else {
+          console.warn("Supabase: não foi possível carregar os dados (status " + xhr.status + "). Usando dados locais/padrão deste navegador.");
+        }
+      } catch (e) {
+        console.warn("Supabase: falha ao conectar. Usando dados locais/padrão deste navegador.", e);
+      }
+    })();
+  </script>
+
   <script>
 
 
@@ -7449,10 +7489,9 @@ const PORTARIAS_DATA = {
 
     // ══════════════════════════════════════════════════════════════════
     // 🔐 AUTENTICAÇÃO — Supabase (login de usuário + admin + permissões)
+    // SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_TABLE já foram declarados
+    // no bloco de sincronização de dados, no topo do arquivo.
     // ══════════════════════════════════════════════════════════════════
-
-    const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5aWlpanJzeGZjdXVmZ2lleWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1Mzk2MDAsImV4cCI6MjEwMjExNTYwMH0.rt5AuRzfQlUwcyACFP1uwYJPFslDGIKVED3N8m4RQ1s";
 
     let currentUser = null;
     let adminSenha = null;
@@ -8054,7 +8093,22 @@ const PORTARIAS_DATA = {
     // mesmas alterações, aí sim seria necessário atualizar o arquivo HTML no
     // GitHub (ou usar um banco de dados/backend).
     // ══════════════════════════════════════════════════════════════════
-    const LS_PREFIX = "ibrep_admin_data_";
+    // LS_PREFIX já foi declarado no bloco de sincronização, no topo do arquivo.
+
+    function salvarNoSupabase(chave, valor) {
+      fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+        method: "POST",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+          "Prefer": "resolution=merge-duplicates"
+        },
+        body: JSON.stringify({ chave: chave, valor: valor, atualizado_em: new Date().toISOString() })
+      }).catch(e => {
+        console.warn(`Supabase: não foi possível sincronizar "${chave}" com a nuvem — a alteração ficou salva só neste navegador.`, e);
+      });
+    }
 
     function salvarNoLocalStorage(marcador, objetoAtual) {
       try {
@@ -8062,6 +8116,9 @@ const PORTARIAS_DATA = {
       } catch (e) {
         console.warn("Não foi possível salvar no localStorage:", e);
       }
+      // 🌐 Envia para o Supabase, para que todos os outros usuários recebam
+      // esta mesma atualização (ver assinatura Realtime mais abaixo).
+      salvarNoSupabase(marcador, objetoAtual);
     }
 
     function carregarDoLocalStorage(marcador) {
@@ -8795,6 +8852,61 @@ const PORTARIAS_DATA = {
       }
     }
 
+  </script>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       🌐 SINCRONIZAÇÃO EM NUVEM (Supabase) — TEMPO REAL
+       Depois que o painel já carregou, mantemos uma conexão aberta com o
+       Supabase: sempre que QUALQUER usuário salvar uma alteração (em
+       qualquer navegador/dispositivo), este bloco recebe o aviso na hora
+       e atualiza a tela de todos os outros usuários que estiverem com o
+       painel aberto — sem precisar recarregar a página.
+  ══════════════════════════════════════════════════════════════════ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function iniciarSincronizacaoEmTempoReal() {
+      try {
+        if (!window.supabase || !window.supabase.createClient) {
+          console.warn("Supabase: biblioteca de tempo real não carregou — sincronização ao vivo desativada nesta sessão (as edições continuam sendo salvas na nuvem normalmente).");
+          return;
+        }
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        client
+          .channel("painel_dados_mudancas")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: SUPABASE_TABLE },
+            (payload) => {
+              const linha = payload.new;
+              if (!linha || !linha.chave) return;
+
+              // Atualiza o cache local com o valor mais recente vindo da nuvem
+              try {
+                localStorage.setItem(LS_PREFIX + linha.chave, JSON.stringify(linha.valor));
+              } catch (e) { /* ignora */ }
+
+              // Reaplica os dados salvos por cima da memória (mesma função
+              // usada no carregamento inicial da página) e redesenha a
+              // tela em que este usuário estiver, se houver uma aberta.
+              try {
+                if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+              } catch (e) {
+                console.warn("Supabase Realtime: erro ao aplicar dados recebidos.", e);
+              }
+              try {
+                const telaAtual = sessionStorage.getItem("ibrep_tela_atual");
+                if (telaAtual && telaAtual !== "welcome" && typeof irParaTela === "function") {
+                  irParaTela(telaAtual, false);
+                }
+              } catch (e) { /* ignora */ }
+            }
+          )
+          .subscribe();
+      } catch (e) {
+        console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
+      }
+    })();
   </script>
 
 </body>
