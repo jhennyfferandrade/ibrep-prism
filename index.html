@@ -1865,7 +1865,13 @@
       display: none;
       flex-direction: column;
       z-index: 9998;
-      overflow: hidden;
+      /* Como o cabeçalho (.tut-header) tem altura fixa, mas o corpo pode
+         ficar mais alto que a tela em zoom alto / fonte maior / telas
+         pequenas, permitimos rolagem vertical na própria tela — assim,
+         em vez de cortar conteúdo (overflow:hidden), o navegador mostra
+         uma barra de rolagem e nada fica inacessível. */
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     #regras-screen.open {
@@ -1882,7 +1888,10 @@
       display: none;
       flex-direction: column;
       z-index: 9998;
-      overflow: hidden;
+      /* Mesmo ajuste de rolagem do #regras-screen — acompanha o zoom da
+         página em vez de cortar as colunas. */
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     #cursos-screen.open {
@@ -1893,6 +1902,14 @@
       display: flex;
       flex: 1;
       overflow: hidden;
+      /* Evita o bug clássico do flexbox em que um item de container em
+         coluna (#regras-screen/#cursos-screen) não encolhe abaixo do
+         tamanho do seu conteúdo — o que, em zoom alto, fazia o corpo
+         "estourar" e ser cortado pelo overflow:hidden da tela. */
+      min-height: 0;
+      /* Rolagem horizontal de segurança: se as 3 colunas não couberem
+         lado a lado (zoom muito alto), rola em vez de cortar. */
+      overflow-x: auto;
     }
 
     /* coluna 1 — categorias (títulos principais numerados) */
@@ -1904,6 +1921,7 @@
       flex-direction: column;
       flex-shrink: 0;
       overflow: hidden;
+      min-height: 0;
     }
 
     .regras-search-box {
@@ -1944,6 +1962,7 @@
     .regras-cats-list {
       overflow-y: auto;
       flex: 1;
+      min-height: 0;
       padding: 0 10px 10px;
       display: flex;
       flex-direction: column;
@@ -2027,6 +2046,7 @@
       flex-direction: column;
       flex-shrink: 0;
       overflow: hidden;
+      min-height: 0;
     }
 
     .regras-list-header {
@@ -2050,6 +2070,7 @@
     .regras-list-items {
       overflow-y: auto;
       flex: 1;
+      min-height: 0;
     }
 
     .regras-item {
@@ -2126,6 +2147,7 @@
     /* coluna 3 — detalhe / mensagem para enviar */
     .regras-detail-pane {
       flex: 1;
+      min-width: 0;
       overflow-y: auto;
       padding: 28px 32px;
     }
@@ -4514,6 +4536,34 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     const CURSOS_ESTADOS_MANUAL = [];
 // @DATA_END:cursosestados
 
+    // Cursos excluídos manualmente pelo admin, por instituição — mapa
+    // { idinstituicao: [idCurso, idCurso, ...] }. Como a lista de cursos de
+    // cada instituição é calculada por regra (getCursosForInst), guardamos
+    // aqui só os IDs que o admin decidiu esconder daquela instituição.
+// @DATA_START:cursosexcluidos
+    const CURSOS_EXCLUIDOS_POR_INST = {};
+// @DATA_END:cursosexcluidos
+
+    function excluirCursoDeInstituicao(idinstituicao, idCurso, nomeCurso) {
+      if (!adminMode) return;
+      if (!confirm(`Remover o curso "${nomeCurso}" desta instituição?\n\n(O curso continua existindo — ele só deixa de aparecer para esta instituição. Dá pra desfazer depois em "Reexibir cursos removidos".)`)) return;
+      const lista = CURSOS_EXCLUIDOS_POR_INST[idinstituicao] || (CURSOS_EXCLUIDOS_POR_INST[idinstituicao] = []);
+      if (!lista.includes(idCurso)) lista.push(idCurso);
+      resyncDataBlock("cursosexcluidos", CURSOS_EXCLUIDOS_POR_INST);
+
+      const inst = DB.instituicoes.find(i => i.idinstituicao === idinstituicao);
+      if (inst) selectCursosInst(idinstituicao, document.querySelector(`#cursos-inst-items .regras-item.active`));
+    }
+
+    function reexibirCursosDeInstituicao(idinstituicao) {
+      if (!adminMode) return;
+      if (!CURSOS_EXCLUIDOS_POR_INST[idinstituicao] || CURSOS_EXCLUIDOS_POR_INST[idinstituicao].length === 0) return;
+      if (!confirm("Voltar a exibir todos os cursos removidos desta instituição?")) return;
+      CURSOS_EXCLUIDOS_POR_INST[idinstituicao] = [];
+      resyncDataBlock("cursosexcluidos", CURSOS_EXCLUIDOS_POR_INST);
+      selectCursosInst(idinstituicao, document.querySelector(`#cursos-inst-items .regras-item.active`));
+    }
+
     function initCursosScreen() {
       const estadosComInst = Array.from(new Set(DB.instituicoes.map(i => cursosEstadoReal(i)).filter(Boolean)));
       const estados = Array.from(new Set([...estadosComInst, ...CURSOS_ESTADOS_MANUAL]));
@@ -4707,16 +4757,26 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
           </div>
           <div class="cursos-section-header" style="margin-top:10px">
             📚 Cursos disponíveis &nbsp;<span style="font-size:10px;font-weight:400;color:var(--texto-muted)">(${cursos.length} cursos)</span>
+            ${adminMode && (CURSOS_EXCLUIDOS_POR_INST[inst.idinstituicao] || []).length > 0
+              ? `<button class="admin-danger-btn" style="margin-left:10px;font-size:10px;padding:3px 9px;" onclick="reexibirCursosDeInstituicao(${inst.idinstituicao})">↺ Reexibir cursos removidos (${CURSOS_EXCLUIDOS_POR_INST[inst.idinstituicao].length})</button>`
+              : ""}
           </div>
           <div class="cursos-grid" id="cursos-grid">`;
       if (cursos.length === 0) {
         html += `<div class="extra-empty">Nenhum curso cadastrado para esta instituição</div>`;
       } else {
         cursos.forEach(curso => {
-          html += `<button class="curso-btn" id="cbtn-${curso.id}" onclick="selectCurso(${curso.id}, this)">
-            <span class="curso-id">#${curso.id}</span>
-            ${curso.nome}
-          </button>`;
+          html += `<div class="curso-btn-wrap" style="position:relative;display:inline-flex;">
+            <button class="curso-btn" id="cbtn-${curso.id}" onclick="selectCurso(${curso.id}, this)">
+              <span class="curso-id">#${curso.id}</span>
+              ${curso.nome}
+            </button>
+            ${adminMode
+              ? `<span class="regras-item-del" title="Excluir curso desta instituição"
+                   style="position:absolute;top:-6px;right:-6px;background:#fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.18);"
+                   onclick="event.stopPropagation(); excluirCursoDeInstituicao(${inst.idinstituicao}, ${curso.id}, '${(curso.nome || "").replace(/'/g, "\\'")}')">🗑️</span>`
+              : ""}
+          </div>`;
         });
       }
       html += `</div>
@@ -5341,7 +5401,7 @@ const PORTARIAS_DATA = {
           ${docsHtml}
         </div>` : ''}
         ${adminMode ? `
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;max-width:320px;">
+        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">
           <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>
           ${!dados.responsaveis ? `<button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>` : ''}
           <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>
@@ -6036,6 +6096,12 @@ const PORTARIAS_DATA = {
 
       if (TTI_PLUS_INST.has(ab)) cursosArr.push(CURSO_132);
       if (TTI_360_INST.has(ab)) cursosArr.push(CURSO_144);
+
+      // Remove os cursos que o admin excluiu manualmente para esta instituição
+      const excluidos = CURSOS_EXCLUIDOS_POR_INST[inst.idinstituicao];
+      if (excluidos && excluidos.length) {
+        return cursosArr.filter(c => !excluidos.includes(c.id));
+      }
 
       return cursosArr;
     }
@@ -8027,6 +8093,9 @@ const PORTARIAS_DATA = {
         CURSOS_ESTADOS_MANUAL.length = 0;
         CURSOS_ESTADOS_MANUAL.push(...salvosCursosEstados);
       }
+
+      const salvosCursosExcluidos = carregarDoLocalStorage("cursosexcluidos");
+      if (salvosCursosExcluidos) Object.assign(CURSOS_EXCLUIDOS_POR_INST, salvosCursosExcluidos);
 
       const salvosRegras = carregarDoLocalStorage("regras");
       if (salvosRegras) {
