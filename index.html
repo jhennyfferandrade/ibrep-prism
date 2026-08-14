@@ -8096,15 +8096,25 @@ const PORTARIAS_DATA = {
     // LS_PREFIX já foi declarado no bloco de sincronização, no topo do arquivo.
 
     function salvarNoSupabase(chave, valor) {
-      fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+      fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?on_conflict=chave`, {
         method: "POST",
         headers: {
           "apikey": SUPABASE_ANON_KEY,
           "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
           "Content-Type": "application/json",
-          "Prefer": "resolution=merge-duplicates"
+          "Prefer": "resolution=merge-duplicates,return=minimal"
         },
         body: JSON.stringify({ chave: chave, valor: valor, atualizado_em: new Date().toISOString() })
+      }).then(async (res) => {
+        // ⚠️ fetch() NÃO rejeita em respostas 4xx/5xx — só em falha de rede.
+        // Por isso, sem este bloco, um erro de permissão (RLS) ou de chave
+        // ficava completamente silencioso, sem aparecer em lugar nenhum.
+        if (!res.ok) {
+          const texto = await res.text().catch(() => "");
+          console.error(`Supabase: falha ao salvar "${chave}" na nuvem (status ${res.status}). ${texto}`);
+        } else {
+          console.log(`Supabase: "${chave}" sincronizado com a nuvem com sucesso.`);
+        }
       }).catch(e => {
         console.warn(`Supabase: não foi possível sincronizar "${chave}" com a nuvem — a alteração ficou salva só neste navegador.`, e);
       });
