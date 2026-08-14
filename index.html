@@ -3029,16 +3029,6 @@
 <body>
 
   <!-- ══════════════════════════════════════════════════════════════════
-     ☁️ TELA DE CARREGAMENTO — enquanto busca os dados mais recentes da
-     nuvem (Supabase), de forma assíncrona (não trava o navegador).
-     ══════════════════════════════════════════════════════════════════ -->
-  <div id="cloud-loading-overlay" style="position:fixed;inset:0;z-index:99999;background:#f4f5f8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:'Poppins',sans-serif;">
-    <div style="width:38px;height:38px;border:4px solid #e0e0ef;border-top-color:#6c5ce7;border-radius:50%;animation:cloud-spin 0.8s linear infinite;"></div>
-    <div style="color:#6b6f80;font-size:13px;">Carregando dados atualizados...</div>
-  </div>
-  <style>@keyframes cloud-spin { to { transform: rotate(360deg); } }</style>
-
-  <!-- ══════════════════════════════════════════════════════════════════
      🔐 LOGIN DE USUÁRIO — autenticação via Supabase
      ══════════════════════════════════════════════════════════════════ -->
   <div id="user-login-overlay">
@@ -4361,14 +4351,12 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
   <!-- ══════════════════════════════════════════════════════════════════
        🌐 SINCRONIZAÇÃO EM NUVEM (Supabase)
-       Este bloco busca, de forma ASSÍNCRONA (sem travar o navegador), os
-       dados mais recentes salvos por QUALQUER usuário/dispositivo e os
-       coloca no localStorage. Só depois disso o script principal (que fica
-       "adormecido" como type="text/plain" logo abaixo) é efetivamente
-       executado — garantindo que ele já enxergue os dados atualizados da
-       nuvem, sem precisar de uma requisição síncrona (que travava a aba
-       inteira até a resposta chegar — foi o que causava o "congelamento"
-       ao recarregar a página).
+       Este bloco roda ANTES do restante do painel (script principal logo
+       abaixo), buscando de forma síncrona os dados mais recentes salvos
+       por QUALQUER usuário/dispositivo e colocando-os no localStorage —
+       assim, quando o script principal ler o localStorage (como já fazia),
+       ele já enxerga os dados atualizados da nuvem, não só os deste
+       navegador.
   ══════════════════════════════════════════════════════════════════ -->
   <script>
     const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
@@ -4376,80 +4364,32 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     const SUPABASE_TABLE = "painel_dados";
     const LS_PREFIX = "ibrep_admin_data_";
 
-    function carregarScriptExterno(src) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-
-    // Corre uma promessa contra um prazo máximo, pra nunca deixar o
-    // usuário esperando pra sempre se a nuvem estiver fora do ar.
-    function comPrazoMaximo(promessa, ms) {
-      return Promise.race([
-        promessa,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("tempo esgotado")), ms))
-      ]);
-    }
-
-    async function iniciarPainel() {
-      // 1) Busca os dados mais recentes da nuvem (assíncrono — não trava)
+    (function carregarDadosDaNuvemAntesDeIniciar() {
       try {
-        const resp = await comPrazoMaximo(
-          fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
-          }),
-          6000
-        );
-        if (resp.ok) {
-          const linhas = await resp.json();
+        const xhr = new XMLHttpRequest();
+        // Síncrono (3º parâmetro "false") de propósito: precisamos que os
+        // dados estejam no localStorage ANTES do script principal ler de lá.
+        xhr.open("GET", `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, false);
+        xhr.setRequestHeader("apikey", SUPABASE_ANON_KEY);
+        xhr.setRequestHeader("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
+        xhr.send(null);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const linhas = JSON.parse(xhr.responseText);
           linhas.forEach(linha => {
             try {
               localStorage.setItem(LS_PREFIX + linha.chave, JSON.stringify(linha.valor));
             } catch (e) { /* localStorage indisponível — segue com o que já tinha */ }
           });
         } else {
-          console.warn("Supabase: não foi possível carregar os dados (status " + resp.status + "). Usando dados locais/padrão deste navegador.");
+          console.warn("Supabase: não foi possível carregar os dados (status " + xhr.status + "). Usando dados locais/padrão deste navegador.");
         }
       } catch (e) {
-        console.warn("Supabase: falha ao conectar (ou demorou demais). Usando dados locais/padrão deste navegador.", e);
+        console.warn("Supabase: falha ao conectar. Usando dados locais/padrão deste navegador.", e);
       }
-
-      // 2) "Acorda" o script principal (estava inerte como text/plain) —
-      //    a partir daqui ele executa normalmente, do jeito que sempre executou.
-      const original = document.getElementById("app-main-script");
-      if (original) {
-        const novo = document.createElement("script");
-        novo.textContent = original.textContent;
-        original.replaceWith(novo);
-      }
-
-      // 3) Só agora tira a telinha de carregamento — o painel já está pronto
-      const overlay = document.getElementById("cloud-loading-overlay");
-      if (overlay) overlay.remove();
-
-      // 4) Carrega a biblioteca de tempo real e liga a sincronização ao vivo
-      //    (não bloqueia nada — o painel já está usável desde o passo 3)
-      try {
-        await carregarScriptExterno("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
-        if (typeof window.iniciarSincronizacaoEmTempoReal === "function") {
-          window.iniciarSincronizacaoEmTempoReal();
-        }
-      } catch (e) {
-        console.warn("Supabase: não foi possível carregar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
-      }
-    }
-
-    iniciarPainel();
+    })();
   </script>
 
-  <script type="text/plain" id="app-main-script">
+  <script>
 
 
 
@@ -8104,26 +8044,35 @@ const PORTARIAS_DATA = {
     //    refletir o objeto JS atual — assim, ao exportar o HTML, as alterações
     //    feitas em tela já saem gravadas no código.
     function resyncDataBlock(marcador, objetoAtual) {
-      // 💾 Grava no navegador (localStorage) e na nuvem (Supabase).
-      //
-      // ⚠️ AJUSTE DE PERFORMANCE: esta função ANTES também reescrevia o
-      // texto-fonte de dentro da tag <script> principal (procurando o
-      // trecho "@DATA_START/@DATA_END" e substituindo por um JSON novo,
-      // formatado com identação). Isso rodava a CADA edição — inclusive
-      // coisas pequenas, como editar uma célula ou inserir uma coluna —
-      // e, como a tag <script> principal é muito grande (o painel inteiro),
-      // essa reescrita ficava cada vez mais pesada e travava a interface.
-      // Agora que os dados ficam salvos de verdade no Supabase (e são
-      // recarregados de lá a cada abertura da página), essa reescrita no
-      // HTML deixou de ser necessária — então foi removida daqui.
+      // 💾 Grava automaticamente no navegador (localStorage) — assim, o ajuste
+      //    feito pelo admin fica salvo ali mesmo, sem precisar baixar/trocar o HTML.
       salvarNoLocalStorage(marcador, objetoAtual);
-      return true;
+
+      const scripts = document.querySelectorAll("script:not([type])");
+      for (const s of scripts) {
+        const src = s.textContent;
+        const startTag = `// @DATA_START:${marcador}`;
+        const endTag = `// @DATA_END:${marcador}`;
+        const startIdx = src.indexOf(startTag);
+        const endIdx = src.indexOf(endTag);
+        if (startIdx === -1 || endIdx === -1) continue;
+        const trecho = src.slice(startIdx, endIdx);
+        const m = trecho.match(/const\s+(\w+)\s*=/);
+        if (!m) continue;
+        const varName = m[1];
+        const before = src.slice(0, startIdx);
+        const after = src.slice(endIdx + endTag.length);
+        const novoBloco = `${startTag}\n    const ${varName} = ${JSON.stringify(objetoAtual, null, 2)};\n    ${endTag}`;
+        s.textContent = before + novoBloco + after;
+        return true;
+      }
+      return false;
     }
 
     function syncRegrasDataScript() {
-      // (Removida a reescrita do <script id="regras-data"> a cada edição —
-      // mesmo motivo do resyncDataBlock acima: ficou redundante e pesada
-      // agora que o Supabase é quem guarda os dados de verdade.)
+      const el = document.getElementById("regras-data");
+      if (el) el.textContent = JSON.stringify(REGRAS_DATA, null, 2);
+      // 💾 Grava automaticamente no navegador (localStorage)
       salvarNoLocalStorage("regras", REGRAS_DATA);
     }
 
@@ -8171,21 +8120,12 @@ const PORTARIAS_DATA = {
       });
     }
 
-    // Guarda, por marcador, o instante do último salvamento feito por ESTE
-    // navegador — usado pelo listener de tempo real logo abaixo para
-    // ignorar o "eco" da própria alteração (o Supabase avisa todo mundo
-    // conectado quando algo muda, inclusive quem acabou de salvar). Sem
-    // isso, a própria tela de quem estava editando era redesenhada de novo
-    // segundos depois, travando o clique/edição em andamento.
-    const ULTIMO_SALVAMENTO_LOCAL = {};
-
     function salvarNoLocalStorage(marcador, objetoAtual) {
       try {
         localStorage.setItem(LS_PREFIX + marcador, JSON.stringify(objetoAtual));
       } catch (e) {
         console.warn("Não foi possível salvar no localStorage:", e);
       }
-      ULTIMO_SALVAMENTO_LOCAL[marcador] = Date.now();
       // 🌐 Envia para o Supabase, para que todos os outros usuários recebam
       // esta mesma atualização (ver assinatura Realtime mais abaixo).
       salvarNoSupabase(marcador, objetoAtual);
@@ -8922,23 +8862,25 @@ const PORTARIAS_DATA = {
       }
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // 🌐 SINCRONIZAÇÃO EM NUVEM (Supabase) — TEMPO REAL
-    // Chamada pelo bloco de bootstrap (início do arquivo) depois que este
-    // script principal já executou e a biblioteca supabase-js já carregou.
-    // Mantém uma conexão aberta: sempre que QUALQUER usuário salvar uma
-    // alteração (em qualquer navegador/dispositivo), este bloco recebe o
-    // aviso na hora e atualiza a tela de todos os outros usuários que
-    // estiverem com o painel aberto — sem precisar recarregar a página.
-    // ══════════════════════════════════════════════════════════════════
-    function iniciarSincronizacaoEmTempoReal() {
+  </script>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       🌐 SINCRONIZAÇÃO EM NUVEM (Supabase) — TEMPO REAL
+       Depois que o painel já carregou, mantemos uma conexão aberta com o
+       Supabase: sempre que QUALQUER usuário salvar uma alteração (em
+       qualquer navegador/dispositivo), este bloco recebe o aviso na hora
+       e atualiza a tela de todos os outros usuários que estiverem com o
+       painel aberto — sem precisar recarregar a página.
+  ══════════════════════════════════════════════════════════════════ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function iniciarSincronizacaoEmTempoReal() {
       try {
         if (!window.supabase || !window.supabase.createClient) {
           console.warn("Supabase: biblioteca de tempo real não carregou — sincronização ao vivo desativada nesta sessão (as edições continuam sendo salvas na nuvem normalmente).");
           return;
         }
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let timerRedesenho = null;
 
         client
           .channel("painel_dados_mudancas")
@@ -8949,47 +8891,32 @@ const PORTARIAS_DATA = {
               const linha = payload.new;
               if (!linha || !linha.chave) return;
 
-              // 🔁 Ignora o "eco" da própria alteração: o Supabase avisa
-              // TODOS os conectados quando algo muda, inclusive quem acabou
-              // de salvar. Sem este filtro, a tela de quem estava editando
-              // era redesenhada de novo poucos instantes depois — foi isso
-              // que estava travando cliques/edições e deixando tudo lento.
-              const agora = Date.now();
-              const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL[linha.chave] || 0;
-              if (agora - ultimoLocal < 4000) return;
-
               // Atualiza o cache local com o valor mais recente vindo da nuvem
               try {
                 localStorage.setItem(LS_PREFIX + linha.chave, JSON.stringify(linha.valor));
               } catch (e) { /* ignora */ }
 
-              // Se várias mudanças chegarem em sequência (outra pessoa fazendo
-              // várias edições seguidas), agrupa tudo num único redesenho em
-              // vez de redesenhar a tela inteira a cada mudança individual.
-              if (timerRedesenho) clearTimeout(timerRedesenho);
-              timerRedesenho = setTimeout(() => {
-                // Reaplica os dados salvos por cima da memória (mesma função
-                // usada no carregamento inicial da página) e redesenha a
-                // tela em que este usuário estiver, se houver uma aberta.
-                try {
-                  if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
-                } catch (e) {
-                  console.warn("Supabase Realtime: erro ao aplicar dados recebidos.", e);
+              // Reaplica os dados salvos por cima da memória (mesma função
+              // usada no carregamento inicial da página) e redesenha a
+              // tela em que este usuário estiver, se houver uma aberta.
+              try {
+                if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+              } catch (e) {
+                console.warn("Supabase Realtime: erro ao aplicar dados recebidos.", e);
+              }
+              try {
+                const telaAtual = sessionStorage.getItem("ibrep_tela_atual");
+                if (telaAtual && telaAtual !== "welcome" && typeof irParaTela === "function") {
+                  irParaTela(telaAtual, false);
                 }
-                try {
-                  const telaAtual = sessionStorage.getItem("ibrep_tela_atual");
-                  if (telaAtual && telaAtual !== "welcome" && typeof irParaTela === "function") {
-                    irParaTela(telaAtual, false);
-                  }
-                } catch (e) { /* ignora */ }
-              }, 500);
+              } catch (e) { /* ignora */ }
             }
           )
           .subscribe();
       } catch (e) {
         console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
       }
-    }
+    })();
   </script>
 
 </body>
