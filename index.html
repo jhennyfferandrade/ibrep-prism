@@ -3941,9 +3941,7 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
     // Rótulos exibidos para cada estado, seguindo a mesma convenção de nomes
     // abreviados já usada em outras partes do painel (ex.: nome_abreviado).
-    const CURSOS_UF_LABEL = {
-      "Santa Catarina": "SANTA CATARINA"
-    };
+    let CURSOS_UF_LABEL = {};
     function cursosUfLabel(uf) {
       return CURSOS_UF_LABEL[uf] || (uf || "").toUpperCase();
     }
@@ -4292,6 +4290,7 @@ function initCursosScreen() {
         itens: []
       });
       syncRegrasDataScript();
+      resyncDataBlock("regras", REGRAS_DATA);
       regrasCategoriaAtual = novoId;
       renderRegrasCats();
       renderRegrasList();
@@ -4303,6 +4302,7 @@ function initCursosScreen() {
       if (!confirm(`Excluir o tópico "${cat.titulo}" e todas as ${cat.itens.length} mensagem(ns) dele? Essa ação não pode ser desfeita.`)) return;
       REGRAS_DATA.categorias = REGRAS_DATA.categorias.filter(c => c.id !== id);
       syncRegrasDataScript();
+      resyncDataBlock("regras", REGRAS_DATA);
       initRegras();
     }
 
@@ -4378,6 +4378,7 @@ function initCursosScreen() {
       const novoId = "msg-" + Date.now();
       cat.itens.push({ id: novoId, subtitulo: null, conteudo: "" });
       syncRegrasDataScript();
+      resyncDataBlock("regras", REGRAS_DATA);
       renderRegrasCats();
       renderRegrasList();
       const el = document.querySelector(`#regras-list-items .regras-item[onclick*="'${novoId}'"]`);
@@ -4392,6 +4393,7 @@ function initCursosScreen() {
       if (!confirm(`Excluir a mensagem "${item.subtitulo || "sem subtítulo"}"?`)) return;
       cat.itens = cat.itens.filter(i => i.id !== itemId);
       syncRegrasDataScript();
+      resyncDataBlock("regras", REGRAS_DATA);
       renderRegrasCats();
       renderRegrasList();
       document.getElementById("regras-detail-pane").innerHTML = `
@@ -5015,8 +5017,9 @@ const cfg = {
       instituicoes: [
         { title: "Identificação", keys: ["idmantenedora", "idinstituicao", "nome", "nome_abreviado", "documento"] },
         { title: "Contato", keys: ["email", "telefone"] },
-        { title: "Endereço", keys: ["cep", "endereco", "bairro", "complemento", "cidade", "estado"] },
-        { title: "Responsável", keys: ["gerente_nome", "gerente_email"] },
+        { title: "Endereço", keys: ["endereco", "bairro", "complemento", "cidade", "estado"] },
+        { title: "Responsável", keys: ["gerente_email"] },
+        { title: "Secretário e Diretor", keys: ["nome_secretario", "portaria_secretario", "nome_diretor", "portaria_diretor"] },
         { title: "Credenciamento", keys: ["data_credenciamento", "data_vencimento"] }
       ],
       polos: [
@@ -5030,7 +5033,7 @@ const cfg = {
         { title: "Identificação", keys: ["idinstituicao", "idpolo", "idlocal", "nome"] },
         { title: "Contato", keys: ["email", "telefone"] },
         { title: "Endereço", keys: ["cep", "endereco", "bairro", "complemento", "cidade", "estado"] },
-        { title: "Responsável", keys: ["gerente_nome", "gerente_telefone", "gerente_celular", "gerente_email"] }
+        { title: "Responsável", keys: ["gerente_nome", "gerente_celular", "gerente_email"] }
       ]
     };
 
@@ -5050,8 +5053,17 @@ let TTI_360_INST = new Set();
 const CURSO_132 = { id: 132, nome: "TTI+ FORMAÇÃO EM NEGÓCIOS IMOBILIÁRIOS" };
 const CURSO_144 = { id: 144, nome: "TTI | CORRETOR 360" };
     function getCursosForInst(inst) {
-      const ids = INSTITUICOES_CURSOS_MAP[inst.idinstituicao] || [];
-      return ids.map(id => CURSOS_CATALOGO.find(c => Number(c.id) === Number(id))).filter(Boolean);
+      const nome = inst.nome_abreviado;
+      const cursos = [...CURSOS_LIVRES];
+      if (TTI_PLUS_INST.has(nome)) {
+        const c132 = CURSOS_CATALOGO.find(c => Number(c.idcurso) === 132);
+        if (c132) cursos.push(c132);
+      }
+      if (TTI_360_INST.has(nome)) {
+        const c144 = CURSOS_CATALOGO.find(c => Number(c.idcurso) === 144);
+        if (c144) cursos.push(c144);
+      }
+      return cursos.map(c => ({ id: Number(c.idcurso), nome: c.nome }));
     }
 
      // ── DISCIPLINAS POR CURSO ─────────────────────────────────────────────────
@@ -6196,125 +6208,135 @@ let ATIVIDADE_PRESENCIAL = new Set();
       return await supabaseRpc(name, payload);
     }
 
-    function normalizarRelacional(data) {
-      data = data || {};
-      DB.mantenedoras = Array.isArray(data.mantenedoras) ? data.mantenedoras : [];
-      DB.instituicoes = Array.isArray(data.instituicoes) ? data.instituicoes : [];
-      DB.polos = Array.isArray(data.polos) ? data.polos : [];
-      DB.locais = Array.isArray(data.locais_prova) ? data.locais_prova : [];
+   function normalizarRelacional(data) {
+  data = data || {};
+  DB.mantenedoras = Array.isArray(data.mantenedoras) ? data.mantenedoras : [];
+  DB.instituicoes = Array.isArray(data.instituicoes) ? data.instituicoes : [];
+  DB.polos = Array.isArray(data.polos) ? data.polos : [];
+  DB.locais = Array.isArray(data.locais) ? data.locais : [];
 
-      CURSOS_CATALOGO = Array.isArray(data.cursos) ? data.cursos : [];
-      INSTITUICOES_CURSOS_MAP = {};
-      (data.instituicoes_cursos || []).forEach(r => {
-        const iid = Number(r.idinstituicao);
-        if (!iid) return;
-        (INSTITUICOES_CURSOS_MAP[iid] ||= []).push(Number(r.idcurso));
-      });
+  CURSOS_CATALOGO = Array.isArray(data.cursos) ? data.cursos : [];
 
-      CURSOS_ESTADO_REAL = {};
-      (data.cursos_estados || []).forEach(r => {
-        if (r.idinstituicao != null && r.estado_real) CURSOS_ESTADO_REAL[Number(r.idinstituicao)] = r.estado_real;
-      });
-      CURSOS_ESTADOS_MANUAL = (data.cursos_estados_manuais || []).map(r => r.estado || r.nome).filter(Boolean);
+  // Não existe tabela instituicoes_cursos: os cursos "livres" (catálogo
+  // menos 132/144) valem para todas as instituições; 132 e 144 só entram
+  // se a instituição estiver em tti_plus_instituicoes / tti_360_instituicoes.
+  CURSOS_LIVRES = CURSOS_CATALOGO.filter(c => Number(c.idcurso) !== 132 && Number(c.idcurso) !== 144);
+  TTI_PLUS_INST = new Set((data.tti_plus_instituicoes || []).map(r => r.nome_abreviado));
+  TTI_360_INST = new Set((data.tti_360_instituicoes || []).map(r => r.nome_abreviado));
 
-      CURRICULOS = {};
-      (data.curriculos || []).forEach(c => {
-        const idcurso = Number(c.idcurso);
-        if (!idcurso) return;
-        (CURRICULOS[idcurso] ||= []).push({
-          id: Number(c.id), nome: c.nome, idinst: c.idinst == null ? null : Number(c.idinst),
-          carga_presencial: c.carga_presencial, carga_distancia: c.carga_distancia, carga_total: c.carga_total
-        });
-      });
+  CURSOS_UF_LABEL = {};
+  (data.cursos_uf_label || []).forEach(r => { if (r.estado) CURSOS_UF_LABEL[r.estado] = r.label; });
 
-      DISCIPLINAS = {};
-      (data.disciplinas || []).forEach(d => {
-        const cid = Number(d.idcurso);
-        if (!cid) return;
-        (DISCIPLINAS[cid] ||= []).push({ id: Number(d.id), nome: d.nome });
-      });
+  CURSOS_ESTADO_REAL = {};
+  (data.cursos_estado_real || []).forEach(r => {
+    if (r.idinstituicao != null) CURSOS_ESTADO_REAL[Number(r.idinstituicao)] = r.estado_real;
+  });
+  // Sem tabela própria no banco — continua só na sessão do navegador.
+  CURSOS_ESTADOS_MANUAL = CURSOS_ESTADOS_MANUAL || [];
 
-      DISCIPLINAS_CURRICULO = {};
-      (data.curriculos_blocos_disciplinas || []).forEach(r => {
-        const cur = Number(r.idcurriculo);
-        if (!cur) return;
-        (DISCIPLINAS_CURRICULO[cur] ||= []).push({
-          id: Number(r.iddisciplina), nome: r.nome || r.disciplina_nome || "", ordem: r.ordem
-        });
-      });
-      // Se a RPC devolver somente relações, completa os nomes das disciplinas.
-      const discById = {};
-      (data.disciplinas || []).forEach(d => discById[Number(d.id)] = d.nome);
-      Object.values(DISCIPLINAS_CURRICULO).forEach(arr => arr.forEach(d => { if (!d.nome) d.nome = discById[d.id] || ""; }));
+  CURRICULOS = {};
+  (data.curriculos || []).forEach(c => {
+    const idcurso = Number(c.idcurso);
+    if (!idcurso) return;
+    (CURRICULOS[idcurso] ||= []).push({
+      id: Number(c.idcurriculo), nome: c.nome, idinst: c.idinst == null ? null : Number(c.idinst),
+      carga_presencial: c.carga_presencial, carga_distancia: c.carga_distancia, carga_total: c.carga_total
+    });
+  });
 
-      AVAS = {};
-      (data.cursos_avas || []).forEach(r => {
-        const cid = Number(r.idcurso);
-        if (!cid) return;
-        (AVAS[cid] ||= []).push({ id: Number(r.idava), nome: r.nome || r.ava_nome || "" });
-      });
-      AVAS_CURRICULO = {};
-      (data.curriculos_avas || []).forEach(r => {
-        const cid = Number(r.idcurriculo);
-        if (!cid) return;
-        (AVAS_CURRICULO[cid] ||= []).push({ id: Number(r.idava), nome: r.nome || r.ava_nome || "" });
-      });
+  DISCIPLINAS = {};
+  (data.disciplinas || []).forEach(d => {
+    const cid = Number(d.idcurso);
+    if (!cid) return;
+    (DISCIPLINAS[cid] ||= []).push({ id: Number(d.iddisciplina), nome: d.nome });
+  });
 
-      CERTIFICADOS = {};
-      (data.certificados || []).forEach(r => {
-        const iid = Number(r.idinstituicao), cid = Number(r.idcurso);
-        if (!iid || !cid) return;
-        (((CERTIFICADOS[iid] ||= {})[cid] ||= [])).push({ id: r.id, nome: r.nome });
-      });
-      PROVAS_IMPRESSAS = {};
-      (data.provas_impressas || []).forEach(r => {
-        const iid = Number(r.idinstituicao), cid = Number(r.idcurso);
-        if (!iid || !cid) return;
-        (((PROVAS_IMPRESSAS[iid] ||= {})[cid] ||= [])).push({ id: r.id, nome: r.nome, iddisciplina: r.iddisciplina });
-      });
-      ATIVIDADE_PRESENCIAL = new Set((data.atividade_presencial || []).map(r => `${r.idinstituicao}-${r.idcurso}`));
+  DISCIPLINAS_CURRICULO = {};
+  (data.disciplinas_curriculo || []).forEach(r => {
+    const cur = Number(r.idcurriculo);
+    if (!cur) return;
+    (DISCIPLINAS_CURRICULO[cur] ||= []).push({ id: Number(r.iddisciplina), nome: r.nome || "" });
+  });
 
-      PORTARIAS_DATA = {};
-      (data.portarias || []).forEach(p => {
-        const uf = p.uf || p.estado;
-        if (uf) PORTARIAS_DATA[uf] = p.dados || p.conteudo || p;
-      });
+  AVAS = {};
+  (data.avas || []).forEach(r => {
+    const cid = Number(r.idcurso);
+    if (!cid) return;
+    (AVAS[cid] ||= []).push({ id: Number(r.idava), nome: r.nome || "" });
+  });
+  AVAS_CURRICULO = {};
+  (data.avas_curriculo || []).forEach(r => {
+    const cur = Number(r.idcurriculo);
+    if (!cur) return;
+    (AVAS_CURRICULO[cur] ||= []).push({ id: Number(r.idava), nome: r.nome || "" });
+  });
 
-      TUTORIAIS = {};
-      (data.tutorial_categorias || []).forEach(c => {
-        TUTORIAIS[c.codigo || String(c.id)] = {
-          id: c.id, icon: c.icone || c.icon || "📁", label: c.nome || c.label || c.codigo,
-          titulo: c.titulo || c.nome || c.label || c.codigo, desc: c.descricao || c.desc || "", videos: []
-        };
-      });
-      (data.tutorial_videos || []).forEach(v => {
-        const cat = (data.tutorial_categorias || []).find(c => Number(c.id) === Number(v.idcategoria));
-        const key = cat ? (cat.codigo || String(cat.id)) : null;
-        if (key && TUTORIAIS[key]) TUTORIAIS[key].videos.push({ id: v.id, tag: v.tag || "", titulo: v.titulo || "Novo vídeo", desc: v.descricao || v.desc || "", url: v.url || "" });
-      });
+  CERTIFICADOS = {};
+  (data.certificados || []).forEach(r => {
+    const iid = Number(r.idinstituicao), cid = Number(r.idcurso);
+    if (!iid || !cid) return;
+    (((CERTIFICADOS[iid] ||= {})[cid] ||= [])).push({ id: r.idcertificado, nome: r.nome });
+  });
+  PROVAS_IMPRESSAS = {};
+  (data.provas_impressas || []).forEach(r => {
+    const iid = Number(r.idinstituicao), cid = Number(r.idcurso);
+    if (!iid || !cid) return;
+    (((PROVAS_IMPRESSAS[iid] ||= {})[cid] ||= [])).push({ id: r.idprova, nome: r.nome, iddisciplina: r.iddisciplina });
+  });
+  ATIVIDADE_PRESENCIAL = new Set((data.atividade_presencial || []).map(r => `${r.idinstituicao}-${r.idcurso}`));
 
-      REGRAS_DATA = { categorias: [] };
-      const cats = data.regras_categorias || [];
-      const tops = data.regras_topicos || [];
-      const msgs = data.regras_mensagens || [];
-      REGRAS_DATA.categorias = cats.map(c => ({ ...c, id: c.id, subtitulos: tops.filter(t => Number(t.idcategoria) === Number(c.id)).map(t => ({
-        ...t, id: t.id, titulo: t.nome || t.titulo, mensagens: msgs.filter(m => Number(m.idtopico) === Number(t.id))
-      })) }));
+  // portarias_estados: colunas diretas, sem JSON aninhado
+  PORTARIAS_DATA = {};
+  (data.portarias_estados || []).forEach(p => {
+    if (!p.uf) return;
+    PORTARIAS_DATA[p.uf] = {
+      status: p.status || "",
+      statusLabel: p.status_label || "",
+      fundamentacaoLegal: p.fundamentacao_legal_html || "",
+      responsaveis: (p.nome_secretario || p.nome_diretor) ? {
+        nomeSecretario: p.nome_secretario || "",
+        portariaSecretario: p.portaria_secretario || "",
+        nomeDiretor: p.nome_diretor || "",
+        portariaDiretor: p.portaria_diretor || ""
+      } : null
+    };
+  });
 
-      COMPARATIVO_DATA = {
-        cols: (data.comparativo_colunas || []).map(c => ({ id: c.codigo || String(c.id), db_id: c.id, html: c.html_titulo || c.titulo || c.html || "", tti360: !!c.tti360 })),
-        rows: (data.comparativo_linhas || []).map(r => ({ id: r.codigo || String(r.id), db_id: r.id, icon: r.icone || r.icon || "✳️", label: r.titulo || r.label || "", cells: {} }))
-      };
-      const colMap = {};
-      (data.comparativo_colunas || []).forEach(c => colMap[c.id] = c.codigo || String(c.id));
-      (data.comparativo_celulas || []).forEach(cell => {
-        const row = COMPARATIVO_DATA.rows.find(r => Number(r.db_id) === Number(cell.idlinha));
-        if (row) row.cells[colMap[cell.idcoluna] || String(cell.idcoluna)] = cell.html || cell.valor || "";
-      });
+  // tutoriais_categorias (chave) + tutoriais_videos (categoria_chave)
+  TUTORIAIS = {};
+  (data.tutoriais_categorias || []).forEach(c => {
+    TUTORIAIS[c.chave] = {
+      icon: c.icon || "📁", label: c.label || c.chave,
+      titulo: c.titulo || c.label || c.chave, desc: c.descricao || "", videos: []
+    };
+  });
+  (data.tutoriais_videos || []).forEach(v => {
+    const cat = TUTORIAIS[v.categoria_chave];
+    if (cat) cat.videos.push({ id: v.id, tag: v.tag || "", titulo: v.titulo || "Novo vídeo", desc: v.descricao || "", url: v.url || "" });
+  });
 
-      _lastDbSnapshot = JSON.parse(JSON.stringify(DB));
-      SUPABASE_DATA_READY = true;
-    }
+  // regras_categorias (id, numero, titulo) + regras_itens (id, categoria_id, subtitulo, conteudo)
+  REGRAS_DATA = { categorias: [] };
+  const regrasCats = data.regras_categorias || [];
+  const regrasItens = data.regras_itens || [];
+  REGRAS_DATA.categorias = regrasCats.map(c => ({
+    id: c.id, numero: c.numero, titulo: c.titulo,
+    itens: regrasItens.filter(i => i.categoria_id === c.id)
+      .map(i => ({ id: i.id, subtitulo: i.subtitulo || null, conteudo: i.conteudo || "" }))
+  }));
+
+  // comparativo_estados: tabela única (caracteristica, coluna, valor)
+  const compRows = [], compCols = [];
+  (data.comparativo_estados || []).forEach(r => {
+    if (!compRows.find(x => x.id === r.caracteristica)) compRows.push({ id: r.caracteristica, icon: "", label: r.caracteristica, cells: {} });
+    if (!compCols.find(x => x.id === r.coluna)) compCols.push({ id: r.coluna, html: r.coluna, tti360: /360/i.test(r.coluna) });
+    compRows.find(x => x.id === r.caracteristica).cells[r.coluna] = r.valor || "";
+  });
+  COMPARATIVO_DATA = { cols: compCols, rows: compRows };
+
+  _lastDbSnapshot = JSON.parse(JSON.stringify(DB));
+  SUPABASE_DATA_READY = true;
+}
 
     function mostrarFlashGlobal(msg, tipo = "ok") {
       const host = document.getElementById("detail-pane") || document.body;
@@ -6340,41 +6362,49 @@ let ATIVIDADE_PRESENCIAL = new Set();
     }
 
     function snapshotAllData() {
-      const cols = (COMPARATIVO_DATA.cols || []).map(c => ({ codigo: c.id, titulo: c.html, html_titulo: c.html, tti360: !!c.tti360 }));
-      const colIdByCode = {}; cols.forEach(c => colIdByCode[c.codigo] = c.codigo);
-      const rows = (COMPARATIVO_DATA.rows || []).map(r => ({ codigo: r.id, titulo: r.label, icone: r.icon }));
-      const rowIdByCode = {}; rows.forEach(r => rowIdByCode[r.codigo] = r.codigo);
-      const cells = [];
-      (COMPARATIVO_DATA.rows || []).forEach(r => Object.entries(r.cells || {}).forEach(([col, val]) => cells.push({ idlinha: r.id, idcoluna: col, valor: val, html: val })));
+      const comparativo_estados = [];
+      (COMPARATIVO_DATA.rows || []).forEach(r => {
+        (COMPARATIVO_DATA.cols || []).forEach(c => {
+          comparativo_estados.push({ caracteristica: r.label, coluna: c.id, valor: r.cells[c.id] || "" });
+        });
+      });
 
       return {
         mantenedoras: DB.mantenedoras,
         instituicoes: DB.instituicoes,
         polos: DB.polos,
-        locais_prova: DB.locais,
+        locais: DB.locais,
         cursos: CURSOS_CATALOGO,
-        instituicoes_cursos: Object.entries(INSTITUICOES_CURSOS_MAP).flatMap(([idinstituicao, ids]) => ids.map(idcurso => ({ idinstituicao: Number(idinstituicao), idcurso: Number(idcurso) }))),
-        cursos_estados: Object.entries(CURSOS_ESTADO_REAL).map(([idinstituicao, estado_real]) => ({ idinstituicao: Number(idinstituicao), estado_real })),
-        cursos_estados_manuais: CURSOS_ESTADOS_MANUAL.map(estado => ({ estado })),
-        curriculos: Object.entries(CURRICULOS).flatMap(([idcurso, arr]) => arr.map(c => ({ ...c, idcurso: Number(idcurso), idinst: c.idinst ?? null }))),
-        disciplinas: Object.entries(DISCIPLINAS).flatMap(([idcurso, arr]) => arr.map(d => ({ ...d, idcurso: Number(idcurso) }))),
-        curriculos_blocos_disciplinas: Object.entries(DISCIPLINAS_CURRICULO).flatMap(([idcurriculo, arr]) => arr.map((d, i) => ({ idcurriculo: Number(idcurriculo), iddisciplina: Number(d.id), nome: d.nome, ordem: d.ordem ?? i + 1 }))),
-        avas: Object.values(AVAS).flatMap(arr => arr),
-        cursos_avas: Object.entries(AVAS).flatMap(([idcurso, arr]) => arr.map(a => ({ idcurso: Number(idcurso), idava: Number(a.id), nome: a.nome }))),
-        curriculos_avas: Object.entries(AVAS_CURRICULO).flatMap(([idcurriculo, arr]) => arr.map(a => ({ idcurriculo: Number(idcurriculo), idava: Number(a.id), nome: a.nome }))),
-        certificados: Object.entries(CERTIFICADOS).flatMap(([idinstituicao, cursos]) => Object.entries(cursos).flatMap(([idcurso, arr]) => arr.map(c => ({ ...c, idinstituicao: Number(idinstituicao), idcurso: Number(idcurso) })))),
-        provas_impressas: Object.entries(PROVAS_IMPRESSAS).flatMap(([idinstituicao, cursos]) => Object.entries(cursos).flatMap(([idcurso, arr]) => arr.map(p => ({ ...p, idinstituicao: Number(idinstituicao), idcurso: Number(idcurso) })))),
+        tti_plus_instituicoes: Array.from(TTI_PLUS_INST).map(nome_abreviado => ({ nome_abreviado })),
+        tti_360_instituicoes: Array.from(TTI_360_INST).map(nome_abreviado => ({ nome_abreviado })),
+        cursos_uf_label: Object.entries(CURSOS_UF_LABEL).map(([estado, label]) => ({ estado, label })),
+        cursos_estado_real: Object.entries(CURSOS_ESTADO_REAL).map(([idinstituicao, estado_real]) => ({ idinstituicao: Number(idinstituicao), estado_real })),
+        curriculos: Object.entries(CURRICULOS).flatMap(([idcurso, arr]) => arr.map(c => ({
+          idcurriculo: c.id, idcurso: Number(idcurso), nome: c.nome, idinst: c.idinst ?? null,
+          carga_presencial: c.carga_presencial, carga_distancia: c.carga_distancia, carga_total: c.carga_total
+        }))),
+        disciplinas: Object.entries(DISCIPLINAS).flatMap(([idcurso, arr]) => arr.map(d => ({ idcurso: Number(idcurso), iddisciplina: d.id, nome: d.nome }))),
+        disciplinas_curriculo: Object.entries(DISCIPLINAS_CURRICULO).flatMap(([idcurriculo, arr]) => arr.map(d => ({ idcurriculo: Number(idcurriculo), iddisciplina: d.id, nome: d.nome }))),
+        avas: Object.entries(AVAS).flatMap(([idcurso, arr]) => arr.map(a => ({ idcurso: Number(idcurso), idava: a.id, nome: a.nome }))),
+        avas_curriculo: Object.entries(AVAS_CURRICULO).flatMap(([idcurriculo, arr]) => arr.map(a => ({ idcurriculo: Number(idcurriculo), idava: a.id, nome: a.nome }))),
+        certificados: Object.entries(CERTIFICADOS).flatMap(([idinstituicao, cursos]) => Object.entries(cursos).flatMap(([idcurso, arr]) => arr.map(c => ({ idinstituicao: Number(idinstituicao), idcurso: Number(idcurso), idcertificado: c.id, nome: c.nome })))),
+        provas_impressas: Object.entries(PROVAS_IMPRESSAS).flatMap(([idinstituicao, cursos]) => Object.entries(cursos).flatMap(([idcurso, arr]) => arr.map(p => ({ idinstituicao: Number(idinstituicao), idcurso: Number(idcurso), idprova: p.id, nome: p.nome, iddisciplina: p.iddisciplina })))),
         atividade_presencial: Array.from(ATIVIDADE_PRESENCIAL).map(v => { const [idinstituicao,idcurso]=String(v).split("-"); return { idinstituicao:Number(idinstituicao), idcurso:Number(idcurso) }; }),
-        portarias: Object.entries(PORTARIAS_DATA).map(([uf,dados]) => ({ uf, dados })),
-        tutorial_categorias: Object.entries(TUTORIAIS).map(([codigo,c],i) => ({ id:c.id, codigo, nome:c.label || codigo, titulo:c.titulo || c.label || codigo, descricao:c.desc || "", icone:c.icon || "📁", ordem:i+1 })),
-        tutorial_videos: Object.entries(TUTORIAIS).flatMap(([codigo,c]) => c.videos.map((v,i) => ({ id:v.id, codigo, idcategoria:c.id, tag:v.tag || "", titulo:v.titulo, descricao:v.desc || "", url:v.url || "", ordem:i+1 }))),
-        regras_categorias: REGRAS_DATA.categorias || [],
-        regras_topicos: (REGRAS_DATA.categorias || []).flatMap(c => (c.subtitulos || []).map(t => ({ ...t, idcategoria:c.id }))),
-        regras_mensagens: (REGRAS_DATA.categorias || []).flatMap(c => (c.subtitulos || []).flatMap(t => (t.mensagens || []).map(m => ({ ...m, idtopico:t.id })))),
-        comparativo: [{ id:1, nome:"Comparativo de cursos" }],
-        comparativo_colunas: cols,
-        comparativo_linhas: rows,
-        comparativo_celulas: cells
+        portarias_estados: Object.entries(PORTARIAS_DATA).map(([uf, dados]) => ({
+          uf,
+          status: dados.status || "",
+          status_label: dados.statusLabel || "",
+          fundamentacao_legal_html: dados.fundamentacaoLegal || "",
+          nome_secretario: dados.responsaveis ? dados.responsaveis.nomeSecretario : "",
+          portaria_secretario: dados.responsaveis ? dados.responsaveis.portariaSecretario : "",
+          nome_diretor: dados.responsaveis ? dados.responsaveis.nomeDiretor : "",
+          portaria_diretor: dados.responsaveis ? dados.responsaveis.portariaDiretor : ""
+        })),
+        tutoriais_categorias: Object.entries(TUTORIAIS).map(([chave, c]) => ({ chave, icon: c.icon || "📁", label: c.label || chave, titulo: c.titulo || c.label || chave, descricao: c.desc || "" })),
+        tutoriais_videos: Object.entries(TUTORIAIS).flatMap(([chave, c]) => c.videos.map(v => ({ id: v.id, categoria_chave: chave, titulo: v.titulo, descricao: v.desc || "", tag: v.tag || "", url: v.url || "" }))),
+        regras_categorias: (REGRAS_DATA.categorias || []).map(c => ({ id: c.id, numero: c.numero, titulo: c.titulo })),
+        regras_itens: (REGRAS_DATA.categorias || []).flatMap(c => (c.itens || []).map(i => ({ id: i.id, categoria_id: c.id, subtitulo: i.subtitulo, conteudo: i.conteudo }))),
+        comparativo_estados
       };
     }
 
@@ -6505,6 +6535,7 @@ let ATIVIDADE_PRESENCIAL = new Set();
       item.subtitulo = novoSub === "" ? null : novoSub;
       item.conteudo = novoConteudo;
       syncRegrasDataScript();
+      resyncDataBlock("regras", REGRAS_DATA);
       renderRegrasList();
       const el = document.querySelector(`#regras-list-items .regras-item[onclick*="'${itemId}'"]`);
       selectRegrasItem(catId, itemId, el);
