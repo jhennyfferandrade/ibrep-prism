@@ -8969,19 +8969,27 @@ const PORTARIAS_DATA = {
               if (timerRedesenho) clearTimeout(timerRedesenho);
               timerRedesenho = setTimeout(() => {
                 // Reaplica os dados salvos por cima da memória (mesma função
-                // usada no carregamento inicial da página) e redesenha a
-                // tela em que este usuário estiver, se houver uma aberta.
+                // usada no carregamento inicial da página), para que a
+                // PRÓXIMA navegação do usuário já reflita o dado mais novo.
+                //
+                // ⚠️ NÃO forçamos mais irParaTela() aqui. Antes, qualquer
+                // alteração salva por QUALQUER pessoa em QUALQUER lugar do
+                // painel reconstruía a tela inteira de quem estava só
+                // olhando — isso é o que estava "roubando" os cliques:
+                // a pessoa clicava num item, a tela era redesenhada do zero
+                // por baixo do clique, e o item selecionado voltava a ser
+                // o anterior (ou nenhum). Como isso podia disparar a cada
+                // poucos segundos com várias pessoas editando ao mesmo
+                // tempo, dava a sensação de painel "alagando"/travando.
+                //
+                // Agora os dados novos ficam prontos em memória e aparecem
+                // sozinhos na próxima vez que a pessoa abrir aquela tela/
+                // item — sem interromper o que ela está fazendo agora.
                 try {
                   if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
                 } catch (e) {
                   console.warn("Supabase Realtime: erro ao aplicar dados recebidos.", e);
                 }
-                try {
-                  const telaAtual = sessionStorage.getItem("ibrep_tela_atual");
-                  if (telaAtual && telaAtual !== "welcome" && typeof irParaTela === "function") {
-                    irParaTela(telaAtual, false);
-                  }
-                } catch (e) { /* ignora */ }
               }, 500);
             }
           )
