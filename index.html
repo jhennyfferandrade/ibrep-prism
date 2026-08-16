@@ -5703,14 +5703,19 @@ function carregarDoLocalStorage(marcador) {
 }
 
 function aplicarDadosSalvos() {
+  const DIAG = [];
   const salvosDb = carregarDoLocalStorage("db");
   if (salvosDb) Object.assign(DB, salvosDb);
+  DIAG.push(["db", !!salvosDb, salvosDb && Object.keys(salvosDb).length]);
   const salvosPortarias = carregarDoLocalStorage("portarias");
   if (salvosPortarias) Object.assign(PORTARIAS_DATA, salvosPortarias);
+  DIAG.push(["portarias", !!salvosPortarias, salvosPortarias && Object.keys(salvosPortarias).length]);
   const salvosTutoriais = carregarDoLocalStorage("tutoriais");
   if (salvosTutoriais) Object.assign(TUTORIAIS, salvosTutoriais);
+  DIAG.push(["tutoriais", !!salvosTutoriais, salvosTutoriais && Object.keys(salvosTutoriais).length]);
   const salvosComparativo = carregarDoLocalStorage("comparativo");
   if (salvosComparativo) Object.assign(COMPARATIVO_DATA, salvosComparativo);
+  DIAG.push(["comparativo", !!salvosComparativo]);
   const salvosCursosEstados = carregarDoLocalStorage("cursosestados");
   if (salvosCursosEstados && Array.isArray(salvosCursosEstados)) {
     CURSOS_ESTADOS_MANUAL.length = 0;
@@ -5726,11 +5731,20 @@ function aplicarDadosSalvos() {
     } else {
       Object.assign(REGRAS_DATA, salvosRegras);
     }
-    syncRegrasDataScript();
+    // 🔧 Antes chamava syncRegrasDataScript() aqui, o que tentava REGRAVAR
+    // no Supabase toda vez que a página só estava sendo carregada (mesmo
+    // por visitantes/funcionários sem sessão de admin). Agora só
+    // atualiza a tag <script id="regras-data"> localmente, sem gravar.
+    try {
+      const el = document.getElementById("regras-data");
+      if (el) el.textContent = JSON.stringify(REGRAS_DATA);
+    } catch (e) { /* noop */ }
   }
+  DIAG.push(["regras", !!salvosRegras]);
   const aplicarObjeto = (marcador, alvo) => {
     const salvo = carregarDoLocalStorage(marcador);
     if (salvo) Object.assign(alvo, salvo);
+    DIAG.push([marcador, !!salvo, salvo && typeof salvo === "object" ? Object.keys(salvo).length : undefined]);
   };
   const aplicarArray = (marcador, alvo) => {
     const salvo = carregarDoLocalStorage(marcador);
@@ -5738,6 +5752,7 @@ function aplicarDadosSalvos() {
       alvo.length = 0;
       alvo.push(...salvo);
     }
+    DIAG.push([marcador, !!salvo, Array.isArray(salvo) ? salvo.length : undefined]);
   };
   const aplicarSet = (marcador, alvo) => {
     const salvo = carregarDoLocalStorage(marcador);
@@ -5745,6 +5760,7 @@ function aplicarDadosSalvos() {
       alvo.clear();
       salvo.forEach(v => alvo.add(v));
     }
+    DIAG.push([marcador, !!salvo, Array.isArray(salvo) ? salvo.length : undefined]);
   };
   aplicarObjeto("cursosuflabel", CURSOS_UF_LABEL);
   aplicarObjeto("cursosestadoreal", CURSOS_ESTADO_REAL);
@@ -5762,6 +5778,8 @@ function aplicarDadosSalvos() {
   aplicarObjeto("certificados", CERTIFICADOS);
   aplicarObjeto("provasimpressas", PROVAS_IMPRESSAS);
   aplicarSet("atividadepresencial", ATIVIDADE_PRESENCIAL);
+  console.log("🔍 Diagnóstico de carregamento do painel_dados (chave / encontrado / itens):");
+  console.table(DIAG.map(([chave, encontrado, itens]) => ({ chave, encontrado, itens })));
 }
 
 aplicarDadosSalvos();
