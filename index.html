@@ -4393,6 +4393,15 @@ function selectEstado(uf) {
   pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}</div>` : ""}\n        </div>\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title">Fundamentação Legal</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title">Secretário e Diretor Responsáveis</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.naoDestituicao ? `\n        <div class="port-section">\n          <div class="port-section-title">Situação de Não Destituição</div>\n          <div class="port-section-text">${dados.naoDestituicao}</div>\n        </div>` : ""}\n        ${dados.parecerInstituicao ? `\n        <div class="port-section">\n          <div class="port-section-title">Parecer da Instituição</div>\n          <div class="port-section-text">${dados.parecerInstituicao}</div>\n        </div>` : ""}\n        ${dados.parecerConselho ? `\n        <div class="port-section">\n          <div class="port-section-title">Parecer do Conselho</div>\n          <div class="port-section-text">${dados.parecerConselho}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>\n          ${!dados.responsaveis ? `<button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>` : ""}\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
 }
 
+function tocarTutVideo(btn) {
+  const thumb = btn.closest(".tut-video-thumb");
+  if (!thumb) return;
+  const url = decodeURIComponent(thumb.getAttribute("data-url") || "");
+  if (!url) return;
+  thumb.innerHTML = `<iframe src="${url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+}
+
+    
 function filterTutorials(q) {
   q = q.trim().toLowerCase();
   if (!q) {
@@ -4419,7 +4428,7 @@ function filterTutorials(q) {
   let html = `\n    <div class="tut-content-title">🔍 Resultados para "${q}"</div>\n    <div class="tut-content-desc">${resultados.length} tutorial(is) encontrado(s)</div>\n    <div class="tut-video-grid">`;
   resultados.forEach(v => {
     if (v.url) {
-      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb">\n          <iframe src="${v.url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n        </div>\n      </div>`;
+      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb" data-url="${encodeURIComponent(v.url)}">\n          <div class="play-overlay" onclick="tocarTutVideo(this)" style="cursor:pointer;font-size:40px;">▶️</div>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n        </div>\n      </div>`;
     } else {
       html += `<div class="tut-video-card">\n        <div class="tut-video-thumb" style="cursor:default">\n          <div class="play-overlay" style="flex-direction:column;gap:8px;font-size:14px;color:var(--roxo);font-weight:500">\n            <span style="font-size:36px">🎬</span>Em breve\n          </div>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n        </div>\n      </div>`;
     }
@@ -4452,7 +4461,7 @@ function setTutCat(btn, cat) {
   data.videos.forEach((v, idx) => {
     const editVideoBtn = adminMode ? `<button class="admin-edit-btn" style="margin-top:6px;" onclick="abrirEdicaoTutVideo('${cat}', ${idx})">✏️ Editar</button>\n             <button class="admin-danger-btn" style="margin-top:6px;margin-left:6px;" onclick="excluirTutVideo('${cat}', ${idx})">🗑️ Excluir</button>` : "";
     if (v.url) {
-      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb">\n          <iframe src="${v.url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n          ${editVideoBtn}\n        </div>\n      </div>`;
+      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb" data-url="${encodeURIComponent(v.url)}">\n          <div class="play-overlay" onclick="tocarTutVideo(this)" style="cursor:pointer;font-size:40px;">▶️</div>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n          ${editVideoBtn}\n        </div>\n      </div>`;
     } else {
       html += `<div class="tut-video-card">\n        <div class="tut-video-thumb" style="cursor:default">\n          <div class="play-overlay" style="flex-direction:column;gap:8px;font-size:14px;color:var(--roxo);font-weight:500">\n            <span style="font-size:36px">🎬</span>\n            Em breve\n          </div>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n          ${editVideoBtn}\n        </div>\n      </div>`;
     }
