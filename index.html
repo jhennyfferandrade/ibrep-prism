@@ -3722,6 +3722,32 @@ function comPrazoMaximo(promessa, ms) {
   return Promise.race([ promessa, new Promise((_, reject) => setTimeout(() => reject(new Error("tempo esgotado")), ms)) ]);
 }
 
+async function carregarComparativoDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respCols, respRows, respCells] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/comparativo_colunas?select=id,html,tti360,ordem&order=ordem.asc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/comparativo_linhas?select=id,icon,label,ordem&order=ordem.asc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/comparativo_estados?select=linha_id,coluna_id,valor`, { headers })
+  ]);
+  if (!respCols.ok || !respRows.ok || !respCells.ok) {
+    console.warn("Supabase: não foi possível carregar as tabelas do comparativo (status " + respCols.status + "/" + respRows.status + "/" + respCells.status + ").");
+    return null;
+  }
+  const colsRaw = await respCols.json();
+  const rowsRaw = await respRows.json();
+  const cellsRaw = await respCells.json();
+  const cols = colsRaw.map(c => ({ id: c.id, html: c.html, tti360: !!c.tti360 }));
+  const rows = rowsRaw.map(r => ({ id: r.id, icon: r.icon, label: r.label, cells: {} }));
+  cellsRaw.forEach(cell => {
+    const row = rows.find(r => r.id === cell.linha_id);
+    if (row) row.cells[cell.coluna_id] = cell.valor;
+  });
+  return { cols, rows };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -3742,6 +3768,14 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao conectar (ou demorou demais). Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const comparativo = await comPrazoMaximo(carregarComparativoDasTabelas(), 6e3);
+    if (comparativo) {
+      localStorage.setItem(LS_PREFIX + "comparativo", JSON.stringify(comparativo));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar o comparativo das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
@@ -5675,11 +5709,17 @@ async function salvarNoSupabase(chave, valor) {
     return;
   }
   try {
-    const data = await supabaseRpc("salvar_dado_painel", {
-      p_admin_senha: adminSenha,
-      p_chave: chave,
-      p_valor: valor
-    });
+    const data = chave === "comparativo"
+      ? await supabaseRpc("salvar_comparativo", {
+          p_admin_senha: adminSenha,
+          p_cols: valor.cols,
+          p_rows: valor.rows
+        })
+      : await supabaseRpc("salvar_dado_painel", {
+          p_admin_senha: adminSenha,
+          p_chave: chave,
+          p_valor: valor
+        });
     if (!data.ok) {
       console.error(`Supabase: falha ao salvar "${chave}" na nuvem. ${data.erro || ""}`);
     } else {
@@ -6416,6 +6456,38 @@ function iniciarSincronizacaoEmTempoReal() {
         }
       }, 500);
     }).subscribe();
+
+    let timerRedesenhoComp = null;
+    const agendarRecargaComparativo = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["comparativo"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoComp) clearTimeout(timerRedesenhoComp);
+      timerRedesenhoComp = setTimeout(async () => {
+        try {
+          const comparativo = await carregarComparativoDasTabelas();
+          if (comparativo) {
+            localStorage.setItem(LS_PREFIX + "comparativo", JSON.stringify(comparativo));
+            if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar o comparativo.", e);
+        }
+      }, 500);
+    };
+    client.channel("comparativo_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "comparativo_colunas"
+    }, agendarRecargaComparativo).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "comparativo_linhas"
+    }, agendarRecargaComparativo).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "comparativo_estados"
+    }, agendarRecargaComparativo).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
