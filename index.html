@@ -3780,6 +3780,66 @@ async function carregarDbDasTabelas() {
   };
 }
 
+async function carregarCursosDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respCursos, respDisc, respAvas, respCurr, respDiscCurr, respAvasCurr] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/cursos?select=idcurso,nome`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/disciplinas?select=idcurso,iddisciplina,nome`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/avas?select=idcurso,idava,nome`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/curriculos?select=idcurriculo,idcurso,nome,idinst,carga_total,carga_distancia,carga_presencial`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/disciplinas_curriculo?select=idcurriculo,iddisciplina,nome`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/avas_curriculo?select=idcurriculo,idava,nome`, { headers })
+  ]);
+  if (!respCursos.ok || !respDisc.ok || !respAvas.ok || !respCurr.ok || !respDiscCurr.ok || !respAvasCurr.ok) {
+    console.warn("Supabase: não foi possível carregar as tabelas de cursos/disciplinas/avas/currículos.");
+    return null;
+  }
+  const cursos = await respCursos.json();
+  const disc = await respDisc.json();
+  const avas = await respAvas.json();
+  const curr = await respCurr.json();
+  const discCurr = await respDiscCurr.json();
+  const avasCurr = await respAvasCurr.json();
+
+  const agrupar = (linhas, campoGrupo, campoId) => {
+    const out = {};
+    linhas.forEach(l => {
+      const grupo = String(l[campoGrupo]);
+      if (!out[grupo]) out[grupo] = [];
+      const item = { id: l[campoId], nome: l.nome };
+      out[grupo].push(item);
+    });
+    return out;
+  };
+
+  const curso132 = cursos.find(c => c.idcurso === 132);
+  const curso144 = cursos.find(c => c.idcurso === 144);
+  const cursoslivres = cursos.filter(c => c.idcurso !== 132 && c.idcurso !== 144).map(c => ({ id: c.idcurso, nome: c.nome }));
+
+  const curriculosAgrupado = {};
+  curr.forEach(l => {
+    const grupo = String(l.idcurso);
+    if (!curriculosAgrupado[grupo]) curriculosAgrupado[grupo] = [];
+    const item = { id: l.idcurriculo, nome: l.nome, idinst: l.idinst, carga_total: l.carga_total, carga_distancia: l.carga_distancia };
+    if (l.carga_presencial !== null && l.carga_presencial !== undefined) item.carga_presencial = l.carga_presencial;
+    curriculosAgrupado[grupo].push(item);
+  });
+
+  return {
+    cursoslivres,
+    curso132: curso132 ? { id: curso132.idcurso, nome: curso132.nome } : { id: 132, nome: "" },
+    curso144: curso144 ? { id: curso144.idcurso, nome: curso144.nome } : { id: 144, nome: "" },
+    disciplinas: agrupar(disc, "idcurso", "iddisciplina"),
+    avas: agrupar(avas, "idcurso", "idava"),
+    curriculos: curriculosAgrupado,
+    disciplinascurriculo: agrupar(discCurr, "idcurriculo", "iddisciplina"),
+    avascurriculo: agrupar(avasCurr, "idcurriculo", "idava")
+  };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -3816,6 +3876,21 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar instituições/polos/locais/mantenedoras das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const cursos = await comPrazoMaximo(carregarCursosDasTabelas(), 6e3);
+    if (cursos) {
+      localStorage.setItem(LS_PREFIX + "cursoslivres", JSON.stringify(cursos.cursoslivres));
+      localStorage.setItem(LS_PREFIX + "curso132", JSON.stringify(cursos.curso132));
+      localStorage.setItem(LS_PREFIX + "curso144", JSON.stringify(cursos.curso144));
+      localStorage.setItem(LS_PREFIX + "disciplinas", JSON.stringify(cursos.disciplinas));
+      localStorage.setItem(LS_PREFIX + "avas", JSON.stringify(cursos.avas));
+      localStorage.setItem(LS_PREFIX + "curriculos", JSON.stringify(cursos.curriculos));
+      localStorage.setItem(LS_PREFIX + "disciplinascurriculo", JSON.stringify(cursos.disciplinascurriculo));
+      localStorage.setItem(LS_PREFIX + "avascurriculo", JSON.stringify(cursos.avascurriculo));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar cursos/disciplinas/avas/currículos das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
