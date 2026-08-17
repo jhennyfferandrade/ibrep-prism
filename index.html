@@ -3840,6 +3840,35 @@ async function carregarCursosDasTabelas() {
   };
 }
 
+async function carregarEstadosDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respLabel, respReal, respGrid] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/cursos_uf_label?select=estado,label`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/cursos_estado_real?select=idinstituicao,estado_real`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/estados_grid?select=uf,nome,row_pos,col_pos`, { headers })
+  ]);
+  if (!respLabel.ok || !respReal.ok || !respGrid.ok) {
+    console.warn("Supabase: não foi possível carregar cursos_uf_label/cursos_estado_real/estados_grid.");
+    return null;
+  }
+  const labelRows = await respLabel.json();
+  const realRows = await respReal.json();
+  const gridRows = await respGrid.json();
+
+  const cursosuflabel = {};
+  labelRows.forEach(r => { cursosuflabel[r.estado] = r.label; });
+
+  const cursosestadoreal = {};
+  realRows.forEach(r => { cursosestadoreal[String(r.idinstituicao)] = r.estado_real; });
+
+  const estadosgrid = gridRows.map(r => ({ uf: r.uf, col: r.col_pos, row: r.row_pos, nome: r.nome }));
+
+  return { cursosuflabel, cursosestadoreal, estadosgrid };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -3891,6 +3920,16 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar cursos/disciplinas/avas/currículos das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const estados = await comPrazoMaximo(carregarEstadosDasTabelas(), 6e3);
+    if (estados) {
+      localStorage.setItem(LS_PREFIX + "cursosuflabel", JSON.stringify(estados.cursosuflabel));
+      localStorage.setItem(LS_PREFIX + "cursosestadoreal", JSON.stringify(estados.cursosestadoreal));
+      localStorage.setItem(LS_PREFIX + "estadosgrid", JSON.stringify(estados.estadosgrid));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar cursos_uf_label/cursos_estado_real/estados_grid das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
