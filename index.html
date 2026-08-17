@@ -3748,6 +3748,38 @@ async function carregarComparativoDasTabelas() {
   return { cols, rows };
 }
 
+async function carregarDbDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respMant, respInst, respPolos, respLocais] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/mantenedoras?select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/instituicoes?select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/polos?select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/locais?select=*`, { headers })
+  ]);
+  if (!respMant.ok || !respInst.ok || !respPolos.ok || !respLocais.ok) {
+    console.warn("Supabase: não foi possível carregar mantenedoras/instituições/polos/locais (status " + respMant.status + "/" + respInst.status + "/" + respPolos.status + "/" + respLocais.status + ").");
+    return null;
+  }
+  const mantenedoras = await respMant.json();
+  const instituicoes = await respInst.json();
+  const polos = await respPolos.json();
+  const locais = await respLocais.json();
+  const limparNulos = (obj) => {
+    const out = {};
+    Object.keys(obj).forEach(k => { if (obj[k] !== null) out[k] = obj[k]; });
+    return out;
+  };
+  return {
+    mantenedoras: mantenedoras.map(limparNulos),
+    instituicoes: instituicoes.map(limparNulos),
+    polos: polos.map(limparNulos),
+    locais: locais.map(limparNulos)
+  };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -3776,6 +3808,14 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar o comparativo das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const db = await comPrazoMaximo(carregarDbDasTabelas(), 6e3);
+    if (db) {
+      localStorage.setItem(LS_PREFIX + "db", JSON.stringify(db));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar instituições/polos/locais/mantenedoras das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
@@ -5715,6 +5755,14 @@ async function salvarNoSupabase(chave, valor) {
           p_cols: valor.cols,
           p_rows: valor.rows
         })
+      : chave === "db"
+      ? await supabaseRpc("salvar_db", {
+          p_admin_senha: adminSenha,
+          p_mantenedoras: valor.mantenedoras,
+          p_instituicoes: valor.instituicoes,
+          p_polos: valor.polos,
+          p_locais: valor.locais
+        })
       : await supabaseRpc("salvar_dado_painel", {
           p_admin_senha: adminSenha,
           p_chave: chave,
@@ -6488,6 +6536,42 @@ function iniciarSincronizacaoEmTempoReal() {
       schema: "public",
       table: "comparativo_estados"
     }, agendarRecargaComparativo).subscribe();
+
+    let timerRedesenhoDb = null;
+    const agendarRecargaDb = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["db"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoDb) clearTimeout(timerRedesenhoDb);
+      timerRedesenhoDb = setTimeout(async () => {
+        try {
+          const db = await carregarDbDasTabelas();
+          if (db) {
+            localStorage.setItem(LS_PREFIX + "db", JSON.stringify(db));
+            if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar mantenedoras/instituições/polos/locais.", e);
+        }
+      }, 500);
+    };
+    client.channel("db_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "mantenedoras"
+    }, agendarRecargaDb).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "instituicoes"
+    }, agendarRecargaDb).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "polos"
+    }, agendarRecargaDb).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "locais"
+    }, agendarRecargaDb).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
