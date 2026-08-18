@@ -3947,6 +3947,53 @@ async function carregarProvasImpressasDasTabelas() {
   return out;
 }
 
+async function carregarCertificadosDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/certificados?select=idinstituicao,idcurso,idcertificado,nome&order=idcertificado.asc`, { headers });
+  if (!resp.ok) {
+    console.warn("Supabase: não foi possível carregar certificados (status " + resp.status + ").");
+    return null;
+  }
+  const linhas = await resp.json();
+  const out = {};
+  linhas.forEach(l => {
+    const inst = String(l.idinstituicao);
+    const curso = String(l.idcurso);
+    if (!out[inst]) out[inst] = {};
+    if (!out[inst][curso]) out[inst][curso] = [];
+    out[inst][curso].push({ id: l.idcertificado, nome: l.nome });
+  });
+  return out;
+}
+
+async function carregarCursosEstadosDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respEst, respExc] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/cursos_estados_manual?select=nome`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/cursos_excluidos_por_inst?select=idinstituicao,idcurso`, { headers })
+  ]);
+  if (!respEst.ok || !respExc.ok) {
+    console.warn("Supabase: não foi possível carregar cursos_estados_manual/cursos_excluidos_por_inst.");
+    return null;
+  }
+  const estRows = await respEst.json();
+  const excRows = await respExc.json();
+  const cursosestados = estRows.map(r => r.nome);
+  const cursosexcluidos = {};
+  excRows.forEach(r => {
+    const inst = String(r.idinstituicao);
+    if (!cursosexcluidos[inst]) cursosexcluidos[inst] = [];
+    cursosexcluidos[inst].push(r.idcurso);
+  });
+  return { cursosestados, cursosexcluidos };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -4032,6 +4079,23 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar provas impressas das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const certificados = await comPrazoMaximo(carregarCertificadosDasTabelas(), 6e3);
+    if (certificados) {
+      localStorage.setItem(LS_PREFIX + "certificados", JSON.stringify(certificados));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar certificados das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const ce = await comPrazoMaximo(carregarCursosEstadosDasTabelas(), 6e3);
+    if (ce) {
+      localStorage.setItem(LS_PREFIX + "cursosestados", JSON.stringify(ce.cursosestados));
+      localStorage.setItem(LS_PREFIX + "cursosexcluidos", JSON.stringify(ce.cursosexcluidos));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar cursosestados/cursosexcluidos das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
@@ -5989,6 +6053,16 @@ async function salvarNoSupabase(chave, valor) {
           p_admin_senha: adminSenha,
           p_estados: valor
         })
+      : chave === "cursosestados"
+      ? await supabaseRpc("salvar_cursos_estados_manual", {
+          p_admin_senha: adminSenha,
+          p_lista: valor
+        })
+      : chave === "cursosexcluidos"
+      ? await supabaseRpc("salvar_cursos_excluidos", {
+          p_admin_senha: adminSenha,
+          p_dados: valor
+        })
       : await supabaseRpc("salvar_dado_painel", {
           p_admin_senha: adminSenha,
           p_chave: chave,
@@ -6850,6 +6924,35 @@ function iniciarSincronizacaoEmTempoReal() {
       schema: "public",
       table: "portarias_estados"
     }, agendarRecargaPortarias).subscribe();
+
+    let timerRedesenhoCE = null;
+    const agendarRecargaCursosEstados = () => {
+      const agora = Date.now();
+      const ultimoLocal = Math.max(ULTIMO_SALVAMENTO_LOCAL["cursosestados"] || 0, ULTIMO_SALVAMENTO_LOCAL["cursosexcluidos"] || 0);
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoCE) clearTimeout(timerRedesenhoCE);
+      timerRedesenhoCE = setTimeout(async () => {
+        try {
+          const ce = await carregarCursosEstadosDasTabelas();
+          if (ce) {
+            localStorage.setItem(LS_PREFIX + "cursosestados", JSON.stringify(ce.cursosestados));
+            localStorage.setItem(LS_PREFIX + "cursosexcluidos", JSON.stringify(ce.cursosexcluidos));
+            if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar cursosestados/cursosexcluidos.", e);
+        }
+      }, 500);
+    };
+    client.channel("cursosestados_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "cursos_estados_manual"
+    }, agendarRecargaCursosEstados).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "cursos_excluidos_por_inst"
+    }, agendarRecargaCursosEstados).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
