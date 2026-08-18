@@ -3925,6 +3925,28 @@ async function carregarPortariasDasTabelas() {
   return out;
 }
 
+async function carregarProvasImpressasDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/provas_impressas?select=idinstituicao,idcurso,idprova,nome,iddisciplina&order=idprova.asc`, { headers });
+  if (!resp.ok) {
+    console.warn("Supabase: não foi possível carregar provas_impressas (status " + resp.status + ").");
+    return null;
+  }
+  const linhas = await resp.json();
+  const out = {};
+  linhas.forEach(l => {
+    const inst = String(l.idinstituicao);
+    const curso = String(l.idcurso);
+    if (!out[inst]) out[inst] = {};
+    if (!out[inst][curso]) out[inst][curso] = [];
+    out[inst][curso].push({ id: l.idprova, nome: l.nome, iddisciplina: l.iddisciplina });
+  });
+  return out;
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -4002,6 +4024,14 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar portarias das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const provas = await comPrazoMaximo(carregarProvasImpressasDasTabelas(), 6e3);
+    if (provas) {
+      localStorage.setItem(LS_PREFIX + "provasimpressas", JSON.stringify(provas));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar provas impressas das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
