@@ -3869,6 +3869,33 @@ async function carregarEstadosDasTabelas() {
   return { cursosuflabel, cursosestadoreal, estadosgrid };
 }
 
+async function carregarTutoriaisDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respCat, respVid] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_videos?select=id,categoria_chave,titulo,descricao,tag,url&order=id.asc`, { headers })
+  ]);
+  if (!respCat.ok || !respVid.ok) {
+    console.warn("Supabase: não foi possível carregar tutoriais_categorias/tutoriais_videos.");
+    return null;
+  }
+  const categorias = await respCat.json();
+  const videos = await respVid.json();
+  const out = {};
+  categorias.forEach(c => {
+    out[c.chave] = { icon: c.icon, label: c.label, titulo: c.titulo, desc: c.descricao, videos: [] };
+  });
+  videos.forEach(v => {
+    if (out[v.categoria_chave]) {
+      out[v.categoria_chave].videos.push({ tag: v.tag, url: v.url, desc: v.descricao, titulo: v.titulo });
+    }
+  });
+  return out;
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -3930,6 +3957,14 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar cursos_uf_label/cursos_estado_real/estados_grid das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const tutoriais = await comPrazoMaximo(carregarTutoriaisDasTabelas(), 6e3);
+    if (tutoriais) {
+      localStorage.setItem(LS_PREFIX + "tutoriais", JSON.stringify(tutoriais));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar tutoriais das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
@@ -5877,6 +5912,11 @@ async function salvarNoSupabase(chave, valor) {
           p_polos: valor.polos,
           p_locais: valor.locais
         })
+      : chave === "tutoriais"
+      ? await supabaseRpc("salvar_tutoriais", {
+          p_admin_senha: adminSenha,
+          p_categorias: valor
+        })
       : await supabaseRpc("salvar_dado_painel", {
           p_admin_senha: adminSenha,
           p_chave: chave,
@@ -6686,6 +6726,34 @@ function iniciarSincronizacaoEmTempoReal() {
       schema: "public",
       table: "locais"
     }, agendarRecargaDb).subscribe();
+
+    let timerRedesenhoTutoriais = null;
+    const agendarRecargaTutoriais = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["tutoriais"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoTutoriais) clearTimeout(timerRedesenhoTutoriais);
+      timerRedesenhoTutoriais = setTimeout(async () => {
+        try {
+          const tutoriais = await carregarTutoriaisDasTabelas();
+          if (tutoriais) {
+            localStorage.setItem(LS_PREFIX + "tutoriais", JSON.stringify(tutoriais));
+            if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar tutoriais.", e);
+        }
+      }, 500);
+    };
+    client.channel("tutoriais_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "tutoriais_categorias"
+    }, agendarRecargaTutoriais).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "tutoriais_videos"
+    }, agendarRecargaTutoriais).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
