@@ -3896,6 +3896,35 @@ async function carregarTutoriaisDasTabelas() {
   return out;
 }
 
+async function carregarPortariasDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor`, { headers });
+  if (!resp.ok) {
+    console.warn("Supabase: não foi possível carregar portarias_estados (status " + resp.status + ").");
+    return null;
+  }
+  const linhas = await resp.json();
+  const out = {};
+  linhas.forEach(l => {
+    const item = {
+      responsaveis: {
+        nomeDiretor: l.nome_diretor,
+        nomeSecretario: l.nome_secretario,
+        portariaDiretor: l.portaria_diretor,
+        portariaSecretario: l.portaria_secretario
+      },
+      fundamentacaoLegal: l.fundamentacao_legal_html
+    };
+    if (l.status !== null && l.status !== undefined) item.status = l.status;
+    if (l.status_label !== null && l.status_label !== undefined) item.statusLabel = l.status_label;
+    out[l.uf] = item;
+  });
+  return out;
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -3965,6 +3994,14 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar tutoriais das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const portarias = await comPrazoMaximo(carregarPortariasDasTabelas(), 6e3);
+    if (portarias) {
+      localStorage.setItem(LS_PREFIX + "portarias", JSON.stringify(portarias));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar portarias das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
@@ -5917,6 +5954,11 @@ async function salvarNoSupabase(chave, valor) {
           p_admin_senha: adminSenha,
           p_categorias: valor
         })
+      : chave === "portarias"
+      ? await supabaseRpc("salvar_portarias", {
+          p_admin_senha: adminSenha,
+          p_estados: valor
+        })
       : await supabaseRpc("salvar_dado_painel", {
           p_admin_senha: adminSenha,
           p_chave: chave,
@@ -6754,6 +6796,30 @@ function iniciarSincronizacaoEmTempoReal() {
       schema: "public",
       table: "tutoriais_videos"
     }, agendarRecargaTutoriais).subscribe();
+
+    let timerRedesenhoPortarias = null;
+    const agendarRecargaPortarias = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["portarias"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoPortarias) clearTimeout(timerRedesenhoPortarias);
+      timerRedesenhoPortarias = setTimeout(async () => {
+        try {
+          const portarias = await carregarPortariasDasTabelas();
+          if (portarias) {
+            localStorage.setItem(LS_PREFIX + "portarias", JSON.stringify(portarias));
+            if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar portarias.", e);
+        }
+      }, 500);
+    };
+    client.channel("portarias_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "portarias_estados"
+    }, agendarRecargaPortarias).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
