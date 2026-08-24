@@ -3754,10 +3754,10 @@ async function carregarDbDasTabelas() {
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
   const [respMant, respInst, respPolos, respLocais] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/mantenedoras?select=*`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/instituicoes?select=*`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/polos?select=*`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/locais?select=*`, { headers })
+    fetch(`${SUPABASE_URL}/rest/v1/mantenedoras?select=*&order=idmantenedora.asc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/instituicoes?select=*&order=idinstituicao.asc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/polos?select=*&order=idpolo.asc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/locais?select=*&order=idlocal.asc`, { headers })
   ]);
   if (!respMant.ok || !respInst.ok || !respPolos.ok || !respLocais.ok) {
     console.warn("Supabase: não foi possível carregar mantenedoras/instituições/polos/locais (status " + respMant.status + "/" + respInst.status + "/" + respPolos.status + "/" + respLocais.status + ").");
@@ -3875,7 +3875,7 @@ async function carregarTutoriaisDasTabelas() {
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
   const [respCat, respVid] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao&order=chave.asc`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/tutoriais_videos?select=id,categoria_chave,titulo,descricao,tag,url&order=id.asc`, { headers })
   ]);
   if (!respCat.ok || !respVid.ok) {
