@@ -3875,7 +3875,7 @@ async function carregarTutoriaisDasTabelas() {
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
   const [respCat, respVid] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao,ordem&order=ordem.asc.nullslast`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/tutoriais_videos?select=id,categoria_chave,titulo,descricao,tag,url&order=id.asc`, { headers })
   ]);
   if (!respCat.ok || !respVid.ok) {
