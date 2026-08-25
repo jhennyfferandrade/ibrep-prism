@@ -3754,10 +3754,10 @@ async function carregarDbDasTabelas() {
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
   const [respMant, respInst, respPolos, respLocais] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/mantenedoras?select=*&order=idmantenedora.asc`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/instituicoes?select=*&order=idinstituicao.asc`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/polos?select=*&order=idpolo.asc`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/locais?select=*&order=idlocal.asc`, { headers })
+    fetch(`${SUPABASE_URL}/rest/v1/mantenedoras?select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/instituicoes?select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/polos?select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/locais?select=*`, { headers })
   ]);
   if (!respMant.ok || !respInst.ok || !respPolos.ok || !respLocais.ok) {
     console.warn("Supabase: não foi possível carregar mantenedoras/instituições/polos/locais (status " + respMant.status + "/" + respInst.status + "/" + respPolos.status + "/" + respLocais.status + ").");
@@ -3875,7 +3875,7 @@ async function carregarTutoriaisDasTabelas() {
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
   const [respCat, respVid] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao&order=chave.asc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/tutoriais_categorias?select=chave,icon,label,titulo,descricao`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/tutoriais_videos?select=id,categoria_chave,titulo,descricao,tag,url&order=id.asc`, { headers })
   ]);
   if (!respCat.ok || !respVid.ok) {
@@ -3994,6 +3994,37 @@ async function carregarCursosEstadosDasTabelas() {
   return { cursosestados, cursosexcluidos };
 }
 
+async function carregarRegrasDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respCat, respItens] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/regras_categorias?select=id,numero,titulo`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/regras_itens?select=id,categoria_id,subtitulo,conteudo,ordem&order=ordem.asc`, { headers })
+  ]);
+  if (!respCat.ok || !respItens.ok) {
+    console.warn("Supabase: não foi possível carregar regras_categorias/regras_itens.");
+    return null;
+  }
+  const categorias = await respCat.json();
+  const itens = await respItens.json();
+  categorias.sort((a, b) => {
+    const na = parseFloat(a.numero), nb = parseFloat(b.numero);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return String(a.numero).localeCompare(String(b.numero));
+  });
+  const out = categorias.map(c => ({
+    id: c.id,
+    numero: c.numero,
+    titulo: c.titulo,
+    itens: itens
+      .filter(i => i.categoria_id === c.id)
+      .map(i => ({ id: i.id, conteudo: i.conteudo, subtitulo: i.subtitulo }))
+  }));
+  return { categorias: out };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -4096,6 +4127,14 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar cursosestados/cursosexcluidos das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const regras = await comPrazoMaximo(carregarRegrasDasTabelas(), 6e3);
+    if (regras) {
+      localStorage.setItem(LS_PREFIX + "regras", JSON.stringify(regras));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar regras das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
@@ -6020,7 +6059,7 @@ function resyncDataBlock(marcador, objetoAtual) {
 }
 
 function syncRegrasDataScript() {
-  salvarNoLocalStorage("regras", REGRAS_DATA);
+  resyncDataBlock("regras", REGRAS_DATA);
 }
 
 async function salvarNoSupabase(chave, valor) {
@@ -6062,6 +6101,11 @@ async function salvarNoSupabase(chave, valor) {
       ? await supabaseRpc("salvar_cursos_excluidos", {
           p_admin_senha: adminSenha,
           p_dados: valor
+        })
+      : chave === "regras"
+      ? await supabaseRpc("salvar_regras", {
+          p_admin_senha: adminSenha,
+          p_categorias: valor.categorias
         })
       : await supabaseRpc("salvar_dado_painel", {
           p_admin_senha: adminSenha,
@@ -6953,6 +6997,37 @@ function iniciarSincronizacaoEmTempoReal() {
       schema: "public",
       table: "cursos_excluidos_por_inst"
     }, agendarRecargaCursosEstados).subscribe();
+
+    let timerRedesenhoRegras = null;
+    const agendarRecargaRegras = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["regras"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoRegras) clearTimeout(timerRedesenhoRegras);
+      timerRedesenhoRegras = setTimeout(async () => {
+        try {
+          const regras = await carregarRegrasDasTabelas();
+          if (regras) {
+            localStorage.setItem(LS_PREFIX + "regras", JSON.stringify(regras));
+            if (typeof REGRAS_DATA !== "undefined") REGRAS_DATA.categorias = regras.categorias;
+            if (typeof initRegras === "function" && document.getElementById("regras-screen").classList.contains("open")) {
+              initRegras();
+            }
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar regras.", e);
+        }
+      }, 500);
+    };
+    client.channel("regras_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "regras_categorias"
+    }, agendarRecargaRegras).on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "regras_itens"
+    }, agendarRecargaRegras).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
