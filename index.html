@@ -4025,6 +4025,30 @@ async function carregarRegrasDasTabelas() {
   return { categorias: out };
 }
 
+async function carregarTtiDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const [respPlus, resp360, respAtiv] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/tti_plus_instituicoes?select=nome_abreviado`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/tti_360_instituicoes?select=nome_abreviado`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/atividade_presencial?select=idinstituicao,idcurso`, { headers })
+  ]);
+  if (!respPlus.ok || !resp360.ok || !respAtiv.ok) {
+    console.warn("Supabase: não foi possível carregar tti_plus_instituicoes/tti_360_instituicoes/atividade_presencial.");
+    return null;
+  }
+  const plusRows = await respPlus.json();
+  const rows360 = await resp360.json();
+  const ativRows = await respAtiv.json();
+  return {
+    ttiplusinst: plusRows.map(r => r.nome_abreviado),
+    tti360inst: rows360.map(r => r.nome_abreviado),
+    atividadepresencial: ativRows.map(r => `${r.idinstituicao}-${r.idcurso}`)
+  };
+}
+
 async function iniciarPainel() {
   try {
     const resp = await comPrazoMaximo(fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=chave,valor`, {
@@ -4135,6 +4159,16 @@ async function iniciarPainel() {
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar regras das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
+    const tti = await comPrazoMaximo(carregarTtiDasTabelas(), 6e3);
+    if (tti) {
+      localStorage.setItem(LS_PREFIX + "ttiplusinst", JSON.stringify(tti.ttiplusinst));
+      localStorage.setItem(LS_PREFIX + "tti360inst", JSON.stringify(tti.tti360inst));
+      localStorage.setItem(LS_PREFIX + "atividadepresencial", JSON.stringify(tti.atividadepresencial));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar ttiplusinst/tti360inst/atividadepresencial das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   const original = document.getElementById("app-main-script");
   if (original) {
