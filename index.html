@@ -6119,7 +6119,14 @@ async function salvarNoSupabase(chave, valor) {
       : chave === "tutoriais"
       ? await supabaseRpc("salvar_tutoriais", {
           p_admin_senha: adminSenha,
-          p_categorias: valor
+          p_categorias: Object.entries(valor).map(([chaveCat, cat]) => ({
+            chave: chaveCat,
+            icon: cat.icon,
+            label: cat.label,
+            titulo: cat.titulo,
+            desc: cat.desc,
+            videos: cat.videos
+          }))
         })
       : chave === "portarias"
       ? await supabaseRpc("salvar_portarias", {
