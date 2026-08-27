@@ -3890,7 +3890,7 @@ async function carregarTutoriaisDasTabelas() {
   });
   videos.forEach(v => {
     if (out[v.categoria_chave]) {
-      out[v.categoria_chave].videos.push({ tag: v.tag, url: v.url, desc: v.descricao, titulo: v.titulo });
+      out[v.categoria_chave].videos.push({ id: v.id, tag: v.tag, url: v.url, desc: v.descricao, titulo: v.titulo });
     }
   });
   return out;
