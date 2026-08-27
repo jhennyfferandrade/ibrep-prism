@@ -6157,6 +6157,25 @@ async function salvarNoSupabase(chave, valor) {
       console.error(`Supabase: falha ao salvar "${chave}" na nuvem. ${data.erro || ""}`);
     } else {
       console.log(`Supabase: "${chave}" sincronizado com a nuvem com sucesso.`);
+      if (chave === "tutoriais") {
+        // Sem isso, os vídeos recém-criados ficam sem "id" na memória local.
+        // Na próxima vez que salvar_tutoriais rodar, esses vídeos "sem id" fazem
+        // a função apagar os registros existentes e recriá-los com ids novos.
+        try {
+          const atualizados = await carregarTutoriaisDasTabelas();
+          if (atualizados) {
+            Object.keys(valor).forEach(k => delete valor[k]);
+            Object.assign(valor, atualizados);
+            try {
+              localStorage.setItem(LS_PREFIX + "tutoriais", JSON.stringify(valor));
+            } catch (e) {
+              console.warn("Não foi possível atualizar o localStorage de tutoriais:", e);
+            }
+          }
+        } catch (e) {
+          console.warn("Supabase: falha ao ressincronizar ids de tutoriais após salvar.", e);
+        }
+      }
     }
   } catch (e) {
     console.warn(`Supabase: não foi possível sincronizar "${chave}" com a nuvem — a alteração ficou salva só neste navegador.`, e);
