@@ -4628,7 +4628,7 @@ function abrirNovoRegrasTopico() {
     titulo: nomeLimpo,
     itens: []
   });
-  syncRegrasDataScript();
+  resyncDataBlock("regras", REGRAS_DATA);
   regrasCategoriaAtual = novoId;
   renderRegrasCats();
   renderRegrasList();
@@ -4714,16 +4714,31 @@ function abrirNovaRegrasMensagem() {
   if (el) el.classList.add("active");
 }
 
+
 function excluirRegrasMensagem(catId, itemId) {
   const cat = REGRAS_DATA.categorias.find(c => c.id === catId);
   const item = cat && cat.itens.find(i => i.id === itemId);
+
   if (!item) return;
+
   if (!confirm(`Excluir a mensagem "${item.subtitulo || "sem subtítulo"}"?`)) return;
+
+  // Remove a mensagem
   cat.itens = cat.itens.filter(i => i.id !== itemId);
-  syncRegrasDataScript();
+
+  // Salva no localStorage e no Supabase
+  resyncDataBlock("regras", REGRAS_DATA);
+
+  // Atualiza a tela
   renderRegrasCats();
   renderRegrasList();
-  document.getElementById("regras-detail-pane").innerHTML = `\n        <div class="regras-empty-state">\n          <div class="icon">👈</div>\n          <p>Selecione um tópico para ver a mensagem</p>\n        </div>`;
+
+  document.getElementById("regras-detail-pane").innerHTML = `
+    <div class="regras-empty-state">
+      <div class="icon">👈</div>
+      <p>Selecione um tópico para ver a mensagem</p>
+    </div>
+  `;
 }
 
 function selectRegrasItem(catId, itemId, el) {
