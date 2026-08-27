@@ -4645,7 +4645,7 @@ function excluirRegrasTopico(id) {
 
 function buildRegrasItemRow(cat, item, comCategoria, indice) {
   const label = item.subtitulo ? item.subtitulo : `Mensagem ${indice + 1}`;
-  const previewBruto = item.conteudo.replace(/\s+/g, " ").trim();
+const previewBruto = String(item.conteudo || "").replace(/\s+/g, " ").trim();
   const preview = previewBruto.length > 90 ? previewBruto.slice(0, 90) + "…" : previewBruto;
   const delBtn = adminMode ? `<span class="regras-item-del" data-del-msg-cat="${cat.id}" data-del-msg-item="${item.id}" title="Excluir mensagem">🗑️</span>` : "";
   return `\n        <div class="regras-item" onclick="selectRegrasItem('${cat.id}','${item.id}',this)">\n          <div class="regras-item-icon">${item.subtitulo ? "📌" : "💬"}</div>\n          <div class="regras-item-info">\n            ${comCategoria ? `<div class="regras-item-cat">${cat.numero}. ${cat.titulo}</div>` : ""}\n            <div class="regras-item-title">${escapeHtmlRegra(label)}</div>\n            <div class="regras-item-preview">${escapeHtmlRegra(preview)}</div>\n          </div>\n          ${delBtn}\n        </div>`;
@@ -4823,9 +4823,22 @@ function selectEstado(uf) {
 function tocarTutVideo(btn) {
   const thumb = btn.closest(".tut-video-thumb");
   if (!thumb) return;
-  const url = decodeURIComponent(thumb.getAttribute("data-url") || "");
+
+  let url = decodeURIComponent(thumb.getAttribute("data-url") || "");
   if (!url) return;
-  thumb.innerHTML = `<iframe src="${url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+
+  // Remove autoplay da URL, caso exista
+  url = url.replace(/([?&])autoplay=1(&?)/, (match, separador, final) => {
+    return final ? separador : "";
+  });
+
+  thumb.innerHTML = `
+    <iframe
+      src="${url}"
+      allowfullscreen
+      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  `;
 }
 
     
