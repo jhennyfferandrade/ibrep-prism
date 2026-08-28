@@ -3536,7 +3536,6 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
               oninput="renderRegrasList()">
           </div>
           <div class="regras-list-header-title" id="regras-list-title">—</div>
-          <div class="regras-list-header-count" id="regras-list-count"></div>
         </div>
         <div class="regras-list-items" id="regras-list-items"></div>
         <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin:8px;width:calc(100% - 16px);" onclick="abrirNovaRegrasMensagem()">➕ Adicionar mensagem</button>
@@ -4570,7 +4569,6 @@ function initRegras() {
     regrasCategoriaAtual = null;
     renderRegrasCats();
     document.getElementById("regras-list-title").textContent = "—";
-    document.getElementById("regras-list-count").textContent = "";
     document.getElementById("regras-list-items").innerHTML = `<div class="regras-empty-list">Nenhum tópico cadastrado</div>`;
     document.getElementById("regras-detail-pane").innerHTML = `\n          <div class="regras-empty-state">\n            <div class="icon">👈</div>\n            <p>Adicione um tópico para começar</p>\n          </div>`;
     return;
@@ -4678,12 +4676,10 @@ function renderRegrasList() {
   const q = document.getElementById("regras-search-input").value.trim().toLowerCase();
   const listEl = document.getElementById("regras-list-items");
   const titleEl = document.getElementById("regras-list-title");
-  const countEl = document.getElementById("regras-list-count");
   let html = "";
   let count = 0;
   if (!REGRAS_DATA.categorias.length) {
     titleEl.textContent = "—";
-    countEl.textContent = "";
     listEl.innerHTML = `<div class="regras-empty-list">Nenhum tópico cadastrado</div>`;
     return;
   }
@@ -4710,7 +4706,6 @@ function renderRegrasList() {
       html += buildRegrasItemRow(cat, item, false, idx);
     });
   }
-  countEl.textContent = count + (count === 1 ? " item" : " itens");
   listEl.innerHTML = html || `<div class="regras-empty-list">Nenhum resultado encontrado</div>`;
   listEl.querySelectorAll("[data-del-msg-cat]").forEach(el => {
     el.addEventListener("click", e => {
