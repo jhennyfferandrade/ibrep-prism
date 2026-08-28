@@ -3524,10 +3524,6 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     <div class="regras-body">
 
       <aside class="regras-cats-pane">
-        <div class="regras-search-box">
-          <input type="text" id="regras-search-input" placeholder="Buscar categoria, tópico ou palavra-chave..."
-            oninput="renderRegrasList()">
-        </div>
         <div class="regras-cats-label">Tópicos</div>
         <div class="regras-cats-list" id="regras-cats-list"></div>
         <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin-top:8px;" onclick="abrirNovoRegrasTopico()">➕ Adicionar tópico</button>
@@ -3535,6 +3531,10 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
       <div class="regras-list-pane">
         <div class="regras-list-header">
+          <div class="regras-search-box" style="padding:0 0 10px;border-bottom:none;">
+            <input type="text" id="regras-search-input" placeholder="Buscar categoria, tópico ou palavra-chave..."
+              oninput="renderRegrasList()">
+          </div>
           <div class="regras-list-header-title" id="regras-list-title">—</div>
           <div class="regras-list-header-count" id="regras-list-count"></div>
         </div>
@@ -4651,6 +4651,29 @@ const previewBruto = String(item.conteudo || "").replace(/\s+/g, " ").trim();
   return `\n        <div class="regras-item" onclick="selectRegrasItem('${cat.id}','${item.id}',this)">\n          <div class="regras-item-icon">${item.subtitulo ? "📌" : "💬"}</div>\n          <div class="regras-item-info">\n            ${comCategoria ? `<div class="regras-item-cat">${cat.numero}. ${cat.titulo}</div>` : ""}\n            <div class="regras-item-title">${escapeHtmlRegra(label)}</div>\n            <div class="regras-item-preview">${escapeHtmlRegra(preview)}</div>\n          </div>\n          ${delBtn}\n        </div>`;
 }
 
+// Tópicos cujos itens devem ser sempre exibidos em ordem alfabética (por subtítulo).
+// Comparação ignora maiúsculas/minúsculas e acentos, então funciona com variações
+// como "Polos Endereço", "Polos - Endereços", etc.
+function normalizarTituloRegra(txt) {
+  return String(txt || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function topicoUsaOrdemAlfabetica(titulo) {
+  const t = normalizarTituloRegra(titulo);
+  return t.includes("polos") && t.includes("endere");
+}
+
+function ordenarItensSeNecessario(cat, itens) {
+  if (!topicoUsaOrdemAlfabetica(cat.titulo)) return itens;
+  return [...itens].sort((a, b) => {
+    const nomeA = a.subtitulo || a.conteudo || "";
+    const nomeB = b.subtitulo || b.conteudo || "";
+    return normalizarTituloRegra(nomeA).localeCompare(normalizarTituloRegra(nomeB), "pt-BR");
+  });
+}
+
 function renderRegrasList() {
   const q = document.getElementById("regras-search-input").value.trim().toLowerCase();
   const listEl = document.getElementById("regras-list-items");
@@ -4666,9 +4689,11 @@ function renderRegrasList() {
   }
   if (q) {
     REGRAS_DATA.categorias.forEach(cat => {
-      cat.itens.forEach((item, idx) => {
+      const itensOrdenados = ordenarItensSeNecessario(cat, cat.itens);
+      itensOrdenados.forEach((item) => {
         const alvo = `${cat.titulo} ${item.subtitulo || ""} ${item.conteudo}`.toLowerCase();
         if (!alvo.includes(q)) return;
+        const idx = cat.itens.indexOf(item);
         count++;
         html += buildRegrasItemRow(cat, item, true, idx);
       });
@@ -4678,7 +4703,9 @@ function renderRegrasList() {
     const cat = REGRAS_DATA.categorias.find(c => c.id === regrasCategoriaAtual) || REGRAS_DATA.categorias[0];
     regrasCategoriaAtual = cat.id;
     titleEl.textContent = `${cat.numero}. ${cat.titulo}`;
-    cat.itens.forEach((item, idx) => {
+    const itensOrdenados = ordenarItensSeNecessario(cat, cat.itens);
+    itensOrdenados.forEach((item) => {
+      const idx = cat.itens.indexOf(item);
       count++;
       html += buildRegrasItemRow(cat, item, false, idx);
     });
