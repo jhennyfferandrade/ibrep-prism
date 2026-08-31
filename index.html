@@ -1104,8 +1104,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 22px 14px;
+      gap: 10px;
+      padding: 26px 16px;
       border-radius: 16px;
       border: 1.5px solid var(--cinza-borda);
       background: #fff;
@@ -1115,7 +1115,7 @@
       box-shadow: 0 4px 20px rgba(124, 92, 255, .07);
       flex: 1 1 0;
       min-width: 0;
-      max-width: 210px;
+      max-width: 228px;
     }
 
     .welcome-btn:hover {
@@ -1125,14 +1125,14 @@
     }
 
     .welcome-btn-icon {
-      width: 44px;
-      height: 44px;
+      width: 50px;
+      height: 50px;
       border-radius: 12px;
       background: var(--roxo-claro);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 25px;
     }
 
     .welcome-btn-primary .welcome-btn-icon {
@@ -1140,7 +1140,7 @@
     }
 
     .welcome-btn-label {
-      font-size: 12.5px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--texto);
       text-align: center;
@@ -1148,7 +1148,7 @@
     }
 
     .welcome-btn-desc {
-      font-size: 10.5px;
+      font-size: 11.5px;
       color: var(--texto-muted);
       text-align: center;
       line-height: 1.4;
@@ -2098,8 +2098,7 @@
 
     .cal-evento {
       display: flex;
-      align-items: flex-start;
-      gap: 6px;
+      flex-direction: column;
       background: var(--roxo-claro);
       border-left: 3px solid var(--roxo);
       border-radius: 6px;
@@ -2111,12 +2110,31 @@
       word-break: break-word;
     }
 
+    .cal-evento-linha {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .cal-evento-desc {
+      font-size: 10px;
+      color: var(--texto-sec);
+      line-height: 1.3;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
     .cal-evento.cal-editavel {
       cursor: pointer;
     }
 
     .cal-evento.cal-editavel:hover {
-      background: #e4dbff;
+      filter: brightness(0.93);
     }
 
     .cal-evento-hora {
@@ -3435,6 +3453,11 @@
       Sua central de gestão institucional.
     </div>
     <div class="welcome-buttons">
+      <button class="welcome-btn" id="btn-area-calendario" data-area="calendario" onclick="openCalendario()">
+        <div class="welcome-btn-icon">📅</div>
+        <div class="welcome-btn-label">Calendário</div>
+        <div class="welcome-btn-desc">Compromissos, prazos<br>e eventos da equipe</div>
+      </button>
       <button class="welcome-btn" id="btn-area-tutoriais" data-area="tutoriais" onclick="openTutorials()">
         <div class="welcome-btn-icon">🎬</div>
         <div class="welcome-btn-label">Tutoriais</div>
@@ -3459,11 +3482,6 @@
         <div class="welcome-btn-icon">🎓</div>
         <div class="welcome-btn-label">Cursos por Instituição</div>
         <div class="welcome-btn-desc">Currículo, disciplinas, AVAs<br>e certificados por instituição</div>
-      </button>
-      <button class="welcome-btn" id="btn-area-calendario" data-area="calendario" onclick="openCalendario()">
-        <div class="welcome-btn-icon">📅</div>
-        <div class="welcome-btn-label">Calendário</div>
-        <div class="welcome-btn-desc">Compromissos, prazos<br>e eventos da equipe</div>
       </button>
       <button class="welcome-btn" id="btn-area-painel" data-area="painel" onclick="openPanel()">
         <div class="welcome-btn-icon">🏛️</div>
@@ -3985,6 +4003,9 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       <div class="admin-inline-form">
         <label>Data</label>
         <input type="date" id="cal-form-data">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="cal-form-dia-todo" style="width:auto;" onchange="calToggleDiaTodo()"> Dia todo
+        </label>
         <label>Horário (opcional)</label>
         <input type="time" id="cal-form-hora">
         <label>Título</label>
@@ -7579,6 +7600,32 @@ function iniciarSincronizacaoEmTempoReal() {
 
 // ===================== CALENDÁRIO =====================
 
+function calHashId(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+const CAL_PALETA = [
+  { bg: "#efeaff", borda: "#7c5cff" }, // roxo
+  { bg: "#e3f2fd", borda: "#1e88e5" }, // azul
+  { bg: "#e8f5e9", borda: "#43a047" }, // verde
+  { bg: "#fff3e0", borda: "#fb8c00" }, // laranja
+  { bg: "#fce4ec", borda: "#e91e63" }, // rosa
+  { bg: "#fffde7", borda: "#c9a300" }, // amarelo
+  { bg: "#e0f7fa", borda: "#00acc1" }, // ciano
+  { bg: "#ffebee", borda: "#e53935" }, // vermelho
+  { bg: "#e8eaf6", borda: "#3949ab" }, // índigo
+  { bg: "#e0f2f1", borda: "#00897b" }  // verde-água
+];
+
+function calCorEvento(id) {
+  const idx = calHashId(String(id)) % CAL_PALETA.length;
+  return CAL_PALETA[idx];
+}
+
 function calFormatarData(d) {
   const ano = d.getFullYear();
   const mes = String(d.getMonth() + 1).padStart(2, "0");
@@ -7646,9 +7693,16 @@ function calRenderMes() {
       if (editavel) classes.push("cal-editavel");
       const addBtn = editavel ? `<span class="cal-day-add" onclick="event.stopPropagation();calAbrirNovoEvento('${dataStr}')" title="Adicionar evento">➕</span>` : "";
       const eventosHtml = eventos.map(ev => {
+        const cor = calCorEvento(ev.id);
         const delBtn = editavel ? `<span class="cal-evento-del" onclick="event.stopPropagation();calExcluirEvento('${dataStr}','${ev.id}')" title="Excluir evento">🗑️</span>` : "";
-        const horaHtml = ev.hora ? `<span class="cal-evento-hora">${escapeHtmlRegra(ev.hora)}</span>` : "";
-        return `<div class="cal-evento cal-editavel" onclick="event.stopPropagation();calAbrirNovoEvento('${dataStr}','${ev.id}')">${horaHtml}<span>${escapeHtmlRegra(ev.titulo)}</span>${delBtn}</div>`;
+        const horaHtml = ev.diaTodo
+          ? `<span class="cal-evento-hora" style="color:${cor.borda};">Dia todo</span>`
+          : (ev.hora ? `<span class="cal-evento-hora" style="color:${cor.borda};">${escapeHtmlRegra(ev.hora)}</span>` : "");
+        const descHtml = ev.desc ? `<div class="cal-evento-desc">${escapeHtmlRegra(ev.desc)}</div>` : "";
+        return `<div class="cal-evento cal-editavel" style="background:${cor.bg};border-left-color:${cor.borda};" onclick="event.stopPropagation();calAbrirNovoEvento('${dataStr}','${ev.id}')">
+          <div class="cal-evento-linha">${horaHtml}<span>${escapeHtmlRegra(ev.titulo)}</span>${delBtn}</div>
+          ${descHtml}
+        </div>`;
       }).join("");
       const cellClick = editavel ? ` onclick="calAbrirNovoEvento('${dataStr}')"` : "";
       html += `<div class="${classes.join(" ")}"${cellClick}>
@@ -7671,12 +7725,14 @@ function calAbrirNovoEvento(dataStr, id) {
 
   document.getElementById("cal-evento-card-titulo").textContent = ev ? (editavel ? "Editar evento" : "Detalhes do evento") : "Novo evento";
   document.getElementById("cal-form-data").value = dataStr;
+  document.getElementById("cal-form-dia-todo").checked = ev ? !!ev.diaTodo : false;
   document.getElementById("cal-form-hora").value = ev ? (ev.hora || "") : "";
   document.getElementById("cal-form-titulo").value = ev ? ev.titulo : "";
   document.getElementById("cal-form-desc").value = ev ? (ev.desc || "") : "";
-  [ "cal-form-data", "cal-form-hora", "cal-form-titulo", "cal-form-desc" ].forEach(idEl => {
+  [ "cal-form-data", "cal-form-dia-todo", "cal-form-hora", "cal-form-titulo", "cal-form-desc" ].forEach(idEl => {
     document.getElementById(idEl).disabled = !editavel;
   });
+  calToggleDiaTodo();
   document.getElementById("cal-btn-excluir-evento").style.display = (ev && editavel) ? "" : "none";
   document.getElementById("cal-btn-salvar-evento").style.display = editavel ? "" : "none";
   document.getElementById("cal-btn-cancelar-evento").textContent = editavel ? "Cancelar" : "Fechar";
@@ -7687,6 +7743,17 @@ function calAbrirNovoEvento(dataStr, id) {
   }, 50);
 }
 
+function calToggleDiaTodo() {
+  const diaTodo = document.getElementById("cal-form-dia-todo").checked;
+  const campoHora = document.getElementById("cal-form-hora");
+  if (diaTodo) {
+    campoHora.value = "";
+    campoHora.disabled = true;
+  } else if (podeEditarCalendario()) {
+    campoHora.disabled = false;
+  }
+}
+
 function calFecharModalEvento() {
   document.getElementById("cal-evento-overlay").classList.remove("open");
   calEditando = { data: null, id: null };
@@ -7695,7 +7762,8 @@ function calFecharModalEvento() {
 function calSalvarEvento() {
   if (!podeEditarCalendario()) return;
   const dataStr = document.getElementById("cal-form-data").value;
-  const hora = document.getElementById("cal-form-hora").value.trim();
+  const diaTodo = document.getElementById("cal-form-dia-todo").checked;
+  const hora = diaTodo ? "" : document.getElementById("cal-form-hora").value.trim();
   const titulo = document.getElementById("cal-form-titulo").value.trim();
   const desc = document.getElementById("cal-form-desc").value.trim();
   if (!dataStr || !titulo) {
@@ -7710,14 +7778,14 @@ function calSalvarEvento() {
       const idx = listaAntiga.findIndex(e => e.id === calEditando.id);
       if (idx > -1) listaAntiga.splice(idx, 1);
       if (listaAntiga.length === 0) delete CALENDARIO_EVENTOS[calEditando.data];
-      CALENDARIO_EVENTOS[dataStr].push({ id: calEditando.id, hora, titulo, desc });
+      CALENDARIO_EVENTOS[dataStr].push({ id: calEditando.id, hora, diaTodo, titulo, desc });
     } else {
       const lista = CALENDARIO_EVENTOS[dataStr];
       const idx = lista.findIndex(e => e.id === calEditando.id);
-      if (idx > -1) lista[idx] = { id: calEditando.id, hora, titulo, desc };
+      if (idx > -1) lista[idx] = { id: calEditando.id, hora, diaTodo, titulo, desc };
     }
   } else {
-    CALENDARIO_EVENTOS[dataStr].push({ id: "ev" + Date.now() + Math.floor(Math.random() * 1000), hora, titulo, desc });
+    CALENDARIO_EVENTOS[dataStr].push({ id: "ev" + Date.now() + Math.floor(Math.random() * 1000), hora, diaTodo, titulo, desc });
   }
 
   salvarNoLocalStorage("calendario", CALENDARIO_EVENTOS);
