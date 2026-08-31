@@ -1872,6 +1872,334 @@
       display: flex;
     }
 
+    #calendario-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--cinza-bg);
+      display: none;
+      flex-direction: column;
+      z-index: 9998;
+      overflow: hidden;
+    }
+
+    #calendario-screen.open {
+      display: flex;
+    }
+
+    .cal-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      padding: 18px 28px 28px;
+      overflow: auto;
+    }
+
+    .cal-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .cal-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1.5px solid var(--cinza-borda);
+      background: #fff;
+      color: var(--roxo);
+      font-size: 15px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .cal-nav-btn:hover {
+      background: var(--roxo-claro);
+      border-color: var(--roxo-medio);
+    }
+
+    .cal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--texto);
+      min-width: 190px;
+      text-transform: capitalize;
+    }
+
+    .cal-today-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      background: var(--cinza-light);
+      border-radius: 99px;
+      padding: 7px 16px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--texto-sec);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .cal-today-btn:hover {
+      background: var(--roxo-claro);
+      color: var(--roxo);
+    }
+
+    .cal-add-btn {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      background: var(--roxo);
+      color: #fff;
+      border-radius: 99px;
+      padding: 9px 18px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      box-shadow: 0 4px 14px rgba(124, 92, 255, .25);
+    }
+
+    .cal-add-btn:hover {
+      background: var(--roxo-hover);
+    }
+
+    .cal-viewonly-badge {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--texto-muted);
+      background: var(--cinza-light);
+      border-radius: 99px;
+      padding: 7px 14px;
+    }
+
+    .cal-grid {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 560px;
+      background: #fff;
+      border: 1px solid var(--cinza-borda);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(124, 92, 255, .07);
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--roxo-claro);
+      flex-shrink: 0;
+    }
+
+    .cal-weekdays span {
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--roxo-hover);
+    }
+
+    .cal-weeks {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .cal-week-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      flex: 1;
+      min-height: 0;
+    }
+
+    .cal-day-cell {
+      border-right: 1px solid var(--cinza-borda);
+      border-bottom: 1px solid var(--cinza-borda);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-height: 0;
+      overflow-y: auto;
+      position: relative;
+      background: #fff;
+      transition: background .12s;
+    }
+
+    .cal-day-cell.cal-outro-mes {
+      background: var(--cinza-light);
+    }
+
+    .cal-day-cell.cal-outro-mes .cal-day-num {
+      color: var(--texto-muted);
+    }
+
+    .cal-day-cell.cal-editavel:hover {
+      background: var(--roxo-claro);
+      cursor: pointer;
+    }
+
+    .cal-day-cell.cal-hoje {
+      background: #f6f3ff;
+    }
+
+    .cal-day-num-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .cal-day-num {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--texto);
+    }
+
+    .cal-day-cell.cal-hoje .cal-day-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--roxo);
+      color: #fff;
+    }
+
+    .cal-day-add {
+      opacity: 0;
+      font-size: 13px;
+      color: var(--roxo);
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 0 4px;
+      transition: opacity .12s;
+    }
+
+    .cal-day-cell:hover .cal-day-add {
+      opacity: 1;
+    }
+
+    .cal-evento {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      background: var(--roxo-claro);
+      border-left: 3px solid var(--roxo);
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--texto);
+      cursor: default;
+      word-break: break-word;
+    }
+
+    .cal-evento.cal-editavel {
+      cursor: pointer;
+    }
+
+    .cal-evento.cal-editavel:hover {
+      background: #e4dbff;
+    }
+
+    .cal-evento-hora {
+      font-weight: 700;
+      color: var(--roxo-hover);
+      flex-shrink: 0;
+    }
+
+    .cal-evento-del {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 11px;
+      opacity: .5;
+      padding: 0 3px;
+      border-radius: 5px;
+    }
+
+    .cal-evento-del:hover {
+      opacity: 1;
+      background: #fde2e2;
+    }
+
+    @media (max-width: 880px) {
+      .cal-body { padding: 14px 12px 20px; }
+      .cal-grid { min-height: 480px; }
+    }
+
+    #cal-evento-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 30, 46, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10050;
+      padding: 20px;
+    }
+
+    #cal-evento-overlay.open {
+      display: flex;
+    }
+
+    .cal-evento-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(30, 30, 46, .25);
+    }
+
+    .cal-evento-card h3 {
+      font-size: 15px;
+      margin-bottom: 14px;
+      color: var(--texto);
+    }
+
+    .cal-evento-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .cal-evento-card-actions button {
+      flex: 1;
+    }
+
+    .cal-evento-del-btn {
+      border: none;
+      background: #fde2e2;
+      color: #c0392b;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+
+    .cal-evento-del-btn:hover {
+      background: #f8c9c9;
+    }
+
     .regras-body {
       display: flex;
       flex: 1;
@@ -3022,6 +3350,8 @@
               <th class="users-perm-check">📜</th>
               <th class="users-perm-check">🎓</th>
               <th class="users-perm-check">🏛️</th>
+              <th class="users-perm-check">📅 Ver</th>
+              <th class="users-perm-check">📅✏️ Editar</th>
               <th class="users-perm-check">Admin</th>
               <th></th>
             </tr>
@@ -3051,6 +3381,8 @@
             <label><input type="checkbox" id="users-perm-portarias"> Atos Normativos</label>
             <label><input type="checkbox" id="users-perm-cursos"> Cursos</label>
             <label><input type="checkbox" id="users-perm-painel"> Painel</label>
+            <label><input type="checkbox" id="users-perm-calendario"> Calendário (ver)</label>
+            <label><input type="checkbox" id="users-perm-calendario-editar"> Calendário (editar)</label>
             <label><input type="checkbox" id="users-perm-is-admin"> Administradora</label>
           </div>
           <div class="users-form-actions">
@@ -3127,6 +3459,11 @@
         <div class="welcome-btn-icon">🎓</div>
         <div class="welcome-btn-label">Cursos por Instituição</div>
         <div class="welcome-btn-desc">Currículo, disciplinas, AVAs<br>e certificados por instituição</div>
+      </button>
+      <button class="welcome-btn" id="btn-area-calendario" data-area="calendario" onclick="openCalendario()">
+        <div class="welcome-btn-icon">📅</div>
+        <div class="welcome-btn-label">Calendário</div>
+        <div class="welcome-btn-desc">Compromissos, prazos<br>e eventos da equipe</div>
       </button>
       <button class="welcome-btn" id="btn-area-painel" data-area="painel" onclick="openPanel()">
         <div class="welcome-btn-icon">🏛️</div>
@@ -3608,6 +3945,58 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <div id="calendario-screen">
+    <div class="tut-header">
+      <div class="tut-header-left">
+        <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+          alt="IBREP">
+        <span style="font-size:14px;font-weight:600;color:var(--texto)">Calendário</span>
+      </div>
+      <button class="tut-back" onclick="backToWelcome()">
+        ← Voltar ao início
+      </button>
+    </div>
+
+    <div class="cal-body">
+      <div class="cal-toolbar">
+        <button class="cal-nav-btn" onclick="calMudarMes(-1)">←</button>
+        <div class="cal-title" id="cal-titulo-mes">—</div>
+        <button class="cal-nav-btn" onclick="calMudarMes(1)">→</button>
+        <button class="cal-today-btn" onclick="calIrParaHoje()">📍 Hoje</button>
+        <button class="cal-add-btn" id="cal-btn-novo-evento" onclick="calAbrirNovoEvento(null)">➕ Novo evento</button>
+        <span class="cal-viewonly-badge" id="cal-viewonly-badge" style="display:none;">👁️ Somente visualização</span>
+      </div>
+
+      <div class="cal-grid">
+        <div class="cal-weekdays">
+          <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+        </div>
+        <div class="cal-weeks" id="cal-weeks"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cal-evento-overlay">
+    <div class="cal-evento-card">
+      <h3 id="cal-evento-card-titulo">Novo evento</h3>
+      <div class="admin-inline-form">
+        <label>Data</label>
+        <input type="date" id="cal-form-data">
+        <label>Horário (opcional)</label>
+        <input type="time" id="cal-form-hora">
+        <label>Título</label>
+        <input type="text" id="cal-form-titulo" placeholder="Ex.: Reunião com a equipe" maxlength="120">
+        <label>Descrição (opcional)</label>
+        <textarea id="cal-form-desc" style="min-height:80px;" placeholder="Detalhes do compromisso..."></textarea>
+      </div>
+      <div class="cal-evento-card-actions">
+        <button class="admin-edit-btn" id="cal-btn-cancelar-evento" style="background:var(--cinza-borda);color:var(--texto-sec);flex:0 0 auto;" onclick="calFecharModalEvento()">Cancelar</button>
+        <button class="cal-evento-del-btn" id="cal-btn-excluir-evento" style="display:none;" onclick="calExcluirEventoAtual()">🗑️ Excluir</button>
+        <button class="admin-edit-btn save" id="cal-btn-salvar-evento" onclick="calSalvarEvento()">💾 Salvar</button>
+      </div>
     </div>
   </div>
 
@@ -4220,6 +4609,7 @@ function irParaTela(tela, pushHistory) {
   document.getElementById("regras-screen").classList.remove("open");
   document.getElementById("comparativo-screen").classList.remove("open");
   document.getElementById("cursos-screen").classList.remove("open");
+  document.getElementById("calendario-screen").classList.remove("open");
   switch (tela) {
    case "welcome":
     document.getElementById("welcome-screen").style.display = "flex";
@@ -4250,6 +4640,11 @@ function irParaTela(tela, pushHistory) {
    case "cursos":
     document.getElementById("cursos-screen").classList.add("open");
     initCursosScreen();
+    break;
+
+   case "calendario":
+    document.getElementById("calendario-screen").classList.add("open");
+    initCalendarioScreen();
     break;
   }
   if (pushHistory) {
@@ -4290,6 +4685,11 @@ function openComparativo() {
 function openCursos() {
   if (!exigirPermissao("cursos")) return;
   irParaTela("cursos");
+}
+
+function openCalendario() {
+  if (!exigirPermissao("calendario")) return;
+  irParaTela("calendario");
 }
 
 function backToWelcome() {
@@ -5239,6 +5639,12 @@ const CERTIFICADOS = {};
 
 const PROVAS_IMPRESSAS = {};
 
+const CALENDARIO_EVENTOS = {};
+
+let CAL_MES_ATUAL = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+let calEditando = { data: null, id: null };
+
 const ATIVIDADE_PRESENCIAL = new Set([]);
 
 let activeCursoId = null;
@@ -5702,8 +6108,14 @@ function exigirPermissao(area) {
   return false;
 }
 
+function podeEditarCalendario() {
+  if (!currentUser) return false;
+  if (currentUser.is_admin) return true;
+  return !!(currentUser.permissoes && currentUser.permissoes.calendario_editar);
+}
+
 function aplicarPermissoes() {
-  const areas = [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel" ];
+  const areas = [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel", "calendario" ];
   areas.forEach(area => {
     const btn = document.getElementById(`btn-area-${area}`);
     if (!btn) return;
@@ -5881,6 +6293,7 @@ function currentSectionTela() {
   if (document.getElementById("regras-screen").classList.contains("open")) return "regras";
   if (document.getElementById("comparativo-screen").classList.contains("open")) return "comparativo";
   if (document.getElementById("cursos-screen").classList.contains("open")) return "cursos";
+  if (document.getElementById("calendario-screen").classList.contains("open")) return "calendario";
   return "panel";
 }
 
@@ -5982,8 +6395,8 @@ async function carregarListaUsuarios() {
     const tbody = document.getElementById("users-table-body");
     tbody.innerHTML = (data.usuarios || []).map(u => {
       const p = u.permissoes || {};
-      return `<tr>\n            <td>${escapeHtmlRegra(u.nome)}</td>\n            <td>${escapeHtmlRegra(u.login)}</td>\n            <td class="users-perm-check">${permIcon(p.tutoriais)}</td>\n            <td class="users-perm-check">${permIcon(p.comparativo)}</td>\n            <td class="users-perm-check">${permIcon(p.regras)}</td>\n            <td class="users-perm-check">${permIcon(p.portarias)}</td>\n            <td class="users-perm-check">${permIcon(p.cursos)}</td>\n            <td class="users-perm-check">${permIcon(p.painel)}</td>\n            <td class="users-perm-check">${u.is_admin ? "✅" : "—"}</td>\n            <td class="users-actions">\n              <button onclick="editarUsuarioForm('${u.id}')">Editar</button>\n              <button onclick="excluirUsuarioConfirm('${u.id}')">Excluir</button>\n            </td>\n          </tr>`;
-    }).join("") || `<tr><td colspan="10" style="text-align:center;color:var(--texto-muted);padding:20px;">Nenhum usuário cadastrado</td></tr>`;
+      return `<tr>\n            <td>${escapeHtmlRegra(u.nome)}</td>\n            <td>${escapeHtmlRegra(u.login)}</td>\n            <td class="users-perm-check">${permIcon(p.tutoriais)}</td>\n            <td class="users-perm-check">${permIcon(p.comparativo)}</td>\n            <td class="users-perm-check">${permIcon(p.regras)}</td>\n            <td class="users-perm-check">${permIcon(p.portarias)}</td>\n            <td class="users-perm-check">${permIcon(p.cursos)}</td>\n            <td class="users-perm-check">${permIcon(p.painel)}</td>\n            <td class="users-perm-check">${permIcon(p.calendario)}</td>\n            <td class="users-perm-check">${permIcon(p.calendario_editar)}</td>\n            <td class="users-perm-check">${u.is_admin ? "✅" : "—"}</td>\n            <td class="users-actions">\n              <button onclick="editarUsuarioForm('${u.id}')">Editar</button>\n              <button onclick="excluirUsuarioConfirm('${u.id}')">Excluir</button>\n            </td>\n          </tr>`;
+    }).join("") || `<tr><td colspan="12" style="text-align:center;color:var(--texto-muted);padding:20px;">Nenhum usuário cadastrado</td></tr>`;
     window._usuariosCache = data.usuarios || [];
   } catch (e) {
     setUsersMsg(e.message || "Erro ao carregar usuários.", "erro");
@@ -5998,6 +6411,8 @@ function lerPermissoesForm() {
     p_area_portarias: document.getElementById("users-perm-portarias").checked,
     p_area_cursos: document.getElementById("users-perm-cursos").checked,
     p_area_painel: document.getElementById("users-perm-painel").checked,
+    p_area_calendario: document.getElementById("users-perm-calendario").checked,
+    p_calendario_editar: document.getElementById("users-perm-calendario-editar").checked,
     p_is_admin: document.getElementById("users-perm-is-admin").checked
   };
 }
@@ -6013,6 +6428,8 @@ function limparUsuarioForm() {
   [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel" ].forEach(a => {
     document.getElementById(`users-perm-${a}`).checked = false;
   });
+  document.getElementById("users-perm-calendario").checked = false;
+  document.getElementById("users-perm-calendario-editar").checked = false;
   document.getElementById("users-perm-is-admin").checked = false;
 }
 
@@ -6033,6 +6450,8 @@ function editarUsuarioForm(id) {
   document.getElementById("users-perm-portarias").checked = !!p.portarias;
   document.getElementById("users-perm-cursos").checked = !!p.cursos;
   document.getElementById("users-perm-painel").checked = !!p.painel;
+  document.getElementById("users-perm-calendario").checked = !!p.calendario;
+  document.getElementById("users-perm-calendario-editar").checked = !!p.calendario_editar;
   document.getElementById("users-perm-is-admin").checked = !!u.is_admin;
   document.getElementById("users-form").scrollIntoView({
     behavior: "smooth"
@@ -6131,6 +6550,9 @@ function refrescarTelaAtual() {
   }
   if (document.getElementById("comparativo-screen").classList.contains("open")) {
     aplicarEdicaoComparativo();
+  }
+  if (document.getElementById("calendario-screen").classList.contains("open")) {
+    calRenderMes();
   }
   if (document.getElementById("tutorial-screen").classList.contains("open") && tutCategoriaAtual) {
     renderTutCats();
@@ -6340,6 +6762,7 @@ function aplicarDadosSalvos() {
   aplicarObjeto("certificados", CERTIFICADOS);
   aplicarObjeto("provasimpressas", PROVAS_IMPRESSAS);
   aplicarSet("atividadepresencial", ATIVIDADE_PRESENCIAL);
+  aplicarObjeto("calendario", CALENDARIO_EVENTOS);
   console.log("🔍 Diagnóstico de carregamento do painel_dados (chave / encontrado / itens):");
   console.table(DIAG.map(([chave, encontrado, itens]) => ({ chave, encontrado, itens })));
 }
@@ -7152,6 +7575,179 @@ function iniciarSincronizacaoEmTempoReal() {
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
+}
+
+// ===================== CALENDÁRIO =====================
+
+function calFormatarData(d) {
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const dia = String(d.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+function initCalendarioScreen() {
+  calRenderMes();
+}
+
+function calMudarMes(delta) {
+  CAL_MES_ATUAL = new Date(CAL_MES_ATUAL.getFullYear(), CAL_MES_ATUAL.getMonth() + delta, 1);
+  calRenderMes();
+}
+
+function calIrParaHoje() {
+  const hoje = new Date();
+  CAL_MES_ATUAL = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  calRenderMes();
+}
+
+function calRenderMes() {
+  const ano = CAL_MES_ATUAL.getFullYear();
+  const mes = CAL_MES_ATUAL.getMonth();
+  const nomesMeses = [ "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" ];
+  const tituloEl = document.getElementById("cal-titulo-mes");
+  if (tituloEl) tituloEl.textContent = `${nomesMeses[mes]} de ${ano}`;
+
+  const editavel = podeEditarCalendario();
+  const btnNovo = document.getElementById("cal-btn-novo-evento");
+  const badgeVer = document.getElementById("cal-viewonly-badge");
+  if (btnNovo) btnNovo.style.display = editavel ? "" : "none";
+  if (badgeVer) badgeVer.style.display = editavel ? "none" : "";
+
+  const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const diasMesAnterior = new Date(ano, mes, 0).getDate();
+  const hojeStr = calFormatarData(new Date());
+
+  const celulas = [];
+  for (let i = 0; i < primeiroDiaSemana; i++) {
+    const dia = diasMesAnterior - primeiroDiaSemana + 1 + i;
+    celulas.push({ dataObj: new Date(ano, mes - 1, dia), outroMes: true });
+  }
+  for (let d = 1; d <= diasNoMes; d++) {
+    celulas.push({ dataObj: new Date(ano, mes, d), outroMes: false });
+  }
+  let proximoDia = 1;
+  while (celulas.length % 7 !== 0) {
+    celulas.push({ dataObj: new Date(ano, mes + 1, proximoDia), outroMes: true });
+    proximoDia++;
+  }
+
+  let html = "";
+  for (let w = 0; w < celulas.length; w += 7) {
+    html += `<div class="cal-week-row">`;
+    for (let i = w; i < w + 7; i++) {
+      const c = celulas[i];
+      const dataStr = calFormatarData(c.dataObj);
+      const eventos = (CALENDARIO_EVENTOS[dataStr] || []).slice().sort((a, b) => (a.hora || "99:99").localeCompare(b.hora || "99:99"));
+      const classes = [ "cal-day-cell" ];
+      if (c.outroMes) classes.push("cal-outro-mes");
+      if (dataStr === hojeStr) classes.push("cal-hoje");
+      if (editavel) classes.push("cal-editavel");
+      const addBtn = editavel ? `<span class="cal-day-add" onclick="event.stopPropagation();calAbrirNovoEvento('${dataStr}')" title="Adicionar evento">➕</span>` : "";
+      const eventosHtml = eventos.map(ev => {
+        const delBtn = editavel ? `<span class="cal-evento-del" onclick="event.stopPropagation();calExcluirEvento('${dataStr}','${ev.id}')" title="Excluir evento">🗑️</span>` : "";
+        const horaHtml = ev.hora ? `<span class="cal-evento-hora">${escapeHtmlRegra(ev.hora)}</span>` : "";
+        return `<div class="cal-evento cal-editavel" onclick="event.stopPropagation();calAbrirNovoEvento('${dataStr}','${ev.id}')">${horaHtml}<span>${escapeHtmlRegra(ev.titulo)}</span>${delBtn}</div>`;
+      }).join("");
+      const cellClick = editavel ? ` onclick="calAbrirNovoEvento('${dataStr}')"` : "";
+      html += `<div class="${classes.join(" ")}"${cellClick}>
+        <div class="cal-day-num-row"><span class="cal-day-num">${c.dataObj.getDate()}</span>${addBtn}</div>
+        ${eventosHtml}
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  const cont = document.getElementById("cal-weeks");
+  if (cont) cont.innerHTML = html;
+}
+
+function calAbrirNovoEvento(dataStr, id) {
+  const editavel = podeEditarCalendario();
+  if (!id && !editavel) return;
+  calEditando = { data: dataStr, id: id || null };
+  const lista = CALENDARIO_EVENTOS[dataStr] || [];
+  const ev = id ? lista.find(e => e.id === id) : null;
+
+  document.getElementById("cal-evento-card-titulo").textContent = ev ? (editavel ? "Editar evento" : "Detalhes do evento") : "Novo evento";
+  document.getElementById("cal-form-data").value = dataStr;
+  document.getElementById("cal-form-hora").value = ev ? (ev.hora || "") : "";
+  document.getElementById("cal-form-titulo").value = ev ? ev.titulo : "";
+  document.getElementById("cal-form-desc").value = ev ? (ev.desc || "") : "";
+  [ "cal-form-data", "cal-form-hora", "cal-form-titulo", "cal-form-desc" ].forEach(idEl => {
+    document.getElementById(idEl).disabled = !editavel;
+  });
+  document.getElementById("cal-btn-excluir-evento").style.display = (ev && editavel) ? "" : "none";
+  document.getElementById("cal-btn-salvar-evento").style.display = editavel ? "" : "none";
+  document.getElementById("cal-btn-cancelar-evento").textContent = editavel ? "Cancelar" : "Fechar";
+  document.getElementById("cal-evento-overlay").classList.add("open");
+  setTimeout(() => {
+    const campo = editavel ? document.getElementById("cal-form-titulo") : document.getElementById("cal-btn-cancelar-evento");
+    if (campo) campo.focus();
+  }, 50);
+}
+
+function calFecharModalEvento() {
+  document.getElementById("cal-evento-overlay").classList.remove("open");
+  calEditando = { data: null, id: null };
+}
+
+function calSalvarEvento() {
+  if (!podeEditarCalendario()) return;
+  const dataStr = document.getElementById("cal-form-data").value;
+  const hora = document.getElementById("cal-form-hora").value.trim();
+  const titulo = document.getElementById("cal-form-titulo").value.trim();
+  const desc = document.getElementById("cal-form-desc").value.trim();
+  if (!dataStr || !titulo) {
+    alert("Preencha ao menos a data e o título do evento.");
+    return;
+  }
+  if (!CALENDARIO_EVENTOS[dataStr]) CALENDARIO_EVENTOS[dataStr] = [];
+
+  if (calEditando.id) {
+    if (calEditando.data && calEditando.data !== dataStr) {
+      const listaAntiga = CALENDARIO_EVENTOS[calEditando.data] || [];
+      const idx = listaAntiga.findIndex(e => e.id === calEditando.id);
+      if (idx > -1) listaAntiga.splice(idx, 1);
+      if (listaAntiga.length === 0) delete CALENDARIO_EVENTOS[calEditando.data];
+      CALENDARIO_EVENTOS[dataStr].push({ id: calEditando.id, hora, titulo, desc });
+    } else {
+      const lista = CALENDARIO_EVENTOS[dataStr];
+      const idx = lista.findIndex(e => e.id === calEditando.id);
+      if (idx > -1) lista[idx] = { id: calEditando.id, hora, titulo, desc };
+    }
+  } else {
+    CALENDARIO_EVENTOS[dataStr].push({ id: "ev" + Date.now() + Math.floor(Math.random() * 1000), hora, titulo, desc });
+  }
+
+  salvarNoLocalStorage("calendario", CALENDARIO_EVENTOS);
+  const [ y, m ] = dataStr.split("-").map(Number);
+  CAL_MES_ATUAL = new Date(y, m - 1, 1);
+  calFecharModalEvento();
+  calRenderMes();
+}
+
+function calExcluirEvento(dataStr, id) {
+  if (!podeEditarCalendario()) return;
+  if (!confirm("Excluir este evento?")) return;
+  const lista = CALENDARIO_EVENTOS[dataStr] || [];
+  const idx = lista.findIndex(e => e.id === id);
+  if (idx > -1) lista.splice(idx, 1);
+  if (lista.length === 0) delete CALENDARIO_EVENTOS[dataStr];
+  salvarNoLocalStorage("calendario", CALENDARIO_EVENTOS);
+  calRenderMes();
+}
+
+function calExcluirEventoAtual() {
+  if (!calEditando.id) return;
+  if (!confirm("Excluir este evento?")) return;
+  const lista = CALENDARIO_EVENTOS[calEditando.data] || [];
+  const idx = lista.findIndex(e => e.id === calEditando.id);
+  if (idx > -1) lista.splice(idx, 1);
+  if (lista.length === 0) delete CALENDARIO_EVENTOS[calEditando.data];
+  salvarNoLocalStorage("calendario", CALENDARIO_EVENTOS);
+  calFecharModalEvento();
+  calRenderMes();
 }
 </script>
 
