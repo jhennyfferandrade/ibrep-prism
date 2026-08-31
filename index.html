@@ -4878,6 +4878,24 @@ function selectEstado(uf) {
   pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}</div>` : ""}\n        </div>\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title">Fundamentação Legal</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title">Secretário e Diretor Responsáveis</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.naoDestituicao ? `\n        <div class="port-section">\n          <div class="port-section-title">Situação de Não Destituição</div>\n          <div class="port-section-text">${dados.naoDestituicao}</div>\n        </div>` : ""}\n        ${dados.parecerInstituicao ? `\n        <div class="port-section">\n          <div class="port-section-title">Parecer da Instituição</div>\n          <div class="port-section-text">${dados.parecerInstituicao}</div>\n        </div>` : ""}\n        ${dados.parecerConselho ? `\n        <div class="port-section">\n          <div class="port-section-title">Parecer do Conselho</div>\n          <div class="port-section-text">${dados.parecerConselho}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>\n          ${!dados.responsaveis ? `<button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>` : ""}\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
 }
 
+// Pausa qualquer outro vídeo de tutorial quando o usuário interage com um novo
+function pausarOutrosTutVideos(iframeAtivo) {
+  document.querySelectorAll(".tut-video-thumb iframe").forEach(f => {
+    if (f !== iframeAtivo) {
+      f.setAttribute("src", f.getAttribute("src"));
+    }
+  });
+}
+
+window.addEventListener("blur", () => {
+  setTimeout(() => {
+    const ativo = document.activeElement;
+    if (ativo && ativo.tagName === "IFRAME" && ativo.closest(".tut-video-thumb")) {
+      pausarOutrosTutVideos(ativo);
+    }
+  }, 0);
+});
+
 function filterTutorials(q) {
   q = q.trim().toLowerCase();
   if (!q) {
