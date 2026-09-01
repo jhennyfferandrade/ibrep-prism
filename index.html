@@ -5662,6 +5662,32 @@ const PROVAS_IMPRESSAS = {};
 
 const CALENDARIO_EVENTOS = {};
 
+function calHashId(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+const CAL_PALETA = [
+  { bg: "#efeaff", borda: "#7c5cff" }, // roxo
+  { bg: "#e3f2fd", borda: "#1e88e5" }, // azul
+  { bg: "#e8f5e9", borda: "#43a047" }, // verde
+  { bg: "#fff3e0", borda: "#fb8c00" }, // laranja
+  { bg: "#fce4ec", borda: "#e91e63" }, // rosa
+  { bg: "#fffde7", borda: "#c9a300" }, // amarelo
+  { bg: "#e0f7fa", borda: "#00acc1" }, // ciano
+  { bg: "#ffebee", borda: "#e53935" }, // vermelho
+  { bg: "#e8eaf6", borda: "#3949ab" }, // índigo
+  { bg: "#e0f2f1", borda: "#00897b" }  // verde-água
+];
+
+function calCorEvento(id) {
+  const idx = calHashId(String(id)) % CAL_PALETA.length;
+  return CAL_PALETA[idx];
+}
+
 let CAL_MES_ATUAL = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 let calEditando = { data: null, id: null };
@@ -7599,32 +7625,6 @@ function iniciarSincronizacaoEmTempoReal() {
 }
 
 // ===================== CALENDÁRIO =====================
-
-function calHashId(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (h * 31 + str.charCodeAt(i)) >>> 0;
-  }
-  return h;
-}
-
-const CAL_PALETA = [
-  { bg: "#efeaff", borda: "#7c5cff" }, // roxo
-  { bg: "#e3f2fd", borda: "#1e88e5" }, // azul
-  { bg: "#e8f5e9", borda: "#43a047" }, // verde
-  { bg: "#fff3e0", borda: "#fb8c00" }, // laranja
-  { bg: "#fce4ec", borda: "#e91e63" }, // rosa
-  { bg: "#fffde7", borda: "#c9a300" }, // amarelo
-  { bg: "#e0f7fa", borda: "#00acc1" }, // ciano
-  { bg: "#ffebee", borda: "#e53935" }, // vermelho
-  { bg: "#e8eaf6", borda: "#3949ab" }, // índigo
-  { bg: "#e0f2f1", borda: "#00897b" }  // verde-água
-];
-
-function calCorEvento(id) {
-  const idx = calHashId(String(id)) % CAL_PALETA.length;
-  return CAL_PALETA[idx];
-}
 
 function calFormatarData(d) {
   const ano = d.getFullYear();
