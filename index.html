@@ -6914,7 +6914,7 @@ function criarBlocoEstado(uf, tipo) {
   if (!PORTARIAS_DATA[uf]) PORTARIAS_DATA[uf] = {};
   const dados = PORTARIAS_DATA[uf];
   if (tipo === "fundamentacao") {
-    dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flBox(flRow("Lei Principal", "Preencha aqui a lei/base legal") + flRow("Resolução", "Preencha aqui a resolução aplicável") + flRow("Autorização", "Preencha aqui o parecer/autorização") + flRow("Validade", "Preencha aqui a validade"));
+    dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flBox(flRow("Lei Principal", "Preencha aqui a lei/base legal") + flRow("Resolução", "Preencha aqui a resolução aplicável") + flRow("Autorização", "Preencha aqui o parecer/autorização") + flRow("COFECI", "Preencha aqui o COFECI") + flRow("Validade", "Preencha aqui a validade"));
   } else if (tipo === "responsaveis") {
     dados.responsaveis = {
       nomeSecretario: "",
