@@ -6733,9 +6733,17 @@ function refrescarTelaAtual() {
   }
 }
 
-function resyncDataBlock(marcador, objetoAtual) {
-  salvarNoLocalStorage(marcador, objetoAtual);
-  return true;
+async function resyncDataBlock(marcador, objetoAtual) {
+  // Retorna true = salvou na nuvem | false = tentou e falhou | null = nem tentou (sem sessão admin)
+  return await salvarNoLocalStorage(marcador, objetoAtual);
+}
+
+function avisarFalhaSalvarNuvem(resultado) {
+  if (resultado === false) {
+    alert("⚠️ Os dados foram salvos apenas neste navegador — houve uma falha ao sincronizar com o banco de dados. Verifique sua conexão e tente novamente. Se o problema persistir, veja o console (F12) para detalhes do erro.");
+  } else if (resultado === null) {
+    alert("⚠️ Os dados foram salvos apenas neste navegador — sua sessão de administradora não está ativa. Faça login como admin novamente e repita a alteração para que ela seja salva no banco de dados.");
+  }
 }
 
 function syncRegrasDataScript() {
@@ -6745,7 +6753,7 @@ function syncRegrasDataScript() {
 async function salvarNoSupabase(chave, valor) {
   if (!adminSenha) {
     console.warn(`Supabase: não foi possível sincronizar "${chave}" — sessão de administradora não encontrada. A alteração ficou salva só neste navegador.`);
-    return;
+    return null; // null = nem tentou (sem sessão de admin válida)
   }
   try {
     const data = chave === "comparativo"
@@ -6801,6 +6809,7 @@ async function salvarNoSupabase(chave, valor) {
         });
     if (!data.ok) {
       console.error(`Supabase: falha ao salvar "${chave}" na nuvem. ${data.erro || ""}`);
+      return false;
     } else {
       console.log(`Supabase: "${chave}" sincronizado com a nuvem com sucesso.`);
       if (chave === "tutoriais") {
@@ -6822,22 +6831,24 @@ async function salvarNoSupabase(chave, valor) {
           console.warn("Supabase: falha ao ressincronizar ids de tutoriais após salvar.", e);
         }
       }
+      return true;
     }
   } catch (e) {
     console.warn(`Supabase: não foi possível sincronizar "${chave}" com a nuvem — a alteração ficou salva só neste navegador.`, e);
+    return false;
   }
 }
 
 const ULTIMO_SALVAMENTO_LOCAL = {};
 
-function salvarNoLocalStorage(marcador, objetoAtual) {
+async function salvarNoLocalStorage(marcador, objetoAtual) {
   try {
     localStorage.setItem(LS_PREFIX + marcador, JSON.stringify(objetoAtual));
   } catch (e) {
     console.warn("Não foi possível salvar no localStorage:", e);
   }
   ULTIMO_SALVAMENTO_LOCAL[marcador] = Date.now();
-  salvarNoSupabase(marcador, objetoAtual);
+  return await salvarNoSupabase(marcador, objetoAtual);
 }
 
 function carregarDoLocalStorage(marcador) {
@@ -7045,7 +7056,7 @@ selectEstado = function(uf) {
   });
 };
 
-function criarBlocoEstado(uf, tipo) {
+async function criarBlocoEstado(uf, tipo) {
   if (!PORTARIAS_DATA[uf]) PORTARIAS_DATA[uf] = {};
   const dados = PORTARIAS_DATA[uf];
   if (tipo === "fundamentacao") {
@@ -7060,8 +7071,9 @@ function criarBlocoEstado(uf, tipo) {
   } else if (tipo === "unidade") {
     dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flUnidade("Unidade de Ensino", flRow("Parecer", "Preencha aqui o parecer da unidade") + flRow("Portaria", "Preencha aqui a portaria"), []);
   }
-  resyncDataBlock("portarias", PORTARIAS_DATA);
+  const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
+  avisarFalhaSalvarNuvem(resultado);
 }
 
 function abrirFormularioEstadoCompleto(uf) {
@@ -7092,7 +7104,7 @@ function preencherMantenedoraSelecionada() {
   document.getElementById("pf-documento").value = (opt && opt.dataset.doc) || "";
 }
 
-function salvarFormularioEstadoCompleto(uf) {
+async function salvarFormularioEstadoCompleto(uf) {
   if (!PORTARIAS_DATA[uf]) PORTARIAS_DATA[uf] = {};
   const dados = PORTARIAS_DATA[uf];
 
@@ -7128,18 +7140,20 @@ function salvarFormularioEstadoCompleto(uf) {
     delete dados.responsaveis;
   }
 
-  resyncDataBlock("portarias", PORTARIAS_DATA);
+  const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
   const header = document.querySelector("#port-detail-pane .port-detail-header");
   if (header) mostrarFlashSalvo(header);
+  avisarFalhaSalvarNuvem(resultado);
 }
 
-function excluirDadosEstado(uf) {
+async function excluirDadosEstado(uf) {
   if (!PORTARIAS_DATA[uf]) return;
   if (!confirm("Excluir TODOS os dados normativos cadastrados para este estado? Essa ação não pode ser desfeita.")) return;
   delete PORTARIAS_DATA[uf];
-  resyncDataBlock("portarias", PORTARIAS_DATA);
+  const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
+  avisarFalhaSalvarNuvem(resultado);
 }
 
 const NOMES_BLOCO_PORTARIA = {
@@ -7150,7 +7164,7 @@ const NOMES_BLOCO_PORTARIA = {
   observacoes: "Observações"
 };
 
-function excluirBlocoEstado(uf, tipo) {
+async function excluirBlocoEstado(uf, tipo) {
   const dados = PORTARIAS_DATA[uf];
   if (!dados) return;
   if (!confirm(`Excluir o bloco "${NOMES_BLOCO_PORTARIA[tipo] || tipo}"? Essa ação não pode ser desfeita.`)) return;
@@ -7169,8 +7183,9 @@ function excluirBlocoEstado(uf, tipo) {
   } else if (tipo === "observacoes") {
     delete dados.observacoes;
   }
-  resyncDataBlock("portarias", PORTARIAS_DATA);
+  const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
+  avisarFalhaSalvarNuvem(resultado);
 }
 
 function abrirEdicaoResponsaveis(uf) {
@@ -7193,7 +7208,7 @@ function abrirEdicaoResponsaveis(uf) {
   textoDiv.innerHTML = `\n        <div class="admin-inline-form">\n          <label>Nome do(a) Secretário(a)</label>\n          <input type="text" id="admin-resp-nome-sec" value="${escapeHtmlRegra(r.nomeSecretario || "")}">\n          <label>Portaria do(a) Secretário(a)</label>\n          <input type="text" id="admin-resp-portaria-sec" value="${escapeHtmlRegra(r.portariaSecretario || "")}">\n          <label>Nome do(a) Diretor(a)</label>\n          <input type="text" id="admin-resp-nome-dir" value="${escapeHtmlRegra(r.nomeDiretor || "")}">\n          <label>Portaria do(a) Diretor(a)</label>\n          <input type="text" id="admin-resp-portaria-dir" value="${escapeHtmlRegra(r.portariaDiretor || "")}">\n          <button class="admin-edit-btn save" onclick="salvarEdicaoResponsaveis('${uf}')">💾 Salvar</button>\n        </div>`;
 }
 
-function salvarEdicaoResponsaveis(uf) {
+async function salvarEdicaoResponsaveis(uf) {
   const dados = PORTARIAS_DATA[uf];
   if (!dados) return;
   dados.responsaveis = {
@@ -7202,8 +7217,9 @@ function salvarEdicaoResponsaveis(uf) {
     nomeDiretor: document.getElementById("admin-resp-nome-dir").value.trim(),
     portariaDiretor: document.getElementById("admin-resp-portaria-dir").value.trim()
   };
-  resyncDataBlock("portarias", PORTARIAS_DATA);
+  const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
+  avisarFalhaSalvarNuvem(resultado);
 }
 
 function ativarEdicaoFundamentacao(uf, textoDiv, btn) {
@@ -7211,17 +7227,19 @@ function ativarEdicaoFundamentacao(uf, textoDiv, btn) {
   textoDiv.classList.add("admin-editable");
   textoDiv.focus();
   btn.textContent = "💾 Salvar";
-  btn.onclick = () => {
+  btn.onclick = async () => {
     const dados = PORTARIAS_DATA[uf];
+    let resultado;
     if (dados) {
       dados.fundamentacaoLegal = textoDiv.innerHTML;
-      resyncDataBlock("portarias", PORTARIAS_DATA);
+      resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
     }
     textoDiv.removeAttribute("contenteditable");
     textoDiv.classList.remove("admin-editable");
     mostrarFlashSalvo(btn.parentElement);
     btn.textContent = "✏️ Editar";
     btn.onclick = () => ativarEdicaoFundamentacao(uf, textoDiv, btn);
+    avisarFalhaSalvarNuvem(resultado);
   };
 }
 
