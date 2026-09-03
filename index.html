@@ -6443,31 +6443,78 @@ function sairAdmin() {
   refrescarTelaAtual();
 }
 
+let adminToolbarTimer = null;
+
+function agendarRecolhimentoToolbar() {
+  clearTimeout(adminToolbarTimer);
+  adminToolbarTimer = setTimeout(() => {
+    const bar = document.getElementById("admin-toolbar");
+    if (!bar) return;
+    bar.classList.add("collapsed");
+    const btn = bar.querySelector(".admin-toolbar-toggle");
+    if (btn) {
+      btn.textContent = "🛠️";
+      btn.title = "Expandir barra";
+    }
+  }, 2500);
+}
+
+function expandirToolbarAdmin() {
+  const bar = document.getElementById("admin-toolbar");
+  if (!bar) return;
+  bar.classList.remove("collapsed");
+  const btn = bar.querySelector(".admin-toolbar-toggle");
+  if (btn) {
+    btn.textContent = "➖";
+    btn.title = "Recolher barra";
+  }
+  agendarRecolhimentoToolbar();
+}
+
 function alternarToolbarAdmin() {
   const bar = document.getElementById("admin-toolbar");
   if (!bar) return;
-  const recolhido = bar.classList.toggle("collapsed");
-  const btn = bar.querySelector(".admin-toolbar-toggle");
-  if (btn) {
-    btn.textContent = recolhido ? "🛠️" : "➖";
-    btn.title = recolhido ? "Expandir barra" : "Recolher barra";
+  if (bar.classList.contains("collapsed")) {
+    expandirToolbarAdmin();
+  } else {
+    clearTimeout(adminToolbarTimer);
+    bar.classList.add("collapsed");
+    const btn = bar.querySelector(".admin-toolbar-toggle");
+    if (btn) {
+      btn.textContent = "🛠️";
+      btn.title = "Expandir barra";
+    }
   }
-  try { localStorage.setItem("ibrep_admin_toolbar_collapsed", recolhido ? "1" : "0"); } catch (e) {}
 }
+
+// Recolhe a barra sozinha sempre que o mouse sai dela; expande ao passar o mouse ou tocar nela.
+(function configurarAutoRecolhimentoToolbar() {
+  const bar = document.getElementById("admin-toolbar");
+  if (!bar) return;
+  bar.addEventListener("mouseenter", () => {
+    clearTimeout(adminToolbarTimer);
+    bar.classList.remove("collapsed");
+    const btn = bar.querySelector(".admin-toolbar-toggle");
+    if (btn) { btn.textContent = "➖"; btn.title = "Recolher barra"; }
+  });
+  bar.addEventListener("mouseleave", agendarRecolhimentoToolbar);
+  bar.addEventListener("click", (e) => {
+    if (bar.classList.contains("collapsed")) expandirToolbarAdmin();
+  });
+})();
 
 function ativarModoAdmin() {
   adminMode = true;
   document.body.classList.add("admin-mode");
   const bar = document.getElementById("admin-toolbar");
   bar.classList.add("open");
-  let recolhido = false;
-  try { recolhido = localStorage.getItem("ibrep_admin_toolbar_collapsed") === "1"; } catch (e) {}
-  bar.classList.toggle("collapsed", recolhido);
+  bar.classList.remove("collapsed");
   const btn = bar.querySelector(".admin-toolbar-toggle");
   if (btn) {
-    btn.textContent = recolhido ? "🛠️" : "➖";
-    btn.title = recolhido ? "Expandir barra" : "Recolher barra";
+    btn.textContent = "➖";
+    btn.title = "Recolher barra";
   }
+  agendarRecolhimentoToolbar();
   atualizarVisibilidadeLinkAdmin();
   refrescarTelaAtual();
 }
