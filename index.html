@@ -2894,10 +2894,46 @@
       border-radius: 99px;
       box-shadow: 0 10px 34px rgba(30, 20, 60, .35);
       font-family: 'Poppins', sans-serif;
+      transition: padding .15s;
     }
 
     #admin-toolbar.open {
       display: flex;
+    }
+
+    #admin-toolbar.collapsed {
+      padding: 8px;
+      gap: 0;
+    }
+
+    #admin-toolbar.collapsed .admin-toolbar-label,
+    #admin-toolbar.collapsed .admin-toolbar-btn {
+      display: none;
+    }
+
+    .admin-toolbar-toggle {
+      border: none;
+      background: rgba(255, 255, 255, .12);
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+      border-radius: 50%;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+      order: 99;
+    }
+
+    .admin-toolbar-toggle:hover {
+      background: rgba(255, 255, 255, .22);
+    }
+
+    #admin-toolbar.collapsed .admin-toolbar-toggle {
+      order: 0;
     }
 
     .admin-toolbar-label {
@@ -3432,6 +3468,7 @@
   <div class="admin-lock-link" id="admin-lock-link" style="display:none" onclick="abrirLoginAdmin()">🔒 Área do administrador</div>
 
   <div id="admin-toolbar">
+    <button class="admin-toolbar-toggle" onclick="alternarToolbarAdmin()" title="Recolher/expandir barra">➖</button>
     <span class="admin-toolbar-label"><span class="admin-toolbar-dot"></span> Modo admin ativo — alterações salvas automaticamente</span>
     <button class="admin-toolbar-btn primary" onclick="abrirGestaoUsuarios()">👥 Usuários</button>
     <button class="admin-toolbar-btn" onclick="sairAdmin()">Sair</button>
@@ -5307,7 +5344,7 @@ function selectEstado(uf) {
     ...CAMPOS_FUNDAMENTACAO.map(f => [ f.label, dados[f.key] ])
   ]);
   const delBtn = tipo => adminMode ? `<button class="admin-danger-btn" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="excluirBlocoEstado('${uf}','${tipo}')" title="Excluir este bloco">🗑️</button>` : "";
-  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Fundamentação Legal (texto livre)</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal (texto livre)</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
 }
 
 // Pausa qualquer outro vídeo de tutorial quando um novo começa a tocar (API do Panda Video)
@@ -6406,10 +6443,31 @@ function sairAdmin() {
   refrescarTelaAtual();
 }
 
+function alternarToolbarAdmin() {
+  const bar = document.getElementById("admin-toolbar");
+  if (!bar) return;
+  const recolhido = bar.classList.toggle("collapsed");
+  const btn = bar.querySelector(".admin-toolbar-toggle");
+  if (btn) {
+    btn.textContent = recolhido ? "🛠️" : "➖";
+    btn.title = recolhido ? "Expandir barra" : "Recolher barra";
+  }
+  try { localStorage.setItem("ibrep_admin_toolbar_collapsed", recolhido ? "1" : "0"); } catch (e) {}
+}
+
 function ativarModoAdmin() {
   adminMode = true;
   document.body.classList.add("admin-mode");
-  document.getElementById("admin-toolbar").classList.add("open");
+  const bar = document.getElementById("admin-toolbar");
+  bar.classList.add("open");
+  let recolhido = false;
+  try { recolhido = localStorage.getItem("ibrep_admin_toolbar_collapsed") === "1"; } catch (e) {}
+  bar.classList.toggle("collapsed", recolhido);
+  const btn = bar.querySelector(".admin-toolbar-toggle");
+  if (btn) {
+    btn.textContent = recolhido ? "🛠️" : "➖";
+    btn.title = recolhido ? "Expandir barra" : "Recolher barra";
+  }
   atualizarVisibilidadeLinkAdmin();
   refrescarTelaAtual();
 }
@@ -6926,14 +6984,16 @@ selectEstado = function(uf) {
   secoes.forEach(sec => {
     const titulo = sec.querySelector(".port-section-title");
     if (!titulo) return;
-    if (titulo.textContent.trim() === "Fundamentação Legal (texto livre)") {
+    const rotulo = (titulo.querySelector("span") || titulo).textContent.trim();
+    if (rotulo === "Fundamentação Legal (texto livre)") {
       const btn = document.createElement("button");
       btn.className = "admin-edit-btn";
       btn.style.marginLeft = "10px";
       btn.textContent = "✏️ Editar";
       const textoDiv = sec.querySelector(".port-section-text");
       btn.onclick = () => ativarEdicaoFundamentacao(uf, textoDiv, btn);
-      titulo.appendChild(btn);
+      const lixeira = titulo.querySelector(".admin-danger-btn");
+      if (lixeira) titulo.insertBefore(btn, lixeira); else titulo.appendChild(btn);
     }
   });
 };
