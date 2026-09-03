@@ -1311,7 +1311,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
 
     .port-detail-title {
@@ -1345,8 +1345,8 @@
       background: #fff;
       border: 1px solid var(--cinza-borda);
       border-radius: 14px;
-      padding: 18px 20px;
-      margin-bottom: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
     }
 
     .port-section-title {
@@ -1355,7 +1355,7 @@
       text-transform: uppercase;
       letter-spacing: .04em;
       color: var(--roxo);
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     .port-section-text {
@@ -3000,6 +3000,7 @@
     }
 
     .admin-inline-form textarea,
+    .admin-inline-form select,
     .admin-inline-form input {
       width: 100%;
       font-family: 'Poppins', sans-serif;
@@ -4306,7 +4307,7 @@ async function carregarPortariasDasTabelas() {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor`, { headers });
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor,cofeci,observacoes`, { headers });
   if (!resp.ok) {
     console.warn("Supabase: não foi possível carregar portarias_estados (status " + resp.status + ").");
     return null;
@@ -4321,7 +4322,9 @@ async function carregarPortariasDasTabelas() {
         portariaDiretor: l.portaria_diretor,
         portariaSecretario: l.portaria_secretario
       },
-      fundamentacaoLegal: l.fundamentacao_legal_html
+      fundamentacaoLegal: l.fundamentacao_legal_html,
+      cofeci: l.cofeci,
+      observacoes: l.observacoes
     };
     if (l.status !== null && l.status !== undefined) item.status = l.status;
     if (l.status_label !== null && l.status_label !== undefined) item.statusLabel = l.status_label;
@@ -5253,9 +5256,36 @@ function flUnidade(titulo, rowsHtml, locais) {
 
 function flResponsaveis(r) {
   if (!r) return "";
-  return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">\n    <div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--cinza-borda);align-items:flex-start;">\n      <span style="flex:0 0 118px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:1px;">👤 Secretário(a)</span>\n      <span style="flex:1;font-size:13px;line-height:1.55;color:var(--texto);">${r.nomeSecretario} <span style="color:var(--texto-muted);">— Portaria nº ${r.portariaSecretario}</span></span>\n    </div>\n    <div style="display:flex;gap:10px;padding:10px 14px;align-items:flex-start;">\n      <span style="flex:0 0 118px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:1px;">🎓 Diretor(a)</span>\n      <span style="flex:1;font-size:13px;line-height:1.55;color:var(--texto);">${r.nomeDiretor} <span style="color:var(--texto-muted);">— Portaria nº ${r.portariaDiretor}</span></span>\n    </div>\n  </div>`;
+  const linhas = [
+    [ "👤 Secretário(a)", r.nomeSecretario ? `${r.nomeSecretario} <span style="color:var(--texto-muted);">— Portaria nº ${r.portariaSecretario || "—"}</span>` : "" ],
+    [ "🎓 Diretor(a)", r.nomeDiretor ? `${r.nomeDiretor} <span style="color:var(--texto-muted);">— Portaria nº ${r.portariaDiretor || "—"}</span>` : "" ],
+    [ "📘 Coord. do Curso", r.coordenadorCurso || "" ],
+    [ "🧭 Coord. de Estágio", r.coordenadorEstagio || "" ]
+  ].filter(([ , v ]) => v);
+  if (!linhas.length) return "";
+  return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:6px 14px;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}align-items:flex-start;">\n      <span style="flex:0 0 140px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:1px;">${label}</span>\n      <span style="flex:1;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</span>\n    </div>`).join("") + `\n  </div>`;
 }
 
+// Renderiza uma lista de pares [rótulo, valor] como uma caixa de linhas, pulando valores vazios.
+function flCamposBox(pares) {
+  const linhas = (pares || []).filter(([ , v ]) => v !== undefined && v !== null && String(v).trim() !== "");
+  if (!linhas.length) return "";
+  return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:6px 14px;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}align-items:flex-start;">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:1px;">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;font-size:13px;line-height:1.35;color:var(--texto);">${escapeHtmlRegra(String(valor))}</span>\n    </div>`).join("") + `\n  </div>`;
+}
+
+// Campos "simples" (texto curto) da Fundamentação Legal e dos Dados do Curso.
+// Usados tanto para montar o formulário quanto para ler e salvar os valores.
+const CAMPOS_FUNDAMENTACAO = [
+  { key: "leiPrincipal", label: "Lei Principal" },
+  { key: "resolucao", label: "Resolução" },
+  { key: "parecer", label: "Parecer" },
+  { key: "validade", label: "Validade" },
+  { key: "cofeci", label: "Código COFECI" },
+  { key: "sistec", label: "SISTEC" },
+  { key: "censoEscolar", label: "Censo Escolar" }
+];
 const PORTARIAS_DATA = {};
 
 function selectEstado(uf) {
@@ -5266,12 +5296,18 @@ function selectEstado(uf) {
   const dados = PORTARIAS_DATA[uf];
   const pane = document.getElementById("port-detail-pane");
   if (!dados) {
-    const podeAdicionar = adminMode ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;max-width:320px;">\n               <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>\n               <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>\n               <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n             </div>` : "";
+    const podeAdicionar = adminMode ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;max-width:320px;">\n               <button class="admin-dashed-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">📝 Cadastrar dados deste estado</button>\n             </div>` : "";
     pane.innerHTML = `\n          <div class="port-detail-header">\n            <div class="port-detail-title">${estado.nome} (${uf})</div>\n          </div>\n          <div class="port-empty" style="height:auto;padding:40px 0;">\n            <div class="icon">📭</div>\n            <p>Nenhuma portaria ou parecer cadastrado para este estado ainda.</p>\n            ${adminMode ? `<p style="font-size:12px;margin-top:4px;">Escolha abaixo o que deseja cadastrar:</p>` : ""}\n            ${podeAdicionar}\n          </div>`;
     return;
   }
   const docsHtml = (dados.portarias || []).map(d => `\n        <div class="port-doc-item">\n          <div class="port-doc-nome">${d.nome}</div>\n          <div class="port-doc-meta">${d.data}</div>\n          ${d.link ? `<a href="${d.link}" target="_blank">Ver documento →</a>` : ""}\n        </div>\n      `).join("") || '<div class="port-doc-meta">Nenhum documento cadastrado.</div>';
-  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}</div>` : ""}\n        </div>\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title">Fundamentação Legal</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title">Secretário e Diretor Responsáveis</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.naoDestituicao ? `\n        <div class="port-section">\n          <div class="port-section-title">Situação de Não Destituição</div>\n          <div class="port-section-text">${dados.naoDestituicao}</div>\n        </div>` : ""}\n        ${dados.parecerInstituicao ? `\n        <div class="port-section">\n          <div class="port-section-title">Parecer da Instituição</div>\n          <div class="port-section-text">${dados.parecerInstituicao}</div>\n        </div>` : ""}\n        ${dados.parecerConselho ? `\n        <div class="port-section">\n          <div class="port-section-title">Parecer do Conselho</div>\n          <div class="port-section-text">${dados.parecerConselho}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','fundamentacao')">➕ Fundamentação Legal</button>\n          ${!dados.responsaveis ? `<button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','responsaveis')">➕ Secretário e Diretor Responsável</button>` : ""}\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
+  const fundamentacaoBox = flCamposBox([
+    [ "Mantenedora / Razão Social", dados.razaoSocial ],
+    [ "Documento (CNPJ)", dados.documento ],
+    ...CAMPOS_FUNDAMENTACAO.map(f => [ f.label, dados[f.key] ])
+  ]);
+  const delBtn = tipo => adminMode ? `<button class="admin-danger-btn" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="excluirBlocoEstado('${uf}','${tipo}')" title="Excluir este bloco">🗑️</button>` : "";
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Fundamentação Legal (texto livre)</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;justify-content:space-between;"><span>Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
 }
 
 // Pausa qualquer outro vídeo de tutorial quando um novo começa a tocar (API do Panda Video)
@@ -6890,15 +6926,7 @@ selectEstado = function(uf) {
   secoes.forEach(sec => {
     const titulo = sec.querySelector(".port-section-title");
     if (!titulo) return;
-    if (titulo.textContent.includes("Secretário e Diretor")) {
-      const btn = document.createElement("button");
-      btn.className = "admin-edit-btn";
-      btn.style.marginLeft = "10px";
-      btn.textContent = "✏️ Editar";
-      btn.onclick = () => abrirEdicaoResponsaveis(uf);
-      titulo.appendChild(btn);
-    }
-    if (titulo.textContent.includes("Fundamentação Legal")) {
+    if (titulo.textContent.trim() === "Fundamentação Legal (texto livre)") {
       const btn = document.createElement("button");
       btn.className = "admin-edit-btn";
       btn.style.marginLeft = "10px";
@@ -6914,7 +6942,7 @@ function criarBlocoEstado(uf, tipo) {
   if (!PORTARIAS_DATA[uf]) PORTARIAS_DATA[uf] = {};
   const dados = PORTARIAS_DATA[uf];
   if (tipo === "fundamentacao") {
-    dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flBox(flRow("Lei Principal", "Preencha aqui a lei/base legal") + flRow("Resolução", "Preencha aqui a resolução aplicável") + flRow("Autorização", "Preencha aqui o parecer/autorização") + flRow("COFECI", "Preencha aqui o COFECI") + flRow("Validade", "Preencha aqui a validade"));
+    dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flBox(flRow("Lei Principal", "Preencha aqui a lei/base legal") + flRow("Resolução", "Preencha aqui a resolução aplicável") + flRow("Autorização", "Preencha aqui o parecer/autorização") + flRow("Validade", "Preencha aqui a validade"));
   } else if (tipo === "responsaveis") {
     dados.responsaveis = {
       nomeSecretario: "",
@@ -6929,10 +6957,111 @@ function criarBlocoEstado(uf, tipo) {
   selectEstado(uf);
 }
 
+function abrirFormularioEstadoCompleto(uf) {
+  if (!adminMode) return;
+  const estado = ESTADOS_GRID.find(e => e.uf === uf);
+  const dados = PORTARIAS_DATA[uf] || {};
+  const r = dados.responsaveis || {};
+  const pane = document.getElementById("port-detail-pane");
+
+  const opcoesMantenedoras = (DB.mantenedoras || []).map(m =>
+    `<option value="${m.idmantenedora}" data-razao="${escapeHtmlRegra(m.razao_social || "")}" data-doc="${escapeHtmlRegra(m.documento || "")}" ${String(dados.mantenedoraId || "") === String(m.idmantenedora) ? "selected" : ""}>${escapeHtmlRegra(m.razao_social || "")}</option>`
+  ).join("");
+
+  const camposFundamentacaoHtml = CAMPOS_FUNDAMENTACAO.map(f =>
+    `<label>${f.label}</label>\n          <input type="text" id="pf-fund-${f.key}" value="${escapeHtmlRegra(dados[f.key] || "")}">`
+  ).join("\n          ");
+
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n        </div>\n        <div class="admin-inline-form" style="max-width:560px;">\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">📌 Situação</h3>\n          <label>Status</label>\n          <select id="pf-status">\n            <option value="" ${!dados.status ? "selected" : ""}>Sem selo de status</option>\n            <option value="ok" ${dados.status === "ok" ? "selected" : ""}>OK (verde)</option>\n            <option value="alerta" ${dados.status === "alerta" ? "selected" : ""}>Alerta (amarelo)</option>\n            <option value="pendente" ${dados.status === "pendente" ? "selected" : ""}>Pendente (vermelho)</option>\n          </select>\n          <label>Rótulo do status (texto exibido no selo)</label>\n          <input type="text" id="pf-status-label" value="${escapeHtmlRegra(dados.statusLabel || "")}" placeholder="Ex.: Regularizado">\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">📄 Fundamentação Legal</h3>\n          <label>Mantenedora</label>\n          <select id="pf-mantenedora" onchange="preencherMantenedoraSelecionada()">\n            <option value="">Selecione a mantenedora...</option>\n            ${opcoesMantenedoras}\n          </select>\n          <label>Razão Social</label>\n          <input type="text" id="pf-razao-social" value="${escapeHtmlRegra(dados.razaoSocial || "")}" readonly style="background:var(--cinza-light);">\n          <label>Documento (CNPJ)</label>\n          <input type="text" id="pf-documento" value="${escapeHtmlRegra(dados.documento || "")}" readonly style="background:var(--cinza-light);">\n          ${camposFundamentacaoHtml}\n          <label>Observações (aceita HTML simples, sempre visível na ficha do estado)</label>\n          <textarea id="pf-observacoes">${dados.observacoes || ""}</textarea>\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">👤 Secretário, Diretor e Coordenadores Responsáveis</h3>\n          <label>Nome do(a) Secretário(a)</label>\n          <input type="text" id="pf-nome-sec" value="${escapeHtmlRegra(r.nomeSecretario || "")}">\n          <label>Portaria do(a) Secretário(a)</label>\n          <input type="text" id="pf-portaria-sec" value="${escapeHtmlRegra(r.portariaSecretario || "")}">\n          <label>Nome do(a) Diretor(a)</label>\n          <input type="text" id="pf-nome-dir" value="${escapeHtmlRegra(r.nomeDiretor || "")}">\n          <label>Portaria do(a) Diretor(a)</label>\n          <input type="text" id="pf-portaria-dir" value="${escapeHtmlRegra(r.portariaDiretor || "")}">\n          <label>Coordenador(a) do Curso</label>\n          <input type="text" id="pf-coord-curso" value="${escapeHtmlRegra(r.coordenadorCurso || "")}">\n          <label>Coordenador(a) de Estágio</label>\n          <input type="text" id="pf-coord-estagio" value="${escapeHtmlRegra(r.coordenadorEstagio || "")}">\n\n          <div style="display:flex;gap:8px;margin-top:6px;">\n            <button class="admin-edit-btn save" onclick="salvarFormularioEstadoCompleto('${uf}')">💾 Salvar tudo</button>\n            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="selectEstado('${uf}')">Cancelar</button>\n          </div>\n        </div>`;
+
+  if (dados.mantenedoraId) preencherMantenedoraSelecionada();
+}
+
+function preencherMantenedoraSelecionada() {
+  const select = document.getElementById("pf-mantenedora");
+  if (!select) return;
+  const opt = select.options[select.selectedIndex];
+  document.getElementById("pf-razao-social").value = (opt && opt.dataset.razao) || "";
+  document.getElementById("pf-documento").value = (opt && opt.dataset.doc) || "";
+}
+
+function salvarFormularioEstadoCompleto(uf) {
+  if (!PORTARIAS_DATA[uf]) PORTARIAS_DATA[uf] = {};
+  const dados = PORTARIAS_DATA[uf];
+
+  const status = document.getElementById("pf-status").value.trim();
+  const statusLabel = document.getElementById("pf-status-label").value.trim();
+  const mantenedoraSelect = document.getElementById("pf-mantenedora");
+  const mantenedoraId = mantenedoraSelect.value.trim();
+  const razaoSocial = document.getElementById("pf-razao-social").value.trim();
+  const documento = document.getElementById("pf-documento").value.trim();
+  const observacoes = document.getElementById("pf-observacoes").value.trim();
+  const nomeSecretario = document.getElementById("pf-nome-sec").value.trim();
+  const portariaSecretario = document.getElementById("pf-portaria-sec").value.trim();
+  const nomeDiretor = document.getElementById("pf-nome-dir").value.trim();
+  const portariaDiretor = document.getElementById("pf-portaria-dir").value.trim();
+  const coordenadorCurso = document.getElementById("pf-coord-curso").value.trim();
+  const coordenadorEstagio = document.getElementById("pf-coord-estagio").value.trim();
+
+  if (status) dados.status = status; else delete dados.status;
+  if (statusLabel) dados.statusLabel = statusLabel; else delete dados.statusLabel;
+  if (mantenedoraId) dados.mantenedoraId = mantenedoraId; else delete dados.mantenedoraId;
+  if (razaoSocial) dados.razaoSocial = razaoSocial; else delete dados.razaoSocial;
+  if (documento) dados.documento = documento; else delete dados.documento;
+  if (observacoes) dados.observacoes = observacoes; else delete dados.observacoes;
+
+  CAMPOS_FUNDAMENTACAO.forEach(f => {
+    const valor = document.getElementById(`pf-fund-${f.key}`).value.trim();
+    if (valor) dados[f.key] = valor; else delete dados[f.key];
+  });
+
+  if (nomeSecretario || portariaSecretario || nomeDiretor || portariaDiretor || coordenadorCurso || coordenadorEstagio) {
+    dados.responsaveis = { nomeSecretario, portariaSecretario, nomeDiretor, portariaDiretor, coordenadorCurso, coordenadorEstagio };
+  } else {
+    delete dados.responsaveis;
+  }
+
+  resyncDataBlock("portarias", PORTARIAS_DATA);
+  selectEstado(uf);
+  const header = document.querySelector("#port-detail-pane .port-detail-header");
+  if (header) mostrarFlashSalvo(header);
+}
+
 function excluirDadosEstado(uf) {
   if (!PORTARIAS_DATA[uf]) return;
   if (!confirm("Excluir TODOS os dados normativos cadastrados para este estado? Essa ação não pode ser desfeita.")) return;
   delete PORTARIAS_DATA[uf];
+  resyncDataBlock("portarias", PORTARIAS_DATA);
+  selectEstado(uf);
+}
+
+const NOMES_BLOCO_PORTARIA = {
+  situacao: "Situação (status)",
+  fundamentacao: "Fundamentação Legal",
+  fundamentacaoLivre: "Fundamentação Legal (texto livre)",
+  responsaveis: "Secretário, Diretor e Coordenadores Responsáveis",
+  observacoes: "Observações"
+};
+
+function excluirBlocoEstado(uf, tipo) {
+  const dados = PORTARIAS_DATA[uf];
+  if (!dados) return;
+  if (!confirm(`Excluir o bloco "${NOMES_BLOCO_PORTARIA[tipo] || tipo}"? Essa ação não pode ser desfeita.`)) return;
+  if (tipo === "situacao") {
+    delete dados.status;
+    delete dados.statusLabel;
+  } else if (tipo === "fundamentacao") {
+    delete dados.mantenedoraId;
+    delete dados.razaoSocial;
+    delete dados.documento;
+    CAMPOS_FUNDAMENTACAO.forEach(f => delete dados[f.key]);
+  } else if (tipo === "fundamentacaoLivre") {
+    delete dados.fundamentacaoLegal;
+  } else if (tipo === "responsaveis") {
+    delete dados.responsaveis;
+  } else if (tipo === "observacoes") {
+    delete dados.observacoes;
+  }
   resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
 }
