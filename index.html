@@ -910,13 +910,12 @@
       z-index: 9999;
       gap: 0;
       overflow-y: auto;
-      padding: clamp(24px, 4vh, 56px) clamp(32px, 9vw, 150px);
-      grid-template-columns: minmax(310px,.78fr) minmax(530px,1.4fr);
+      padding: clamp(24px, 4vh, 56px) 0;
+      grid-template-columns: minmax(310px,38%) minmax(530px,62%);
       grid-template-rows: auto auto auto auto;
-      column-gap: clamp(48px,8vw,130px);
+      column-gap: 0;
       align-content: center;
       overflow-x: hidden;
-      padding-left: clamp(20px, 5vw, 80px);
     }
     #welcome-screen::before, #welcome-screen::after {
       content: "";
@@ -976,13 +975,13 @@
       grid-column: 2;
       grid-row: 1 / span 4;
       align-self: start;
+      justify-self: center;
       position: relative;
       z-index: 3;
       pointer-events: auto;
       margin-top: 64px;
       max-height: calc(100vh - 128px);
       overflow-y: auto;
-      margin-right: -6px;
       scrollbar-width: none;
     }
     .welcome-btn {
@@ -991,7 +990,7 @@
       align-items: center !important;
       gap: 5px;
       padding: 16px 20px;
-      border-radius: 4px;
+      border-radius: 18px;
       border: 0;
       background: #fff;
       cursor: pointer;
@@ -1009,6 +1008,12 @@
       min-height: 108px;
       justify-content: center !important;
       border-top: 3px solid transparent;
+    }
+    .welcome-buttons .welcome-btn:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: 100%;
+      max-width: calc((100% - 12px) / 2);
     }
     .welcome-btn:hover {
       border-color: var(--roxo);
