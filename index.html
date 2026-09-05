@@ -1374,9 +1374,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 0;
       flex-shrink: 0;
       transition: background .12s;
+    }
+    .tut-cat-icon::after {
+      content: attr(data-num);
+      font: 700 15px/1 'IBM Plex Sans', sans-serif;
     }
     .tut-cat-btn.active .tut-cat-icon, .tut-cat-btn:hover .tut-cat-icon {
       background: var(--roxo-claro);
@@ -2047,10 +2051,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 0;
       font-weight: 700;
       flex-shrink: 0;
       transition: background .12s;
+    }
+    .regras-cat-num::after {
+      content: attr(data-num);
+      font: 700 11px/1 'IBM Plex Sans', sans-serif;
     }
     .regras-cat-btn.active .regras-cat-num, .regras-cat-btn:hover .regras-cat-num {
       background: #fff;
@@ -4645,7 +4653,7 @@ function renderTutCats() {
     const cat = TUTORIAIS[key];
     const ativo = key === tutCategoriaAtual ? "active" : "";
     const delBtn = adminMode ? `<span class="tut-cat-del" data-del-cat="${key}" title="Excluir categoria">🗑️</span>` : "";
-    html += `\n          <button class="tut-cat-btn ${ativo}" data-cat="${key}">\n            <span class="tut-cat-icon">${idx + 1}</span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}${delBtn}\n          </button>`;
+    html += `\n          <button class="tut-cat-btn ${ativo}" data-cat="${key}">\n            <span class="tut-cat-icon" data-num="${idx + 1}"></span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}${delBtn}\n          </button>`;
   });
   cont.innerHTML = html;
   cont.querySelectorAll(".tut-cat-btn").forEach(btn => {
@@ -4813,7 +4821,7 @@ function renderCursosEstados(estados) {
     const qtd = DB.instituicoes.filter(i => cursosEstadoReal(i) === uf).length;
     const ativo = uf === cursosEstadoAtual ? "active" : "";
     const delBtn = adminMode ? `<span class="regras-cat-del" data-del-uf-idx="${idx}" title="Excluir estado">🗑️</span>` : "";
-    html += `\n          <button class="regras-cat-btn ${ativo}" data-uf-idx="${idx}">\n            <span class="regras-cat-num">${idx + 1}</span>\n            <span class="regras-cat-label">${cursosUfLabel(uf)}</span>\n            <span class="regras-cat-count">${qtd}</span>\n            ${delBtn}\n          </button>`;
+    html += `\n          <button class="regras-cat-btn ${ativo}" data-uf-idx="${idx}">\n            <span class="regras-cat-num" data-num="${idx + 1}"></span>\n            <span class="regras-cat-label">${cursosUfLabel(uf)}</span>\n            <span class="regras-cat-count">${qtd}</span>\n            ${delBtn}\n          </button>`;
   });
   cont.innerHTML = html || `<div class="regras-empty-list">Nenhum estado cadastrado</div>`;
   cont.querySelectorAll(".regras-cat-btn").forEach(btn => {
@@ -4941,7 +4949,7 @@ function renderRegrasCats() {
   REGRAS_DATA.categorias.forEach(cat => {
     const ativo = cat.id === regrasCategoriaAtual ? "active" : "";
     const delBtn = adminMode ? `<span class="regras-cat-del" data-del-topico="${cat.id}" title="Excluir tópico">🗑️</span>` : "";
-    html += `\n          <button class="regras-cat-btn ${ativo}" data-cat-id="${cat.id}">\n            <span class="regras-cat-num">${cat.numero}</span>\n            <span class="regras-cat-label">${cat.titulo}</span>\n            <span class="regras-cat-count">${cat.itens.length}</span>\n            ${delBtn}\n          </button>`;
+    html += `\n          <button class="regras-cat-btn ${ativo}" data-cat-id="${cat.id}">\n            <span class="regras-cat-num" data-num="${cat.numero}"></span>\n            <span class="regras-cat-label">${cat.titulo}</span>\n            <span class="regras-cat-count">${cat.itens.length}</span>\n            ${delBtn}\n          </button>`;
   });
   cont.innerHTML = html || `<div class="regras-empty-list">Nenhum tópico cadastrado</div>`;
   cont.querySelectorAll(".regras-cat-btn").forEach(btn => {
