@@ -3986,26 +3986,10 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
 
   <div class="app">
 
-    <aside class="sidebar">
-      <div class="sidebar-label">Categorias</div>
-
-      <button class="nav-btn active" id="btn-mantenedoras" onclick="setSection('mantenedoras')">
-        <span class="icon"></span> Mantenedoras
-      </button>
-      <button class="nav-btn" id="btn-instituicoes" onclick="setSection('instituicoes')">
-        <span class="icon"></span> Instituições
-      </button>
-      <button class="nav-btn" id="btn-polos" onclick="setSection('polos')">
-        <span class="icon"></span> Polos
-      </button>
-      <button class="nav-btn" id="btn-locais" onclick="setSection('locais')">
-        <span class="icon"></span> Locais de Provas
-      </button>
-
-<div class="sidebar-divider"></div>
-      <button class="nav-btn" id="btn-arvore" onclick="setSection('arvore')">
-        <span class="icon"></span> Árvore Hierárquica
-      </button>
+    <aside class="regras-cats-pane" id="painel-cats-pane">
+      <div class="regras-cats-label">Categorias</div>
+      <div class="regras-cats-list" id="painel-cats-list"></div>
+      <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin-top:8px;" onclick="abrirNovaCategoriaPainel()">➕ Adicionar categoria</button>
     </aside>
 
     <div class="right">
@@ -5562,6 +5546,124 @@ const sectionGroups = {
   } ]
 };
 
+const PAINEL_CATEGORIAS_FIXAS = [
+  { id: "mantenedoras", titulo: "Mantenedoras" },
+  { id: "instituicoes", titulo: "Instituições" },
+  { id: "polos", titulo: "Polos" },
+  { id: "locais", titulo: "Locais de Provas" }
+];
+
+const PAINEL_CATEGORIAS_EXTRAS = [];
+
+function registrarCategoriaPainelCustom(cat) {
+  if (!DB[cat.id]) DB[cat.id] = [];
+  cfg[cat.id] = {
+    label: cat.titulo,
+    idKey: "id",
+    nameKey: "nome"
+  };
+  sectionGroups[cat.id] = [ {
+    title: "Identificação",
+    keys: [ "id", "nome" ]
+  } ];
+  if (!labelMap.id) labelMap.id = "ID";
+}
+
+function painelCategoriasTodas() {
+  return [ ...PAINEL_CATEGORIAS_FIXAS, ...PAINEL_CATEGORIAS_EXTRAS ];
+}
+
+function persistirRegistrosSecao(section) {
+  const ehFixa = PAINEL_CATEGORIAS_FIXAS.some(c => c.id === section);
+  if (ehFixa) {
+    resyncDataBlock("db", DB);
+  } else {
+    resyncDataBlock("painelitens_" + section, DB[section] || []);
+  }
+}
+
+function renderPainelCats() {
+  const cont = document.getElementById("painel-cats-list");
+  if (!cont) return;
+  let numero = 0;
+  let html = "";
+  painelCategoriasTodas().forEach(cat => {
+    numero++;
+    const ativo = cat.id === currentSection ? "active" : "";
+    const qtd = (DB[cat.id] || []).length;
+    const ehCustom = PAINEL_CATEGORIAS_EXTRAS.some(c => c.id === cat.id);
+    const delBtn = adminMode && ehCustom ? `<span class="regras-cat-del" data-del-painel-cat="${cat.id}" title="Excluir categoria">🗑️</span>` : "";
+    html += `
+          <button class="regras-cat-btn ${ativo}" data-painel-cat="${cat.id}">
+            <span class="regras-cat-num" data-num="${numero}"></span>
+            <span class="regras-cat-label">${cat.titulo}</span>
+            <span class="regras-cat-count">${qtd}</span>
+            ${delBtn}
+          </button>`;
+  });
+  const arvoreAtiva = currentSection === "arvore" ? "active" : "";
+  html += `
+          <button class="regras-cat-btn ${arvoreAtiva}" data-painel-cat="arvore">
+            <span class="regras-cat-num" data-num="🌳"></span>
+            <span class="regras-cat-label">Árvore Hierárquica</span>
+          </button>`;
+  cont.innerHTML = html;
+  cont.querySelectorAll("[data-painel-cat]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      if (e.target.closest("[data-del-painel-cat]")) return;
+      setSection(btn.getAttribute("data-painel-cat"));
+    });
+  });
+  cont.querySelectorAll("[data-del-painel-cat]").forEach(el => {
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      excluirCategoriaPainel(el.getAttribute("data-del-painel-cat"));
+    });
+  });
+}
+
+function abrirNovaCategoriaPainel() {
+  const nome = prompt("Nome da nova categoria:");
+  if (nome === null) return;
+  const nomeLimpo = nome.trim();
+  if (!nomeLimpo) {
+    alert("Digite um nome para a categoria.");
+    return;
+  }
+  let base = nomeLimpo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "categoria";
+  let id = base, n = 2;
+  while (cfg[id]) {
+    id = `${base}-${n++}`;
+  }
+  const novaCat = {
+    id,
+    titulo: nomeLimpo
+  };
+  PAINEL_CATEGORIAS_EXTRAS.push(novaCat);
+  registrarCategoriaPainelCustom(novaCat);
+  resyncDataBlock("painelcats", PAINEL_CATEGORIAS_EXTRAS);
+  setSection(id);
+}
+
+function excluirCategoriaPainel(id) {
+  const idx = PAINEL_CATEGORIAS_EXTRAS.findIndex(c => c.id === id);
+  if (idx === -1) return;
+  const cat = PAINEL_CATEGORIAS_EXTRAS[idx];
+  const qtd = (DB[id] || []).length;
+  const aviso = qtd > 0 ? ` e ${qtd} registro(s) cadastrados nela` : "";
+  if (!confirm(`Excluir a categoria "${cat.titulo}"${aviso}? Essa ação não pode ser desfeita.`)) return;
+  PAINEL_CATEGORIAS_EXTRAS.splice(idx, 1);
+  delete DB[id];
+  delete cfg[id];
+  delete sectionGroups[id];
+  resyncDataBlock("painelcats", PAINEL_CATEGORIAS_EXTRAS);
+  if (currentSection === id) {
+    setSection("mantenedoras");
+  } else {
+    renderPainelCats();
+  }
+}
+
 let currentSection = "mantenedoras";
 
 let allItems = [];
@@ -5954,8 +6056,7 @@ function filterList() {
 
 function setSection(section) {
   currentSection = section;
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  document.getElementById("btn-" + section).classList.add("active");
+  renderPainelCats();
   document.getElementById("search-input").value = "";
   document.getElementById("detail-pane").innerHTML = `\n    <div class="empty-state">\n      <div class="empty-icon"></div>\n      <p>Selecione um item para ver os detalhes</p>\n    </div>`;
   const addBtn = document.getElementById("btn-add-registro");
@@ -6595,6 +6696,7 @@ async function excluirUsuarioConfirm(id) {
 }
 
 function refrescarTelaAtual() {
+  renderPainelCats();
   if (document.getElementById("regras-screen").classList.contains("open")) {
     const activeItemEl = document.querySelector("#regras-list-items .regras-item.active");
     let idsAtivos = null;
@@ -6625,8 +6727,7 @@ function refrescarTelaAtual() {
     const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${tutCategoriaAtual}"]`);
     setTutCat(btnAtivo, tutCategoriaAtual);
   }
-  const activeSectionBtn = document.querySelector(".nav-btn.active");
-  if (activeSectionBtn && document.getElementById("detail-pane").querySelector(".detail-card")) {
+  if (currentSection && cfg[currentSection] && document.getElementById("detail-pane").querySelector(".detail-card")) {
     const idAtivo = document.querySelector(".list-item.active")?.dataset.id;
     if (idAtivo) {
       const c = cfg[currentSection];
@@ -6840,6 +6941,12 @@ function aplicarDadosSalvos() {
   aplicarObjeto("provasimpressas", PROVAS_IMPRESSAS);
   aplicarSet("atividadepresencial", ATIVIDADE_PRESENCIAL);
   aplicarObjeto("calendario", CALENDARIO_EVENTOS);
+  aplicarArray("painelcats", PAINEL_CATEGORIAS_EXTRAS);
+  PAINEL_CATEGORIAS_EXTRAS.forEach(cat => {
+    registrarCategoriaPainelCustom(cat);
+    aplicarArray("painelitens_" + cat.id, DB[cat.id]);
+  });
+  renderPainelCats();
   console.log("🔍 Diagnóstico de carregamento do painel_dados (chave / encontrado / itens):");
   console.table(DIAG.map(([chave, encontrado, itens]) => ({ chave, encontrado, itens })));
 }
@@ -7365,7 +7472,7 @@ renderDetail = function(item) {
       const novoValor = headerNameEl.textContent.trim();
       if (!novoValor || novoValor === String(item[c.nameKey])) return;
       item[c.nameKey] = novoValor;
-      resyncDataBlock("db", DB);
+      persistirRegistrosSecao(currentSection);
       mostrarFlashSalvo(headerNameEl.parentElement);
       const listEl = document.querySelector(`.list-item[data-id="${item[c.idKey]}"] .item-name`);
       if (listEl) listEl.textContent = novoValor;
@@ -7399,7 +7506,7 @@ renderDetail = function(item) {
       const novoValor = valEl.textContent.trim();
       if (novoValor === String(item[key])) return;
       item[key] = novoValor;
-      resyncDataBlock("db", DB);
+      persistirRegistrosSecao(currentSection);
       mostrarFlashSalvo(row);
       if (key === c.nameKey) {
         if (headerNameEl) headerNameEl.textContent = novoValor;
@@ -7472,7 +7579,8 @@ function abrirNovoRegistro(sectionParam) {
   if (parentInfo) novoItem[parentInfo.fk] = fkValor;
   novoItem[c.nameKey] = nomeLimpo;
   DB[section].push(novoItem);
-  resyncDataBlock("db", DB);
+  persistirRegistrosSecao(section);
+  renderPainelCats();
   if (section === currentSection) {
     allItems = DB[section];
     renderList(allItems);
@@ -7516,7 +7624,8 @@ function excluirRegistro(section, id) {
   const aviso = filhos > 0 ? `\n\n⚠️ Atenção: existem ${filhos} registro(s) vinculados a este (instituições/polos/locais) que ficarão sem referência. Eles NÃO serão excluídos automaticamente.` : "";
   if (!confirm(`Excluir "${nome}"?${aviso}`)) return;
   DB[section] = DB[section].filter(x => x[c.idKey] !== id);
-  resyncDataBlock("db", DB);
+  persistirRegistrosSecao(section);
+  renderPainelCats();
   if (section === currentSection) {
     allItems = DB[section];
     renderList(allItems);
