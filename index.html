@@ -6151,8 +6151,6 @@ document.addEventListener("click", e => {
   }
 });
 
-setSection("mantenedoras");
-
 let currentUser = null;
 
 let adminSenha = null;
@@ -6164,6 +6162,8 @@ let usersEditId = null;
 let _refreshPermInterval = null;
 
 const REFRESH_PERMISSOES_MS = 2e4;
+
+setSection("mantenedoras");
 
 async function supabaseRpc(fn, params) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
