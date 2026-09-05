@@ -7,7 +7,7 @@
   <title>Painel Institucional — IBREP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
   <style>
     :root {
       --roxo: #7c5cff;
@@ -3362,6 +3362,322 @@
       color: #27ae60;
     }
   </style>
+  <style>
+    /* Identidade visual institucional — sobreposições para todas as áreas do portal */
+    :root {
+      --roxo: #240e27;
+      --roxo-medio: #7e3188;
+      --roxo-claro: #f5e7f7;
+      --roxo-hover: #38163c;
+      --cinza-bg: #f3f5f4;
+      --cinza-card: #ffffff;
+      --cinza-borda: #d8e0e4;
+      --cinza-light: #f7f9f9;
+      --texto: #14212b;
+      --texto-sec: #52636f;
+      --texto-muted: #7b8a94;
+      --dourado: #b58a3a;
+    }
+
+    body, button, input, textarea, select { font-family: 'IBM Plex Sans', Arial, sans-serif !important; }
+    h1, h2, h3, .welcome-title, .detail-header-info h2, .curso-detail-title,
+    .port-detail-title, .regras-detail-header h2 { font-family: 'Source Serif 4', Georgia, serif; }
+    body { background: var(--cinza-bg); letter-spacing: .005em; }
+
+    header, .tut-header, .port-header, .cal-toolbar {
+      border-color: var(--cinza-borda); box-shadow: none;
+    }
+    header { height: 70px; padding: 0 36px; border-top: 4px solid var(--roxo); }
+    .header-brand { gap: 18px; }
+    .header-brand img { height: 29px; }
+    .header-text h1 { font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; color: var(--roxo); }
+    .header-tag, .badge, .port-status-badge, .cal-viewonly-badge {
+      border-radius: 3px; letter-spacing: .045em; text-transform: uppercase;
+    }
+
+    .sidebar { width: 232px; padding: 25px 13px; background: #fbfcfc; }
+    .sidebar-label, .tut-cats-label, .regras-cats-label, .field-section-title,
+    .port-section-title, .list-header-count { letter-spacing: .12em; font-weight: 700; }
+    .nav-btn { border-radius: 4px; padding: 10px; font-weight: 600; }
+    .nav-btn.active { background: var(--roxo); color: #fff; }
+    .nav-btn .icon { width: 27px; height: 27px; border-radius: 3px; background: transparent; font-size: 13px; }
+    .nav-btn.active .icon, .nav-btn:hover .icon { background: rgba(255,255,255,.14); }
+    .nav-btn:hover { background: var(--roxo-claro); color: var(--roxo); }
+
+    .list-pane { width: 280px; background: #f8faf9; }
+    .list-header, .list-search { background: #fff; }
+    .list-item { padding: 13px 16px; border-left: 3px solid transparent; }
+    .list-item.active { border-left-color: var(--dourado); background: #fff; }
+    .item-avatar, .detail-avatar, .gs-avatar { border-radius: 3px; background: var(--roxo-claro); color: var(--roxo); }
+    .detail-pane { padding: 30px; }
+    .detail-card, .curso-detail-card, .regras-detail-card, .port-detail-pane,
+    .tut-video-card, .cal-evento-card { border-radius: 4px; box-shadow: 0 4px 18px rgba(17,46,66,.07); border-color: var(--cinza-borda); }
+    .detail-card-header, .curso-detail-header, .regras-detail-header { border-top: 3px solid var(--roxo); }
+    .field-section, .extra-box, .presencial-box { border-radius: 3px; }
+    .global-search-input, .list-search input, .regras-search-box input { border-radius: 3px; }
+    .global-search-input:focus, .list-search input:focus, .regras-search-box input:focus { border-color: var(--roxo); box-shadow: 0 0 0 3px rgba(91,13,102,.09); }
+
+    #welcome-screen { background: #f4f6f5; padding: 52px 0 32px; }
+    #welcome-screen::before { position: absolute; top: 0; left: 0; right: 0; height: 7px; background: var(--roxo); flex: none; }
+    #welcome-screen::after { display: none; }
+    .welcome-logo { height: 48px; margin-bottom: 20px; }
+    .welcome-title { font-size: clamp(32px, 4vw, 48px); font-weight: 600; line-height: 1.08; letter-spacing: -.025em; }
+    .welcome-title span { color: var(--roxo); }
+    .welcome-sub { max-width: 490px; margin-bottom: 35px; font-size: 15px; }
+    .welcome-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); max-width: 1120px; gap: 10px; padding: 0 30px; }
+    .welcome-btn { align-items: flex-start; min-width: 0; max-width: none; flex: auto; padding: 21px 20px; gap: 7px; border-radius: 4px; border-color: var(--cinza-borda); box-shadow: none; text-align: left; }
+    .welcome-btn:hover { border-color: var(--roxo); box-shadow: 0 8px 20px rgba(91,13,102,.12); transform: translateY(-3px); }
+    .welcome-btn-label { color: var(--roxo); font-size: 14px; font-weight: 700; }
+    .welcome-btn-desc { color: var(--texto-sec); font-size: 12px; line-height: 1.55; }
+    .welcome-footer { margin-top: 34px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+    .welcome-user-bar { border-radius: 3px !important; background: #fff !important; border: 1px solid var(--cinza-borda); }
+
+    .tut-header, .port-header { height: 70px; padding: 0 32px; border-top: 4px solid var(--roxo); }
+    .tut-cats, .regras-cats-pane { background: #f8faf9; }
+    .tut-cat-btn, .regras-cat-btn { border-radius: 3px; }
+    .tut-cat-btn.active, .regras-cat-btn.active { background: var(--roxo); color: #fff; }
+    .tut-content, .regras-detail-pane { padding: 30px; }
+    .tut-video-thumb { border-radius: 3px 3px 0 0; }
+    .tut-video-tag { border-radius: 2px; background: var(--roxo-claro); color: var(--roxo); }
+
+    .port-body, .regras-body { background: var(--cinza-bg); }
+    .port-map-pane { background: #f8faf9; }
+    #br-map-svg .uf path { fill: #326993; transition: fill .15s; }
+    #br-map-svg .uf:hover path, #br-map-svg .uf.active path { fill: var(--dourado); }
+    .cal-body { background: var(--cinza-bg); }
+    .cal-title { font-family: 'Source Serif 4', Georgia, serif; color: var(--roxo); }
+    .cal-grid { border-radius: 4px; overflow: hidden; }
+    .cal-day-cell.cal-hoje { background: #edf4f8; }
+    .cal-day-cell.cal-hoje .cal-day-num, .cal-add-btn, .cal-today-btn { background: var(--roxo); }
+    .cal-evento { border-radius: 2px; }
+
+    .regras-cat-num, .curso-btn .curso-id, .item-id { border-radius: 2px; }
+    .comp-table th { background: var(--roxo) !important; }
+    .comp-table td, .comp-table th { border-color: var(--cinza-borda); }
+    .admin-edit-btn.save, .users-btn-save, .admin-login-confirm { background: var(--roxo); border-radius: 3px; }
+    .admin-edit-btn, .admin-login-cancel, .users-btn-cancel { border-radius: 3px; }
+
+    @media (max-width: 760px) {
+      header { padding: 0 16px; } .sidebar { width: 58px; padding: 18px 8px; }
+      .sidebar-label, .nav-btn > :not(.icon), .sidebar-footer { display: none; }
+      .nav-btn { justify-content: center; } .list-pane { width: 220px; }
+      .welcome-buttons { grid-template-columns: 1fr; padding: 0 18px; }
+      .welcome-title { font-size: 34px; } .tut-header, .port-header { padding: 0 16px; }
+    }
+  </style>
+  <style>
+    /* Segunda camada: nova composição espacial do portal */
+    #welcome-screen { display:grid; grid-template-columns:minmax(310px,.78fr) minmax(530px,1.4fr); grid-template-rows:auto auto auto auto; column-gap:clamp(48px,8vw,130px); align-content:center; align-items:start; padding:clamp(46px,7vh,90px) clamp(32px,9vw,150px) 56px; background:linear-gradient(90deg,#240e27 0,#240e27 38%,transparent 38%),linear-gradient(135deg,#f8faf9 0%,#edf2f3 100%); }
+    #welcome-screen::before { display:none; }
+    /* Sem camada sobre os módulos: os cards permanecem totalmente clicáveis. */
+    #welcome-screen::after { display:none; }
+    .welcome-user-bar { position:absolute; top:22px; right:34px; z-index:2; }
+    .welcome-logo { grid-column:1; grid-row:1; height:44px; margin:0 0 38px; filter:brightness(0) invert(1); }
+    .welcome-title { grid-column:1; grid-row:2; color:#fff; max-width:420px; margin:0 0 20px; font-size:clamp(38px,4.1vw,58px); }
+    .welcome-title span { color:#d8b56a; }
+    .welcome-sub { grid-column:1; grid-row:3; color:#d5c3d7; text-align:left; max-width:335px; margin:0; line-height:1.7; }
+    .welcome-sub::before { content:'CENTRAL INSTITUCIONAL'; display:block; margin-bottom:16px; color:#d8b56a; font-size:10px; font-weight:700; letter-spacing:.16em; }
+    .welcome-buttons { grid-column:2; grid-row:1 / span 4; align-self:center; grid-template-columns:repeat(2,minmax(220px,1fr)); max-width:700px; padding:0; gap:12px; position:relative; z-index:3; pointer-events:auto; }
+    .welcome-btn { position:relative; z-index:4; pointer-events:auto; min-height:142px; justify-content:center; border:0; border-top:3px solid transparent; background:#fff; padding:22px 24px; }
+    .welcome-btn:hover { border-top-color:#b58a3a; box-shadow:0 16px 30px rgba(91,13,102,.16); transform:translateY(-5px); }
+    .welcome-footer { grid-column:1; grid-row:4; align-self:end; margin:68px 0 0; color:#b191b5; text-align:left; }
+
+    /* Painel de gestão: rail escuro + área de trabalho clara */
+    header { height:76px; padding:0 42px; border-top:0; border-bottom:1px solid #dce4e5; }
+    .header-brand img { height:34px; } .header-text h1 { font-size:21px; } .header-text p { font-size:11px; letter-spacing:.035em; }
+    .header-divider { height:34px; background:#cfd9dc; } .global-search-input { width:340px; height:38px; background:#f4f7f7; }
+    .app { background:#eef2f2; padding:18px; gap:18px; }
+    .sidebar { width:230px; padding:21px 12px; border:0; border-radius:5px; background:#240e27; box-shadow:0 8px 24px rgba(56,5,63,.12); }
+    .sidebar-label { color:#b591ba; padding:0 12px 13px; } .sidebar-divider { background:rgba(238,217,241,.18); margin:12px 5px; }
+    .nav-btn { min-height:45px; color:#e5d5e7; padding:9px 10px; border-left:2px solid transparent; }
+    .nav-btn:hover { color:#fff; background:rgba(255,255,255,.09); } .nav-btn.active { border-left-color:#d8b56a; color:#fff; background:rgba(255,255,255,.14); }
+    .nav-btn .icon { color:#d8b56a; background:transparent!important; font-size:0; } .nav-btn .icon::after { font:700 10px/1 'IBM Plex Sans',sans-serif; }
+    #btn-mantenedoras .icon::after { content:'01'; } #btn-instituicoes .icon::after { content:'02'; } #btn-polos .icon::after { content:'03'; } #btn-locais .icon::after { content:'04'; } #btn-arvore .icon::after { content:'05'; }
+    .right { gap:18px; min-width:0; } .list-pane { width:292px; border:0; border-radius:5px; background:#fff; box-shadow:0 8px 24px rgba(56,5,63,.07); }
+    .list-header { padding:22px 20px 13px; border:0; } .list-header-title, .regras-list-header-title { font-family:'Source Serif 4',Georgia,serif; font-size:20px; font-weight:600; color:#240e27; }
+    .regras-list-header { padding:22px 20px 13px; border:0; }
+    .list-search { padding:12px 16px; border-top:1px solid #e5ecec; border-bottom:1px solid #e5ecec; }
+    .list-item { border-bottom-color:#edf1f1; border-left:0; padding:15px 16px; } .list-item.active { border-left:0; border-right:3px solid #b58a3a; background:#f2f7f8; }
+    .detail-pane { border-radius:5px; background:#fff; padding:38px; box-shadow:0 8px 24px rgba(56,5,63,.07); }
+    .detail-card { max-width:1120px; margin:0 auto; box-shadow:none; border:0; } .detail-card-header { background:#f5f8f8; border-bottom:1px solid #dbe4e5; }
+    .empty-state { padding:100px 20px; } .empty-icon { font-size:0; width:52px; height:52px; border:1px solid #bfd0d4; border-radius:50%; margin:0 auto 16px; } .empty-icon::after { content:'i'; font:600 25px/52px 'Source Serif 4',serif; color:#240e27; }
+
+    .tut-body,.port-body,.regras-body,.cal-body { background:#eef2f2; } .tut-body,.port-body,.regras-body { padding:18px; gap:18px; }
+    .tut-cats,.regras-cats-pane,.port-map-pane { border:0; border-radius:5px; box-shadow:0 8px 24px rgba(56,5,63,.07); }
+    .tut-content,.regras-detail-pane,.port-detail-pane { border:0; border-radius:5px; background:#fff; box-shadow:0 8px 24px rgba(56,5,63,.07); }
+    .tut-header,.port-header { border-top:0; height:76px; padding:0 36px; } .cal-body { padding:24px 34px; } .cal-toolbar { background:transparent; border-bottom:0; padding:0 0 20px; } .cal-grid { background:#fff; box-shadow:0 8px 24px rgba(56,5,63,.07); }
+    @media (max-width:900px) { #welcome-screen { padding:48px 28px; background:#240e27; } #welcome-screen::after { display:none; } .welcome-logo,.welcome-title,.welcome-sub,.welcome-footer { align-self:flex-start; } .welcome-buttons { width:100%; max-width:640px; margin-top:40px; grid-template-columns:repeat(2,1fr); } .app { padding:10px; gap:10px; } .sidebar { width:64px; } .right { gap:10px; } }
+    @media (max-width:560px) { .welcome-buttons { grid-template-columns:1fr; } .welcome-btn { min-height:116px; } .list-pane { width:210px; } .detail-pane { padding:18px; } .global-search-wrap { display:none; } }
+  </style>
+  <style>
+    /* Ajustes finais: garante que apenas o menu lateral (sidebar) use o tema
+       escuro institucional; o restante do painel permanece claro, como nas
+       telas de referência (boas-vindas em duas colunas + painel com rail
+       escuro e área de trabalho clara). */
+    .sidebar-footer { color: #b591ba; }
+    .sidebar-divider { background: rgba(238,217,241, .18); }
+
+    /* ---- Correção da tela de boas-vindas: a marca (coluna esquerda) não pode
+       rolar para fora de vista. Só a grade de cards (coluna direita) rola,
+       de forma independente, se não couber na altura da tela. ---- */
+    #welcome-screen { overflow-y: auto; overflow-x: hidden; padding: clamp(24px, 4vh, 56px) clamp(32px, 9vw, 150px); }
+    .welcome-logo { margin-bottom: 22px; }
+    .welcome-title { margin-bottom: 12px; font-size: clamp(28px, 3.2vw, 42px); line-height: 1.12; }
+    .welcome-sub::before { margin-bottom: 12px; }
+    .welcome-footer { margin-top: 28px; }
+    .welcome-buttons {
+      align-self: start;
+      margin-top: 64px;
+      max-height: calc(100vh - 128px);
+      overflow-y: auto;
+      padding: 4px 6px 64px 0;
+      margin-right: -6px;
+      scrollbar-width: none;
+    }
+    .welcome-buttons::-webkit-scrollbar { display: none; width: 0; height: 0; }
+    .welcome-btn { min-height: 108px; padding: 16px 20px; gap: 5px; }
+    .welcome-btn-label { font-size: 13.5px; }
+    .welcome-btn-desc { font-size: 11.5px; line-height: 1.5; }
+
+    /* ---- Badge de usuário (nome + Sair), mais legível e alinhado à identidade ---- */
+    .welcome-user-bar {
+      top: 20px;
+      right: 28px;
+      gap: 10px;
+      background: #fff;
+      padding: 6px 8px 6px 16px;
+      border-radius: 999px;
+      border: 1px solid #e9e3ea;
+      box-shadow: 0 6px 18px rgba(56,5,63,.12);
+      z-index: 5;
+    }
+    #welcome-user-name {
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 600;
+      font-size: 12.5px;
+      color: #240e27;
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #welcome-user-name:not(:empty)::before {
+      content: 'Olá, ';
+      font-weight: 400;
+      color: #7f939a;
+    }
+    .welcome-user-bar button {
+      border: 1px solid #240e27;
+      background: transparent;
+      color: #240e27;
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: .02em;
+    }
+    .welcome-user-bar button:hover {
+      background: #240e27;
+      color: #fff;
+      border-color: #240e27;
+    }
+
+    /* ---- Todos os menus de categoria seguem o mesmo padrão visual do menu
+       institucional (rail azul-marinho, número dourado, item ativo com borda
+       dourada) — Tutoriais, Regras do Atendimento e Cursos por Instituição. ---- */
+    .tut-cats, .regras-cats-pane {
+      width: 230px;
+      background: #240e27;
+      border: 0;
+      border-radius: 5px;
+      padding: 21px 12px;
+      box-shadow: 0 8px 24px rgba(56,5,63,.12);
+    }
+    .tut-cats-label, .regras-cats-label {
+      color: #b591ba;
+      padding: 0 12px 13px;
+    }
+    .regras-search-box { padding: 0 2px 14px; border-bottom: 0; }
+    .regras-search-box input {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(238,217,241,.22);
+      color: #fff;
+    }
+    .regras-search-box input::placeholder { color: #b591ba; }
+    .regras-search-box input:focus { border-color: #d8b56a; }
+    .regras-cats-list { padding: 0 2px; }
+
+    .tut-cat-btn, .regras-cat-btn {
+      min-height: 42px;
+      color: #e5d5e7;
+      padding: 9px 10px;
+      border-radius: 4px;
+      border-left: 2px solid transparent;
+    }
+    .tut-cat-btn:hover, .regras-cat-btn:hover {
+      background: rgba(255,255,255,.09);
+      color: #fff;
+    }
+    .tut-cat-btn.active, .regras-cat-btn.active {
+      background: rgba(255,255,255,.14);
+      border-left-color: #d8b56a;
+      color: #fff;
+    }
+    .tut-cat-icon, .regras-cat-num {
+      background: transparent;
+      color: #d8b56a;
+      font-weight: 700;
+    }
+    .tut-cat-btn.active .tut-cat-icon, .tut-cat-btn:hover .tut-cat-icon,
+    .regras-cat-btn.active .regras-cat-num, .regras-cat-btn:hover .regras-cat-num {
+      background: transparent;
+      color: #d8b56a;
+    }
+    .regras-cat-count {
+      background: rgba(255,255,255,.12);
+      color: #e5d5e7;
+    }
+    .regras-cat-btn.active .regras-cat-count {
+      background: rgba(255,255,255,.22);
+      color: #fff;
+    }
+    .tut-cat-del { color: #e5d5e7; }
+    .tut-cat-del:hover { background: rgba(255,255,255,.16); color: #fff; }
+    .tut-add-cat-btn, .regras-cats-pane .admin-dashed-btn {
+      border-color: #d8b56a;
+      color: #d8b56a;
+    }
+    .tut-add-cat-btn:hover, .regras-cats-pane .admin-dashed-btn:hover {
+      background: rgba(255,255,255,.09);
+    }
+
+    @media (max-width: 900px) {
+      .welcome-buttons { max-height: none; overflow-y: visible; }
+      #welcome-screen { overflow-y: auto; }
+    }
+
+    /* ---- Centralizar logo + textos institucionais como um único bloco ---- */
+    .welcome-logo { display: block; margin-left: auto; margin-right: auto; }
+    .welcome-title { text-align: center; margin-left: auto; margin-right: auto; font-size: clamp(34px, 3.8vw, 52px); }
+    .welcome-sub { text-align: center; margin-left: auto; margin-right: auto; }
+    .welcome-sub::before { text-align: center; }
+    .welcome-footer { text-align: center; margin-left: auto; margin-right: auto; white-space: nowrap; letter-spacing: .08em; }
+    #welcome-screen { padding-left: clamp(20px, 5vw, 80px); }
+
+    /* ---- Calendário: centralizar mês/ano e corrigir contraste do botão Hoje ---- */
+    .cal-title { text-align: center; }
+    .cal-today-btn { color: #fff; }
+
+    /* ---- Placeholders "selecione um item" padronizados com o ícone "i" ---- */
+    .regras-empty-state .icon { font-size: 0; width: 52px; height: 52px; border: 1px solid #bfd0d4; border-radius: 50%; margin: 0 auto; background: var(--roxo-claro); display: flex; align-items: center; justify-content: center; }
+    .regras-empty-state .icon::after { content: 'i'; font: 600 25px/1 'Source Serif 4', serif; color: #240e27; }
+
+    /* ---- Cards da tela inicial: badge (CAL/TUT/UF/...) removido do HTML; texto centralizado ---- */
+    .welcome-btn-icon { display: none !important; }
+    .welcome-btn { align-items: center !important; justify-content: center !important; text-align: center !important; }
+    .welcome-btn-label { text-align: center !important; }
+    .welcome-btn-desc { text-align: center !important; }
+  </style>
 </head>
 
 <body>
@@ -3488,42 +3804,33 @@
       alt="IBREP">
     
     <div class="welcome-title">Bem-vindo ao<br><span>IBREP Prism</span></div>
-    <div class="welcome-sub">
-      Sua central de gestão institucional.
-    </div>
+    <div class="welcome-sub"></div>
     <div class="welcome-buttons">
       <button class="welcome-btn" id="btn-area-calendario" data-area="calendario" onclick="openCalendario()">
-        <div class="welcome-btn-icon">📅</div>
         <div class="welcome-btn-label">Calendário</div>
         <div class="welcome-btn-desc">Compromissos, prazos<br>e eventos da equipe</div>
       </button>
       <button class="welcome-btn" id="btn-area-tutoriais" data-area="tutoriais" onclick="openTutorials()">
-        <div class="welcome-btn-icon">🎬</div>
         <div class="welcome-btn-label">Tutoriais</div>
         <div class="welcome-btn-desc">Passo a passo em vídeo<br>para usar o Oráculo</div>
       </button>
       <button class="welcome-btn" id="btn-area-comparativo" data-area="comparativo" onclick="openComparativo()">
-        <div class="welcome-btn-icon">📊</div>
         <div class="welcome-btn-label">Comparativo de Estados</div>
         <div class="welcome-btn-desc">Duração, provas, carga horária<br>e diploma por estado</div>
       </button>
       <button class="welcome-btn" id="btn-area-regras" data-area="regras" onclick="openRegras()">
-        <div class="welcome-btn-icon">📖</div>
         <div class="welcome-btn-label">Regras do Atendimento</div>
         <div class="welcome-btn-desc">Categorias, tópicos e mensagens<br>padrão para o atendimento</div>
       </button>
       <button class="welcome-btn" id="btn-area-portarias" data-area="portarias" onclick="openPortarias()">
-        <div class="welcome-btn-icon">📜</div>
         <div class="welcome-btn-label">Atos Normativos</div>
         <div class="welcome-btn-desc">Pareceres, portarias e situação<br>de cada estado</div>
       </button>
       <button class="welcome-btn" id="btn-area-cursos" data-area="cursos" onclick="openCursos()">
-        <div class="welcome-btn-icon">🎓</div>
         <div class="welcome-btn-label">Cursos por Instituição</div>
         <div class="welcome-btn-desc">Currículo, disciplinas, AVAs<br>e certificados por instituição</div>
       </button>
       <button class="welcome-btn" id="btn-area-painel" data-area="painel" onclick="openPanel()">
-        <div class="welcome-btn-icon">🏛️</div>
         <div class="welcome-btn-label">Painel Institucional</div>
         <div class="welcome-btn-desc">Mantenedoras, instituições,<br>polos e locais de provas</div>
       </button>
@@ -3536,7 +3843,11 @@
       <div class="tut-header-left">
         <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
           alt="IBREP">
-        <span style="font-size:14px;font-weight:600;color:var(--texto)">Central de Tutoriais</span>
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Central de Tutoriais</h1>
+          <p>Vídeos · Categorias · Passo a passo</p>
+        </div>
       </div>
       <div class="global-search-wrap">
         <span class="global-search-icon">🔍</span>
@@ -3558,7 +3869,11 @@
     <div class="port-header">
       <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
         alt="IBREP">
-      <span style="font-size:14px;font-weight:600;color:var(--texto)">Atos Normativos</span>
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <h1>Atos Normativos</h1>
+        <p>Portarias · Pareceres · Situação por Estado</p>
+      </div>
     </div>
     <div class="port-body">
       
@@ -3922,7 +4237,11 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       <div class="tut-header-left">
         <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
           alt="IBREP">
-        <span style="font-size:14px;font-weight:600;color:var(--texto)">Regras do Atendimento</span>
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Regras do Atendimento</h1>
+          <p>Tópicos · Procedimentos · Mensagens padrão</p>
+        </div>
       </div>
     </div>
     <div class="regras-body">
@@ -3959,7 +4278,11 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
     <div class="port-header">
       <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
         alt="IBREP">
-      <span style="font-size:14px;font-weight:600;color:var(--texto)">Cursos por Instituição</span>
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <h1>Cursos por Instituição</h1>
+        <p>Estados · Instituições · Cursos</p>
+      </div>
     </div>
     <div class="regras-body">
 
@@ -3996,7 +4319,11 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       <div class="tut-header-left">
         <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
           alt="IBREP">
-        <span style="font-size:14px;font-weight:600;color:var(--texto)">Calendário</span>
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Calendário</h1>
+          <p>Eventos · Prazos · Compromissos</p>
+        </div>
       </div>
     </div>
 
@@ -4048,7 +4375,11 @@ c-6.208,0-11.257-5.036-11.257-11.262C422.54,138.647,427.589,133.597,433.797,133.
       <div class="tut-header-left">
         <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
           alt="IBREP">
-        <span style="font-size:14px;font-weight:600;color:var(--texto)">Comparativo de Estados</span>
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Comparativo de Estados</h1>
+          <p>Duração · Provas · Modalidade · Carga horária</p>
+        </div>
       </div>
     </div>
 
@@ -4648,7 +4979,7 @@ function irParaTela(tela, pushHistory) {
   document.getElementById("calendario-screen").classList.remove("open");
   switch (tela) {
    case "welcome":
-    document.getElementById("welcome-screen").style.display = "flex";
+    document.getElementById("welcome-screen").style.display = "grid";
     break;
 
    case "panel":
@@ -4728,7 +5059,28 @@ function openCalendario() {
   irParaTela("calendario");
 }
 
+function resetSelecoesTelas() {
+  // Atos Normativos: tira o estado marcado no mapa e volta o painel de detalhes ao estado inicial
+  document.querySelectorAll("#br-map-svg a.uf.active").forEach(a => a.classList.remove("active"));
+  const portPane = document.getElementById("port-detail-pane");
+  if (portPane) {
+    portPane.innerHTML = `\n        <div class="port-empty">\n          <div class="icon">🗺️</div>\n          <p>Selecione um estado no mapa para ver os detalhes</p>\n        </div>`;
+  }
+
+  // Tutoriais: esquece a categoria/vídeo selecionado
+  tutCategoriaAtual = null;
+
+  // Regras do Atendimento: esquece a categoria/tópico selecionado
+  regrasCategoriaAtual = null;
+
+  // Cursos por Instituição: esquece o estado e a instituição/curso selecionado
+  cursosEstadoAtual = null;
+  activeCursoId = null;
+  activeInstId = null;
+}
+
 function backToWelcome() {
+  resetSelecoesTelas();
   irParaTela("welcome");
 }
 
@@ -4743,11 +5095,11 @@ function renderTutCats() {
   const cont = document.getElementById("tut-cats-list");
   if (!cont) return;
   let html = "";
-  Object.keys(TUTORIAIS).forEach(key => {
+  Object.keys(TUTORIAIS).forEach((key, idx) => {
     const cat = TUTORIAIS[key];
     const ativo = key === tutCategoriaAtual ? "active" : "";
     const delBtn = adminMode ? `<span class="tut-cat-del" data-del-cat="${key}" title="Excluir categoria">🗑️</span>` : "";
-    html += `\n          <button class="tut-cat-btn ${ativo}" data-cat="${key}">\n            <span class="tut-cat-icon">${cat.icon || "📁"}</span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}${delBtn}\n          </button>`;
+    html += `\n          <button class="tut-cat-btn ${ativo}" data-cat="${key}">\n            <span class="tut-cat-icon">${idx + 1}</span> ${escapeHtmlRegra(cat.label || cat.titulo || key)}${delBtn}\n          </button>`;
   });
   cont.innerHTML = html;
   cont.querySelectorAll(".tut-cat-btn").forEach(btn => {
@@ -4788,6 +5140,7 @@ history.replaceState({
 
 window.addEventListener("popstate", e => {
   const tela = e.state && e.state.tela || "welcome";
+  if (tela === "welcome") resetSelecoesTelas();
   irParaTela(tela, false);
 });
 
@@ -4914,7 +5267,7 @@ function renderCursosEstados(estados) {
     const qtd = DB.instituicoes.filter(i => cursosEstadoReal(i) === uf).length;
     const ativo = uf === cursosEstadoAtual ? "active" : "";
     const delBtn = adminMode ? `<span class="regras-cat-del" data-del-uf-idx="${idx}" title="Excluir estado">🗑️</span>` : "";
-    html += `\n          <button class="regras-cat-btn ${ativo}" data-uf-idx="${idx}">\n            <span class="regras-cat-num">📍</span>\n            <span class="regras-cat-label">${cursosUfLabel(uf)}</span>\n            <span class="regras-cat-count">${qtd}</span>\n            ${delBtn}\n          </button>`;
+    html += `\n          <button class="regras-cat-btn ${ativo}" data-uf-idx="${idx}">\n            <span class="regras-cat-num">${idx + 1}</span>\n            <span class="regras-cat-label">${cursosUfLabel(uf)}</span>\n            <span class="regras-cat-count">${qtd}</span>\n            ${delBtn}\n          </button>`;
   });
   cont.innerHTML = html || `<div class="regras-empty-list">Nenhum estado cadastrado</div>`;
   cont.querySelectorAll(".regras-cat-btn").forEach(btn => {
@@ -6232,13 +6585,13 @@ function atualizarVisibilidadeLinkAdmin() {
 
 function mostrarLoginUsuario() {
   document.getElementById("user-login-overlay").classList.remove("hidden");
-  document.getElementById("welcome-screen").style.display = "flex";
+  document.getElementById("welcome-screen").style.display = "grid";
   document.getElementById("admin-lock-link").style.display = "none";
 }
 
 function esconderLoginUsuario() {
   document.getElementById("user-login-overlay").classList.add("hidden");
-  document.getElementById("welcome-screen").style.display = "flex";
+  document.getElementById("welcome-screen").style.display = "grid";
   atualizarVisibilidadeLinkAdmin();
 }
 
