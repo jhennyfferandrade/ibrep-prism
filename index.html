@@ -4107,7 +4107,7 @@ async function carregarCursosDasTabelas() {
     fetch(`${SUPABASE_URL}/rest/v1/cursos?select=idcurso,nome`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/disciplinas?select=idcurso,iddisciplina,nome`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avas?select=idcurso,idava,nome`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/curriculos?select=idcurriculo,idcurso,nome,idinst,carga_total,carga_distancia,carga_presencial`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/curriculos?select=idcurriculo,idcurso,nome,idinstituicao,carga_total,carga_distancia,carga_presencial`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/disciplinas_curriculo?select=idcurriculo,iddisciplina,nome`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/avas_curriculo?select=idcurriculo,idava,nome`, { headers })
   ]);
@@ -4137,7 +4137,7 @@ async function carregarCursosDasTabelas() {
   curr.forEach(l => {
     const grupo = String(l.idcurso);
     if (!curriculosAgrupado[grupo]) curriculosAgrupado[grupo] = [];
-    const item = { id: l.idcurriculo, nome: l.nome, idinst: l.idinst, carga_total: l.carga_total, carga_distancia: l.carga_distancia };
+    const item = { id: l.idcurriculo, nome: l.nome, idinst: l.idinstituicao, carga_total: l.carga_total, carga_distancia: l.carga_distancia };
     if (l.carga_presencial !== null && l.carga_presencial !== undefined) item.carga_presencial = l.carga_presencial;
     curriculosAgrupado[grupo].push(item);
   });
