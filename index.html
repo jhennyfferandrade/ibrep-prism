@@ -4156,28 +4156,23 @@ async function carregarEstadosDasTabelas() {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const [respLabel, respReal, respGrid] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/cursos_uf_label?select=estado,label`, { headers }),
+  const [respReal, respGrid] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/cursos_estado_real?select=idinstituicao,estado_real`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/estados_grid?select=uf,nome,row_pos,col_pos`, { headers })
   ]);
-  if (!respLabel.ok || !respReal.ok || !respGrid.ok) {
-    console.warn("Supabase: não foi possível carregar cursos_uf_label/cursos_estado_real/estados_grid.");
+  if (!respReal.ok || !respGrid.ok) {
+    console.warn("Supabase: não foi possível carregar cursos_estado_real/estados_grid.");
     return null;
   }
-  const labelRows = await respLabel.json();
   const realRows = await respReal.json();
   const gridRows = await respGrid.json();
-
-  const cursosuflabel = {};
-  labelRows.forEach(r => { cursosuflabel[r.estado] = r.label; });
 
   const cursosestadoreal = {};
   realRows.forEach(r => { cursosestadoreal[String(r.idinstituicao)] = r.estado_real; });
 
   const estadosgrid = gridRows.map(r => ({ uf: r.uf, col: r.col_pos, row: r.row_pos, nome: r.nome }));
 
-  return { cursosuflabel, cursosestadoreal, estadosgrid };
+  return { cursosestadoreal, estadosgrid };
 }
 
 async function carregarTutoriaisDasTabelas() {
@@ -4282,19 +4277,19 @@ async function carregarCertificadosDasTabelas() {
   return out;
 }
 
+// 🆕 Substitui cursos_uf_label + cursos_estados_manual (unificadas em cursos_estados)
 async function carregarCursosEstadosDasTabelas() {
   const headers = {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const respEst = await fetch(`${SUPABASE_URL}/rest/v1/cursos_estados_manual?select=nome`, { headers });
+  const respEst = await fetch(`${SUPABASE_URL}/rest/v1/cursos_estados?select=nome,label,manual`, { headers });
   if (!respEst.ok) {
-    console.warn("Supabase: não foi possível carregar cursos_estados_manual.");
+    console.warn("Supabase: não foi possível carregar cursos_estados.");
     return null;
   }
-  const estRows = await respEst.json();
-  const cursosestados = estRows.map(r => r.nome);
-  return { cursosestados };
+  const rows = await respEst.json();
+  return { cursosestadostodos: rows };
 }
 
 // 🆕 Substitui CURSOS_LIVRES + tti_plus_instituicoes + tti_360_instituicoes +
@@ -4424,12 +4419,11 @@ async function iniciarPainel() {
   try {
     const estados = await comPrazoMaximo(carregarEstadosDasTabelas(), 6e3);
     if (estados) {
-      localStorage.setItem(LS_PREFIX + "cursosuflabel", JSON.stringify(estados.cursosuflabel));
       localStorage.setItem(LS_PREFIX + "cursosestadoreal", JSON.stringify(estados.cursosestadoreal));
       localStorage.setItem(LS_PREFIX + "estadosgrid", JSON.stringify(estados.estadosgrid));
     }
   } catch (e) {
-    console.warn("Supabase: falha ao carregar cursos_uf_label/cursos_estado_real/estados_grid das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+    console.warn("Supabase: falha ao carregar cursos_estado_real/estados_grid das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   // 🆕 instituicao_cursos substitui cursoslivres + tti_plus/360 + cursos_excluidos_por_inst
   try {
@@ -4476,10 +4470,10 @@ async function iniciarPainel() {
   try {
     const ce = await comPrazoMaximo(carregarCursosEstadosDasTabelas(), 6e3);
     if (ce) {
-      localStorage.setItem(LS_PREFIX + "cursosestados", JSON.stringify(ce.cursosestados));
+      localStorage.setItem(LS_PREFIX + "cursosestadostodos", JSON.stringify(ce.cursosestadostodos));
     }
   } catch (e) {
-    console.warn("Supabase: falha ao carregar cursosestados das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
+    console.warn("Supabase: falha ao carregar cursosestadostodos das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   try {
     const regras = await comPrazoMaximo(carregarRegrasDasTabelas(), 6e3);
@@ -4708,6 +4702,17 @@ function cursosEstadoReal(inst) {
 
 const CURSOS_ESTADOS_MANUAL = [];
 
+// 🆕 Monta a lista completa (labels + manuais) pra mandar pro RPC
+// salvar_cursos_estados, que substitui tudo a cada chamada.
+function montarListaCursosEstados() {
+  const nomes = new Set([...Object.keys(CURSOS_UF_LABEL), ...CURSOS_ESTADOS_MANUAL]);
+  return Array.from(nomes).map(nome => ({
+    nome,
+    label: CURSOS_UF_LABEL[nome] || null,
+    manual: CURSOS_ESTADOS_MANUAL.includes(nome)
+  }));
+}
+
 // 🆕 Substitui CURSOS_LIVRES + TTI_PLUS_INST + TTI_360_INST + CURSOS_EXCLUIDOS_POR_INST.
 // Estrutura: { "<idinstituicao>": [idcurso, idcurso, ...] }
 const INSTITUICAO_CURSOS = {};
@@ -4817,7 +4822,7 @@ async function adicionarEstadoCursos() {
     return;
   }
   CURSOS_ESTADOS_MANUAL.push(nomeLimpo);
-  const resultado = await resyncDataBlock("cursosestados", CURSOS_ESTADOS_MANUAL);
+  const resultado = await resyncDataBlock("cursosestadostodos", montarListaCursosEstados());
   avisarFalhaSalvarNuvem(resultado);
   cursosEstadoAtual = nomeLimpo;
   initCursosScreen();
@@ -4833,8 +4838,10 @@ async function excluirEstadoCursos(uf) {
     DB.instituicoes = DB.instituicoes.filter(i => !idsRemover.includes(i.idinstituicao));
     resultado = await resyncDataBlock("db", DB);
   }
-  CURSOS_ESTADOS_MANUAL.splice(CURSOS_ESTADOS_MANUAL.indexOf(uf), 1);
-  const resultado2 = await resyncDataBlock("cursosestados", CURSOS_ESTADOS_MANUAL);
+  const idx = CURSOS_ESTADOS_MANUAL.indexOf(uf);
+  if (idx !== -1) CURSOS_ESTADOS_MANUAL.splice(idx, 1);
+  delete CURSOS_UF_LABEL[uf];
+  const resultado2 = await resyncDataBlock("cursosestadostodos", montarListaCursosEstados());
   avisarFalhaSalvarNuvem(resultado === false || resultado2 === false ? false : (resultado === null || resultado2 === null ? null : true));
   cursosEstadoAtual = null;
   initCursosScreen();
@@ -6837,10 +6844,10 @@ async function salvarNoSupabase(chave, valor) {
           p_admin_senha: adminSenha,
           p_estados: valor
         })
-      : chave === "cursosestados"
-      ? await supabaseRpc("salvar_cursos_estados_manual", {
+      : chave === "cursosestadostodos"
+      ? await supabaseRpc("salvar_cursos_estados", {
           p_admin_senha: adminSenha,
-          p_lista: valor
+          p_estados: valor
         })
       : chave === "cursosexcluidos"
       ? await supabaseRpc("salvar_cursos_excluidos", {
@@ -6924,10 +6931,15 @@ function aplicarDadosSalvos() {
   const salvosComparativo = carregarDoLocalStorage("comparativo");
   if (salvosComparativo) Object.assign(COMPARATIVO_DATA, salvosComparativo);
   DIAG.push(["comparativo", !!salvosComparativo]);
-  const salvosCursosEstados = carregarDoLocalStorage("cursosestados");
-  if (salvosCursosEstados && Array.isArray(salvosCursosEstados)) {
+  // 🆕 cursos_uf_label + cursos_estados_manual unificadas em "cursosestadostodos"
+  const salvosCursosEstadosTodos = carregarDoLocalStorage("cursosestadostodos");
+  if (salvosCursosEstadosTodos && Array.isArray(salvosCursosEstadosTodos)) {
     CURSOS_ESTADOS_MANUAL.length = 0;
-    CURSOS_ESTADOS_MANUAL.push(...salvosCursosEstados);
+    Object.keys(CURSOS_UF_LABEL).forEach(k => delete CURSOS_UF_LABEL[k]);
+    salvosCursosEstadosTodos.forEach(row => {
+      if (row.label) CURSOS_UF_LABEL[row.nome] = row.label;
+      if (row.manual) CURSOS_ESTADOS_MANUAL.push(row.nome);
+    });
   }
   const salvosInstituicaoCursos = carregarDoLocalStorage("instituicaocursos");
   if (salvosInstituicaoCursos) Object.assign(INSTITUICAO_CURSOS, salvosInstituicaoCursos);
@@ -6972,7 +6984,6 @@ function aplicarDadosSalvos() {
     }
     DIAG.push([marcador, !!salvo, Array.isArray(salvo) ? salvo.length : undefined]);
   };
-  aplicarObjeto("cursosuflabel", CURSOS_UF_LABEL);
   aplicarObjeto("cursosestadoreal", CURSOS_ESTADO_REAL);
   aplicarArray("estadosgrid", ESTADOS_GRID);
   aplicarObjeto("disciplinas", DISCIPLINAS);
@@ -7830,25 +7841,25 @@ function iniciarSincronizacaoEmTempoReal() {
     let timerRedesenhoCE = null;
     const agendarRecargaCursosEstados = () => {
       const agora = Date.now();
-      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["cursosestados"] || 0;
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["cursosestadostodos"] || 0;
       if (agora - ultimoLocal < 4e3) return;
       if (timerRedesenhoCE) clearTimeout(timerRedesenhoCE);
       timerRedesenhoCE = setTimeout(async () => {
         try {
           const ce = await carregarCursosEstadosDasTabelas();
           if (ce) {
-            localStorage.setItem(LS_PREFIX + "cursosestados", JSON.stringify(ce.cursosestados));
+            localStorage.setItem(LS_PREFIX + "cursosestadostodos", JSON.stringify(ce.cursosestadostodos));
             if (typeof aplicarDadosSalvos === "function") aplicarDadosSalvos();
           }
         } catch (e) {
-          console.warn("Supabase Realtime: erro ao recarregar cursosestados.", e);
+          console.warn("Supabase Realtime: erro ao recarregar cursosestadostodos.", e);
         }
       }, 500);
     };
     client.channel("cursosestados_mudancas").on("postgres_changes", {
       event: "*",
       schema: "public",
-      table: "cursos_estados_manual"
+      table: "cursos_estados"
     }, agendarRecargaCursosEstados).subscribe();
 
     // 🆕 Realtime para a tabela unificada instituicao_cursos
