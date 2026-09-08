@@ -4157,7 +4157,7 @@ async function carregarEstadosDasTabelas() {
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
   const [respReal, respGrid] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/cursos_estado_real?select=idinstituicao,estado_real`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/cursos_estado_real?select=idinstituicao,estado_real&idinstituicao=not.is.null`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/estados_grid?select=uf,nome,row_pos,col_pos`, { headers })
   ]);
   if (!respReal.ok || !respGrid.ok) {
@@ -4277,19 +4277,20 @@ async function carregarCertificadosDasTabelas() {
   return out;
 }
 
-// 🆕 Substitui cursos_uf_label + cursos_estados_manual (unificadas em cursos_estados)
+// 🆕 Substitui cursos_uf_label + cursos_estados_manual + a tabela "cursos_estados",
+// tudo agora unificado dentro de cursos_estado_real (linhas com idinstituicao nulo).
 async function carregarCursosEstadosDasTabelas() {
   const headers = {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const respEst = await fetch(`${SUPABASE_URL}/rest/v1/cursos_estados?select=nome,label,manual`, { headers });
+  const respEst = await fetch(`${SUPABASE_URL}/rest/v1/cursos_estado_real?select=estado_real,label,manual&idinstituicao=is.null`, { headers });
   if (!respEst.ok) {
-    console.warn("Supabase: não foi possível carregar cursos_estados.");
+    console.warn("Supabase: não foi possível carregar os metadados de estado em cursos_estado_real.");
     return null;
   }
   const rows = await respEst.json();
-  return { cursosestadostodos: rows };
+  return { cursosestadostodos: rows.map(r => ({ nome: r.estado_real, label: r.label, manual: r.manual })) };
 }
 
 // 🆕 Substitui CURSOS_LIVRES + tti_plus_instituicoes + tti_360_instituicoes +
@@ -7921,7 +7922,7 @@ function iniciarSincronizacaoEmTempoReal() {
     client.channel("cursosestados_mudancas").on("postgres_changes", {
       event: "*",
       schema: "public",
-      table: "cursos_estados"
+      table: "cursos_estado_real"
     }, agendarRecargaCursosEstados).subscribe();
 
     // 🆕 Realtime para a tabela unificada instituicao_cursos
