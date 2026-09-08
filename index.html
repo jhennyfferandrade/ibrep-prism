@@ -4418,11 +4418,6 @@ async function iniciarPainel() {
     const eventosCalendario = await comPrazoMaximo(carregarEventosCalendarioDaTabela(), 6e3);
     if (eventosCalendario) {
       localStorage.setItem(LS_PREFIX + "calendario", JSON.stringify(eventosCalendario));
-      Object.keys(CALENDARIO_EVENTOS).forEach(k => delete CALENDARIO_EVENTOS[k]);
-      Object.assign(CALENDARIO_EVENTOS, eventosCalendario);
-      if (document.getElementById("calendario-screen")?.classList.contains("open") && typeof calRenderMes === "function") {
-        calRenderMes();
-      }
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar calendario_eventos. Usando dados locais/padrão deste navegador.", e);
