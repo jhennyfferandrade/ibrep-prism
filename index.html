@@ -4418,6 +4418,11 @@ async function iniciarPainel() {
     const eventosCalendario = await comPrazoMaximo(carregarEventosCalendarioDaTabela(), 6e3);
     if (eventosCalendario) {
       localStorage.setItem(LS_PREFIX + "calendario", JSON.stringify(eventosCalendario));
+      Object.keys(CALENDARIO_EVENTOS).forEach(k => delete CALENDARIO_EVENTOS[k]);
+      Object.assign(CALENDARIO_EVENTOS, eventosCalendario);
+      if (document.getElementById("calendario-screen")?.classList.contains("open") && typeof calRenderMes === "function") {
+        calRenderMes();
+      }
     }
   } catch (e) {
     console.warn("Supabase: falha ao carregar calendario_eventos. Usando dados locais/padrão deste navegador.", e);
@@ -7752,6 +7757,34 @@ function iniciarSincronizacaoEmTempoReal() {
       }, 500);
     }).subscribe();
 
+    let timerRedesenhoCalendario = null;
+    const agendarRecargaCalendario = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["calendario"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoCalendario) clearTimeout(timerRedesenhoCalendario);
+      timerRedesenhoCalendario = setTimeout(async () => {
+        try {
+          const eventos = await carregarEventosCalendarioDaTabela();
+          if (eventos) {
+            localStorage.setItem(LS_PREFIX + "calendario", JSON.stringify(eventos));
+            Object.keys(CALENDARIO_EVENTOS).forEach(k => delete CALENDARIO_EVENTOS[k]);
+            Object.assign(CALENDARIO_EVENTOS, eventos);
+            if (document.getElementById("calendario-screen")?.classList.contains("open") && typeof calRenderMes === "function") {
+              calRenderMes();
+            }
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar o calendário.", e);
+        }
+      }, 500);
+    };
+    client.channel("calendario_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "calendario_eventos"
+    }, agendarRecargaCalendario).subscribe();
+
     let timerRedesenhoComp = null;
     const agendarRecargaComparativo = () => {
       const agora = Date.now();
@@ -8106,6 +8139,7 @@ function calCacheLocal() {
   } catch (e) {
     console.warn("Não foi possível salvar o cache local do calendário:", e);
   }
+  ULTIMO_SALVAMENTO_LOCAL["calendario"] = Date.now();
 }
 
 async function calPersistirEvento(evento, dataStr) {
