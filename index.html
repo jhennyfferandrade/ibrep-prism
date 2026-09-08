@@ -8100,8 +8100,16 @@ function calFecharModalEvento() {
   calEditando = { data: null, id: null };
 }
 
+function calCacheLocal() {
+  try {
+    localStorage.setItem(LS_PREFIX + "calendario", JSON.stringify(CALENDARIO_EVENTOS));
+  } catch (e) {
+    console.warn("Não foi possível salvar o cache local do calendário:", e);
+  }
+}
+
 async function calPersistirEvento(evento, dataStr) {
-  salvarNoLocalStorage("calendario", CALENDARIO_EVENTOS); // cache local imediato
+  calCacheLocal();
   try {
     const data = await supabaseRpc("salvar_evento_calendario", {
       p_user_id: currentUser ? currentUser.id : null,
@@ -8125,7 +8133,7 @@ async function calPersistirEvento(evento, dataStr) {
 }
 
 async function calPersistirExclusao(id) {
-  salvarNoLocalStorage("calendario", CALENDARIO_EVENTOS); // cache local imediato
+  calCacheLocal();
   try {
     const data = await supabaseRpc("excluir_evento_calendario", {
       p_user_id: currentUser ? currentUser.id : null,
