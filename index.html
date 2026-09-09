@@ -6067,22 +6067,22 @@ function buildTreeHTML(q) {
   q = (q || "").trim().toLowerCase();
   let html = "";
   let totalM = 0, totalI = 0, totalP = 0, totalL = 0;
-  DB.mantenedoras.forEach(m => {
+  listaOrdenadaPorId("mantenedoras").forEach(m => {
     const mNome = m.razao_social || m.nome_fantasia || "";
     const mSelfMatch = nodeMatches(mNome, q) || nodeMatches(m.idmantenedora, q);
-    const instituicoes = DB.instituicoes.filter(i => i.idmantenedora === m.idmantenedora);
+    const instituicoes = DB.instituicoes.filter(i => i.idmantenedora === m.idmantenedora).sort((a, b) => Number(a.idinstituicao) - Number(b.idinstituicao));
     let instHtml = "";
     let mantenedoraTemMatch = mSelfMatch;
     instituicoes.forEach(inst => {
       const iNome = inst.nome_abreviado || inst.nome || "";
       const iSelfMatch = nodeMatches(iNome, q) || nodeMatches(inst.idinstituicao, q);
-      const polos = DB.polos.filter(p => p.idinstituicao === inst.idinstituicao);
+      const polos = DB.polos.filter(p => p.idinstituicao === inst.idinstituicao).sort((a, b) => Number(a.idpolo) - Number(b.idpolo));
       let poloHtml = "";
       let instTemMatch = iSelfMatch || mSelfMatch;
       polos.forEach(polo => {
         const pNome = polo.nome_fantasia || polo.razao_social || "";
         const pSelfMatch = nodeMatches(pNome, q) || nodeMatches(polo.idpolo, q);
-        const locais = DB.locais.filter(l => l.idpolo === polo.idpolo);
+        const locais = DB.locais.filter(l => l.idpolo === polo.idpolo).sort((a, b) => Number(a.idlocal) - Number(b.idlocal));
         let localHtml = "";
         let poloTemMatch = pSelfMatch || iSelfMatch || mSelfMatch;
         locais.forEach(local => {
@@ -6169,6 +6169,11 @@ function renderList(items) {
   document.getElementById("list-count").textContent = items.length + " registro" + (items.length !== 1 ? "s" : "");
 }
 
+function listaOrdenadaPorId(section) {
+  const idKey = cfg[section].idKey;
+  return (DB[section] || []).slice().sort((a, b) => Number(a[idKey]) - Number(b[idKey]));
+}
+
 function filterList() {
   const q = document.getElementById("search-input").value.toLowerCase();
   if (currentSection === "arvore") {
@@ -6202,7 +6207,7 @@ function setSection(section) {
     addBtn.textContent = "➕ Adicionar " + (cfg[section].label.replace(/s$/, "").toLowerCase() === "instituiçõe" ? "instituição" : cfg[section].label.toLowerCase().replace(/s$/, ""));
   }
   document.getElementById("search-input").placeholder = "Buscar...";
-  allItems = DB[section];
+  allItems = listaOrdenadaPorId(section);
   document.getElementById("list-title").textContent = cfg[section].label;
   renderList(allItems);
 }
@@ -7624,6 +7629,13 @@ renderDetail = function(item) {
     if (!valEl || !keyLabel) return;
     const key = Object.keys(labelMap).find(k => labelMap[k] === keyLabel);
     if (!key || item[key] === undefined) return;
+    if (key === c.idKey) {
+      valEl.classList.add("admin-editable");
+      valEl.setAttribute("contenteditable", "true");
+      valEl.title = "Editar o número do ID deste registro";
+      valEl.addEventListener("blur", () => renumerarRegistro(currentSection, item, valEl, row));
+      return;
+    }
     if (FK_ORIGEM[key]) {
       valEl.classList.add("admin-fk-link");
       valEl.style.cursor = "pointer";
@@ -7658,6 +7670,98 @@ renderDetail = function(item) {
     headerActions.appendChild(delBtn);
   }
 };
+
+function renumerarRegistro(section, item, valEl, row) {
+  const c = cfg[section];
+  const idKey = c.idKey;
+  const idAntigo = item[idKey];
+  const texto = valEl.textContent.trim();
+  const idNovo = Number(texto);
+
+  if (!texto || !Number.isInteger(idNovo) || idNovo <= 0) {
+    alert("O ID deve ser um número inteiro positivo.");
+    valEl.textContent = idAntigo;
+    return;
+  }
+  if (idNovo === idAntigo) {
+    valEl.textContent = idAntigo;
+    return;
+  }
+  const jaExiste = (DB[section] || []).some(x => x !== item && Number(x[idKey]) === idNovo);
+  if (jaExiste) {
+    alert(`Já existe um registro com o ID ${idNovo} nesta categoria. Escolha outro número.`);
+    valEl.textContent = idAntigo;
+    return;
+  }
+  if (!confirm(`Alterar o ID deste registro de ${idAntigo} para ${idNovo}?\n\nIsso também atualiza automaticamente as referências deste registro em outros cadastros vinculados (ex.: polos/locais).`)) {
+    valEl.textContent = idAntigo;
+    return;
+  }
+
+  item[idKey] = idNovo;
+
+  // Atualiza referências (chaves estrangeiras) em outras seções que apontam para este registro
+  const registrosAfetados = [ item ];
+  Object.keys(DB).forEach(sec => {
+    (DB[sec] || []).forEach(reg => {
+      if (reg === item) return;
+      if (reg[idKey] !== undefined && Number(reg[idKey]) === idAntigo) {
+        reg[idKey] = idNovo;
+        registrosAfetados.push(reg);
+      }
+    });
+  });
+
+  // Atualiza estruturas auxiliares usadas em "Cursos por Instituição" quando o registro é uma instituição
+  if (idKey === "idinstituicao") {
+    const chaveAntiga = String(idAntigo), chaveNova = String(idNovo);
+    [ INSTITUICAO_CURSOS, CURSOS_ESTADO_REAL, CERTIFICADOS, PROVAS_IMPRESSAS ].forEach(obj => {
+      if (obj && Object.prototype.hasOwnProperty.call(obj, chaveAntiga)) {
+        obj[chaveNova] = obj[chaveAntiga];
+        delete obj[chaveAntiga];
+      }
+    });
+    const novoSetAtiv = new Set();
+    ATIVIDADE_PRESENCIAL.forEach(chave => {
+      const [ instId, cursoId ] = chave.split("-");
+      novoSetAtiv.add(instId === chaveAntiga ? `${chaveNova}-${cursoId}` : chave);
+    });
+    ATIVIDADE_PRESENCIAL.clear();
+    novoSetAtiv.forEach(v => ATIVIDADE_PRESENCIAL.add(v));
+    try {
+      localStorage.setItem(LS_PREFIX + "instituicaocursos", JSON.stringify(INSTITUICAO_CURSOS));
+    } catch (e) {}
+  }
+
+  // Persiste todos os registros afetados
+  registrosAfetados.forEach(reg => {
+    const sec = Object.keys(DB).find(s => (DB[s] || []).includes(reg));
+    if (sec) persistirRegistroInstitucional(sec, reg);
+  });
+
+  mostrarFlashSalvo(row);
+
+  // Atualiza a interface: cabeçalho do detalhe, item na lista e reordena pela nova numeração
+  const breadcrumbEl = document.querySelector("#detail-pane .detail-header-info p");
+  if (breadcrumbEl) breadcrumbEl.innerHTML = `ID ${idNovo} &nbsp;·&nbsp; ${c.label.replace(/s$/, "")}`;
+  const listEl = document.querySelector(`.list-item[data-id="${idAntigo}"]`);
+  if (listEl) {
+    listEl.dataset.id = idNovo;
+    const idEl = listEl.querySelector(".item-id");
+    if (idEl) idEl.textContent = "ID " + idNovo;
+  }
+  if (currentSection === section) {
+    allItems = listaOrdenadaPorId(section);
+    filterList();
+    const novoEl = document.querySelector(`.list-item[data-id="${idNovo}"]`);
+    if (novoEl) {
+      document.querySelectorAll(".list-item").forEach(e => e.classList.remove("active"));
+      novoEl.classList.add("active");
+      novoEl.scrollIntoView({ block: "nearest" });
+    }
+  }
+  renderPainelCats();
+}
 
 const REGISTRO_PARENT = {
   mantenedoras: null,
@@ -7713,7 +7817,7 @@ function abrirNovoRegistro(sectionParam) {
   persistirRegistroInstitucional(section, novoItem);
   renderPainelCats();
   if (section === currentSection) {
-    allItems = DB[section];
+    allItems = listaOrdenadaPorId(section);
     renderList(allItems);
     const el = document.querySelector(`.list-item[data-id="${novoId}"]`);
     if (el) {
@@ -7758,7 +7862,7 @@ function excluirRegistro(section, id) {
   excluirRegistroInstitucional(section, id);
   renderPainelCats();
   if (section === currentSection) {
-    allItems = DB[section];
+    allItems = listaOrdenadaPorId(section);
     renderList(allItems);
     document.getElementById("detail-pane").innerHTML = `\n          <div class="empty-state">\n            <div class="empty-icon"></div>\n            <p>Selecione um item para ver os detalhes</p>\n          </div>`;
   }
