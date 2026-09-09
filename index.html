@@ -6097,7 +6097,7 @@ function setSection(section) {
   }
   if (addBtn) {
     addBtn.style.display = "";
-    addBtn.textContent = "➕ Adicionar " + (cfg[section].label.replace(/s$/, "").toLowerCase() === "instituiçõe" ? "instituição" : cfg[section].label.toLowerCase().replace(/s$/, ""));
+    addBtn.textContent = "➕ Adicionar " + (cfg[section].label.replace(/s$/, "").toLowerCase() === "instituições" ? "instituição" : cfg[section].label.toLowerCase().replace(/s$/, ""));
   }
   document.getElementById("search-input").placeholder = "Buscar...";
   allItems = listaOrdenadaPorId(section);
