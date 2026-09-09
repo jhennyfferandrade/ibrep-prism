@@ -5693,6 +5693,48 @@ function persistirRegistrosSecao(section) {
   }
 }
 
+const SECOES_TABELA_REAL = { mantenedoras: "mantenedora", instituicoes: "instituicao", polos: "polo", locais: "local" };
+
+function dbCacheLocal() {
+  try {
+    localStorage.setItem(LS_PREFIX + "db", JSON.stringify(DB));
+  } catch (e) {
+    console.warn("Não foi possível salvar o cache local do painel institucional:", e);
+  }
+}
+
+async function persistirRegistroInstitucional(section, item) {
+  const tipo = SECOES_TABELA_REAL[section];
+  if (!tipo) { persistirRegistrosSecao(section); return; }
+  dbCacheLocal();
+  try {
+    const data = await supabaseRpc("salvar_" + tipo, { p_admin_senha: adminSenha, p_dado: item });
+    if (!data.ok) {
+      alert("⚠️ O registro foi salvo apenas neste navegador — falha ao sincronizar com o banco de dados: " + (data.erro || ""));
+    } else if (data.id !== undefined && data.id !== null) {
+      item[cfg[section].idKey] = data.id;
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao salvar " + tipo + " na nuvem.", e);
+    alert("⚠️ O registro foi salvo apenas neste navegador — houve uma falha ao sincronizar com o banco de dados.");
+  }
+}
+
+async function excluirRegistroInstitucional(section, id) {
+  const tipo = SECOES_TABELA_REAL[section];
+  if (!tipo) { persistirRegistrosSecao(section); return; }
+  dbCacheLocal();
+  try {
+    const data = await supabaseRpc("excluir_" + tipo, { p_admin_senha: adminSenha, p_id: id });
+    if (!data.ok) {
+      alert("⚠️ Falha ao excluir na nuvem: " + (data.erro || "") + " — o registro pode voltar a aparecer ao recarregar.");
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao excluir " + tipo + " na nuvem.", e);
+    alert("⚠️ Falha ao excluir na nuvem — o registro pode voltar a aparecer ao recarregar.");
+  }
+}
+
 function renderPainelCats() {
   const cont = document.getElementById("painel-cats-list");
   if (!cont) return;
@@ -5882,13 +5924,13 @@ function renderDetail(item) {
   html += `<div class="detail-card-header">\n    <div class="detail-avatar">${initials(name)}</div>\n    <div class="detail-header-info">\n      <h2>${name}</h2>\n      <p>ID ${id} &nbsp;·&nbsp; ${c.label.replace(/s$/, "")}</p>\n    </div>\n  </div>`;
   html += `<div class="field-section">`;
   groups.forEach(group => {
-    const rows = group.keys.filter(k => item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== "");
+    const rows = group.keys.filter(k => (typeof adminMode !== "undefined" && adminMode) || (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== ""));
     if (rows.length === 0) return;
     html += `<div class="field-section-title">${group.title}</div>`;
     rows.forEach(k => {
       const label = labelMap[k] || k;
-      let val = String(item[k]);
-      if (k === "data_credenciamento" || k === "data_vencimento") val = statusBadge(item[k]); else if ([ "idmantenedora", "idinstituicao", "idpolo", "idlocal" ].includes(k)) val = resolveIdLabel(k, item[k]);
+      let val = item[k] !== undefined && item[k] !== null ? String(item[k]) : "";
+      if (k === "data_credenciamento" || k === "data_vencimento") val = statusBadge(item[k]); else if (val && [ "idmantenedora", "idinstituicao", "idpolo", "idlocal" ].includes(k)) val = resolveIdLabel(k, item[k]);
       html += `<div class="field-row">\n        <div class="field-key">${label}</div>\n        <div class="field-val">${val}</div>\n      </div>`;
     });
   });
@@ -7561,7 +7603,7 @@ renderDetail = function(item) {
       const novoValor = headerNameEl.textContent.trim();
       if (!novoValor || novoValor === String(item[c.nameKey])) return;
       item[c.nameKey] = novoValor;
-      persistirRegistrosSecao(currentSection);
+      persistirRegistroInstitucional(currentSection, item);
       mostrarFlashSalvo(headerNameEl.parentElement);
       const listEl = document.querySelector(`.list-item[data-id="${item[c.idKey]}"] .item-name`);
       if (listEl) listEl.textContent = novoValor;
@@ -7595,7 +7637,7 @@ renderDetail = function(item) {
       const novoValor = valEl.textContent.trim();
       if (novoValor === String(item[key])) return;
       item[key] = novoValor;
-      persistirRegistrosSecao(currentSection);
+      persistirRegistroInstitucional(currentSection, item);
       mostrarFlashSalvo(row);
       if (key === c.nameKey) {
         if (headerNameEl) headerNameEl.textContent = novoValor;
@@ -7668,7 +7710,7 @@ function abrirNovoRegistro(sectionParam) {
   if (parentInfo) novoItem[parentInfo.fk] = fkValor;
   novoItem[c.nameKey] = nomeLimpo;
   DB[section].push(novoItem);
-  persistirRegistrosSecao(section);
+  persistirRegistroInstitucional(section, novoItem);
   renderPainelCats();
   if (section === currentSection) {
     allItems = DB[section];
@@ -7713,7 +7755,7 @@ function excluirRegistro(section, id) {
   const aviso = filhos > 0 ? `\n\n⚠️ Atenção: existem ${filhos} registro(s) vinculados a este (instituições/polos/locais) que ficarão sem referência. Eles NÃO serão excluídos automaticamente.` : "";
   if (!confirm(`Excluir "${nome}"?${aviso}`)) return;
   DB[section] = DB[section].filter(x => x[c.idKey] !== id);
-  persistirRegistrosSecao(section);
+  excluirRegistroInstitucional(section, id);
   renderPainelCats();
   if (section === currentSection) {
     allItems = DB[section];
