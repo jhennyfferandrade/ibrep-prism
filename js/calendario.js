@@ -50,12 +50,6 @@ let CAL_MES_ATUAL = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
 
 let calEditando = { data: null, id: null };
 
-const ATIVIDADE_PRESENCIAL = new Set([]);
-
-let activeCursoId = null;
-
-let activeInstId = null;
-
 function openCalendario() {
   if (!exigirPermissao("calendario")) return;
   irParaTela("calendario");
