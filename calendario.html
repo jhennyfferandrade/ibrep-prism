@@ -1,0 +1,63 @@
+<!--
+  IBREP Prism — Tela: Calendário
+  --------------------------------
+  Fragmento HTML da tela "Calendário" + modal de novo/editar evento.
+  Carregado sob demanda (fetch) na primeira vez que o usuário clica no
+  botão "Calendário", e injetado dentro de #tela-calendario-slot no
+  index.html. Depois disso fica em cache no DOM (não busca de novo).
+-->
+<div id="calendario-screen">
+    <div class="tut-header">
+      <div class="tut-header-left">
+        <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+          alt="IBREP">
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Calendário</h1>
+          <p>Eventos · Prazos · Compromissos</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cal-body">
+      <div class="cal-toolbar">
+        <button class="cal-nav-btn" onclick="calMudarMes(-1)">←</button>
+        <div class="cal-title" id="cal-titulo-mes">—</div>
+        <button class="cal-nav-btn" onclick="calMudarMes(1)">→</button>
+        <button class="cal-today-btn" onclick="calIrParaHoje()">📍 Hoje</button>
+        <button class="cal-add-btn" id="cal-btn-novo-evento" onclick="calAbrirNovoEvento(null)">➕ Novo evento</button>
+        <span class="cal-viewonly-badge" id="cal-viewonly-badge" style="display:none;">👁️ Somente visualização</span>
+      </div>
+
+      <div class="cal-grid">
+        <div class="cal-weekdays">
+          <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+        </div>
+        <div class="cal-weeks" id="cal-weeks"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cal-evento-overlay">
+    <div class="cal-evento-card">
+      <h3 id="cal-evento-card-titulo">Novo evento</h3>
+      <div class="admin-inline-form">
+        <label>Data</label>
+        <input type="date" id="cal-form-data">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="cal-form-dia-todo" style="width:auto;" onchange="calToggleDiaTodo()"> Dia todo
+        </label>
+        <label>Horário (opcional)</label>
+        <input type="time" id="cal-form-hora">
+        <label>Título</label>
+        <input type="text" id="cal-form-titulo" placeholder="Ex.: Reunião com a equipe" maxlength="120">
+        <label>Descrição (opcional)</label>
+        <textarea id="cal-form-desc" style="min-height:80px;" placeholder="Detalhes do compromisso..."></textarea>
+      </div>
+      <div class="cal-evento-card-actions">
+        <button class="admin-edit-btn" id="cal-btn-cancelar-evento" style="background:var(--cinza-borda);color:var(--texto-sec);flex:0 0 auto;" onclick="calFecharModalEvento()">Cancelar</button>
+        <button class="cal-evento-del-btn" id="cal-btn-excluir-evento" style="display:none;" onclick="calExcluirEventoAtual()">🗑️ Excluir</button>
+        <button class="admin-edit-btn save" id="cal-btn-salvar-evento" onclick="calSalvarEvento()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
