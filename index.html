@@ -4100,7 +4100,7 @@ async function carregarPortariasDasTabelas() {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor,coordenador_curso,coordenador_estagio,cofeci,observacoes,mantenedora_id,razao_social,documento,lei_principal,resolucao,autorizacao,sistec,censo_escolar,validade`, { headers });
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor,coordenador_curso,coordenador_estagio,cofeci,observacoes,mantenedora_id,razao_social,documento,lei_principal,resolucao,parecer,sistec,censo_escolar,validade`, { headers });
   if (!resp.ok) {
     console.warn("Supabase: não foi possível carregar portarias_estados (status " + resp.status + ").");
     return null;
@@ -4125,7 +4125,7 @@ async function carregarPortariasDasTabelas() {
       documento: l.documento,
       leiPrincipal: l.lei_principal,
       resolucao: l.resolucao,
-      autorizacao: l.autorizacao,
+      parecer: l.parecer,
       sistec: l.sistec,
       censoEscolar: l.censo_escolar,
       validade: l.validade
@@ -5219,7 +5219,7 @@ function flCamposBox(pares) {
 const CAMPOS_FUNDAMENTACAO = [
   { key: "leiPrincipal", label: "Lei Principal" },
   { key: "resolucao", label: "Resolução" },
-  { key: "autorizacao", label: "Autorização" },
+  { key: "parecer", label: "Autorização" },
   { key: "cofeci", label: "Código COFECI" },
   { key: "sistec", label: "SISTEC" },
   { key: "censoEscolar", label: "Censo Escolar" },
