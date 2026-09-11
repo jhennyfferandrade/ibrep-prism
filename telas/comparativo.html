@@ -1,0 +1,42 @@
+<!--
+  IBREP Prism — Tela: Comparativo de Estados
+  --------------------------------------------
+  Fragmento HTML da tela "Comparativo de Estados".
+  Carregado sob demanda (fetch) na primeira vez que o usuário clica no
+  botão "Comparativo", e injetado dentro de #tela-comparativo-slot no
+  index.html.
+-->
+<div id="comparativo-screen">
+    <div class="tut-header">
+      <div class="tut-header-left">
+        <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+          alt="IBREP">
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Comparativo de Estados</h1>
+          <p>Duração · Provas · Modalidade · Carga horária</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp-body">
+      <div class="comp-intro">
+        Compare, lado a lado, a duração, as provas, a modalidade, a carga horária e o prazo de diploma
+        de cada estado/plano. Role a tabela para o lado para ver todas as colunas.
+      </div>
+
+      <div class="comp-table-wrap">
+        <table class="comp-table" id="comp-table"></table>
+      </div>
+
+      <div class="comp-admin-actions comp-admin-only">
+        <button class="admin-dashed-btn" onclick="adicionarLinhaComparativo()">➕ Adicionar linha</button>
+        <button class="admin-dashed-btn" onclick="adicionarColunaComparativo()">➕ Adicionar coluna</button>
+      </div>
+
+      <div class="comp-legend">
+        <div class="comp-legend-item">📊 Fonte: Comparativo de Estados (PDF interno)</div>
+        <div class="comp-legend-item">🟣 Coluna destacada = TTI 360</div>
+      </div>
+    </div>
+  </div>
