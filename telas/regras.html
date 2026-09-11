@@ -1,0 +1,47 @@
+<!--
+  IBREP Prism — Tela: Regras do Atendimento
+  ---------------------------------------------------
+  Fragmento HTML da tela "Regras do Atendimento" (categorias numeradas +
+  lista de tópicos + mensagem padrão com botão de copiar). Carregado sob
+  demanda (fetch) na primeira vez que o usuário clica no botão "Regras
+  do Atendimento", e injetado dentro de #tela-regras-slot no index.html.
+-->
+  <div id="regras-screen">
+    <div class="port-header">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+        alt="IBREP">
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <h1>Regras do Atendimento</h1>
+        <p>Categorias · Tópicos · Mensagens padrão</p>
+      </div>
+    </div>
+    <div class="regras-body">
+
+      <aside class="regras-cats-pane">
+        <div class="regras-cats-label">Categorias</div>
+        <div class="regras-cats-list" id="regras-cats-list"></div>
+        <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin-top:8px;" onclick="adicionarCategoriaRegra()">➕ Adicionar categoria</button>
+      </aside>
+
+      <div class="regras-list-pane">
+        <div class="regras-list-header">
+          <div class="regras-search-box" style="padding:0 0 10px;border-bottom:none;">
+            <input type="text" id="regras-search-input" placeholder="Buscar tópico..." oninput="renderRegrasList()">
+          </div>
+          <div class="regras-list-header-title" id="regras-list-title">—</div>
+          <div class="regras-list-header-count" id="regras-list-count"></div>
+        </div>
+        <div class="regras-list-items" id="regras-list-items"></div>
+        <button class="admin-dashed-btn regras-admin-only" style="width:calc(100% - 16px);margin:8px;" onclick="adicionarItemRegra()">➕ Adicionar tópico</button>
+      </div>
+
+      <div class="regras-detail-pane" id="regras-detail-pane">
+        <div class="regras-empty-state">
+          <div class="icon">💬</div>
+          <p>Selecione um tópico para ver a mensagem</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
