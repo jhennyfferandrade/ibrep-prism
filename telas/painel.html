@@ -1,0 +1,59 @@
+<!--
+  IBREP Prism — Tela: Painel Institucional
+  ---------------------------------------------------
+  Fragmento HTML da tela "Painel Institucional" (cabeçalho com busca
+  global + categorias/lista/detalhe de Mantenedoras, Instituições,
+  Polos e Locais de Provas, incluindo a Árvore Hierárquica). Carregado
+  sob demanda (fetch) na primeira vez que o usuário abre essa tela, e
+  injetado dentro de #tela-painel-slot no index.html.
+-->
+  <header>
+    <div class="header-brand">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+        alt="IBREP">
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <h1>Painel Institucional</h1>
+        <p>Mantenedoras · Instituições · Polos · Locais de Provas</p>
+      </div>
+    </div>
+
+    <div class="global-search-wrap">
+      <span class="global-search-icon">🔍</span>
+      <input type="text" id="global-search-input" class="global-search-input"
+        placeholder="Buscar em tudo: ID, nome, polo, cidade..." oninput="globalSearch(this.value)">
+      <div id="global-search-results" class="global-search-results"></div>
+    </div>
+  </header>
+
+  <div class="app">
+
+    <aside class="regras-cats-pane" id="painel-cats-pane">
+      <div class="regras-cats-label">Categorias</div>
+      <div class="regras-cats-list" id="painel-cats-list"></div>
+      <button class="admin-dashed-btn regras-admin-only" style="width:100%;margin-top:8px;" onclick="abrirNovaCategoriaPainel()">➕ Adicionar categoria</button>
+    </aside>
+
+    <div class="right">
+
+      <div class="list-pane">
+        <div class="list-header">
+          <div class="list-header-title" id="list-title">Mantenedoras</div>
+          <div class="list-header-count" id="list-count"></div>
+        </div>
+        <div class="list-search">
+          <input type="text" id="search-input" placeholder="Buscar..." oninput="filterList()">
+        </div>
+        <div class="list-items" id="list-items"></div>
+        <button class="admin-dashed-btn comp-admin-only" id="btn-add-registro" style="width:calc(100% - 32px);margin:0 16px 16px;" onclick="abrirNovoRegistro()">➕ Adicionar registro</button>
+      </div>
+
+      <div class="detail-pane" id="detail-pane">
+        <div class="empty-state">
+          <div class="empty-icon"></div>
+          <p>Selecione um item para ver os detalhes</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
