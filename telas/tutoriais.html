@@ -1,0 +1,34 @@
+<!--
+  IBREP Prism — Tela: Tutoriais
+  --------------------------------
+  Fragmento HTML da tela "Central de Tutoriais".
+  Carregado sob demanda (fetch) na primeira vez que o usuário clica no
+  botão "Tutoriais", e injetado dentro de #tela-tutoriais-slot no
+  index.html.
+-->
+<div id="tutorial-screen">
+    <div class="tut-header">
+      <div class="tut-header-left">
+        <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+          alt="IBREP">
+        <div class="header-divider"></div>
+        <div class="header-text">
+          <h1>Central de Tutoriais</h1>
+          <p>Vídeos · Categorias · Passo a passo</p>
+        </div>
+      </div>
+      <div class="global-search-wrap">
+        <span class="global-search-icon">🔍</span>
+        <input type="text" class="global-search-input" placeholder="Buscar tutorial..."
+          oninput="filterTutorials(this.value)">
+      </div>
+    </div>
+    <div class="tut-body">
+      <aside class="tut-cats">
+        <div class="tut-cats-label">Categorias</div>
+        <div id="tut-cats-list"></div>
+        <button class="tut-add-cat-btn" onclick="abrirNovaTutCategoria()">➕ Adicionar categoria</button>
+      </aside>
+      <div class="tut-content" id="tut-content"></div>
+    </div>
+  </div>
