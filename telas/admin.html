@@ -1,0 +1,48 @@
+<!--
+  IBREP Prism — Tela: Painel do Administrador
+  --------------------------------------------------
+  Fragmento HTML da tela "Painel do Administrador". Carregado sob
+  demanda (fetch) na primeira vez que a administradora clica na
+  bolinha 🛠️ (canto inferior direito, visível com o modo admin
+  ativo), e injetado dentro de #tela-admin-slot no index.html.
+
+  Layout espelha a tela de Tutoriais: menu de seções à esquerda
+  (.tut-cats/.tut-cat-btn, mesmas classes/CSS) e o conteúdo da seção
+  selecionada à direita (.tut-content). Seções (ver ADMIN_SECOES em
+  js/admin.js):
+    1. Usuários            — lista nome/login/perfil de cada login
+    2. Perfis              — cria/edita perfis de permissão (ex.:
+                              Pedagógico, Administrativo) reutilizáveis
+    3. Cadastrar usuário    — formulário próprio de novo login (e
+                              também usado para editar um já existente),
+                              com nome, login, CPF, senha e o perfil
+                              vinculado
+
+  O "Sair" (encerra o modo admin) mora aqui no cabeçalho — antes ficava
+  na barra flutuante, que agora é só a bolinha 🛠️ sem textos/botões.
+-->
+<div id="admin-screen">
+  <div class="tut-header">
+    <div class="tut-header-left">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+        alt="IBREP">
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <h1>Painel do Administrador</h1>
+        <p>Usuários · Perfis · Cadastro</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="admin-header-back-btn" onclick="sairAdmin()">Sair</button>
+      <button class="admin-header-back-btn" onclick="irParaTela('welcome')">← Voltar ao início</button>
+    </div>
+  </div>
+
+  <div class="tut-body">
+    <aside class="tut-cats">
+      <div class="tut-cats-label">Seções</div>
+      <div id="admin-cats-list"></div>
+    </aside>
+    <div class="tut-content" id="admin-content"></div>
+  </div>
+</div>
