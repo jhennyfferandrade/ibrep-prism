@@ -2420,6 +2420,11 @@
       background: var(--roxo-claro);
       border-radius: 12px;
     }
+    .cont-setor-subtitulo {
+      font-size: 12.5px;
+      color: var(--texto-sec);
+      margin-top: 3px;
+    }
     /* ---- Grid de "quadradinhos" — um card por função/situação ----
        auto-fit (em vez de auto-fill) faz os cards existentes ocuparem
        toda a largura disponível quando há poucas funções cadastradas —
@@ -2508,14 +2513,11 @@
       color: var(--texto);
       line-height: 1.55;
     }
-    .cont-funcao-contato {
+    .cont-funcao-contato-nome {
       font-size: 12.5px;
       font-weight: 600;
       color: var(--texto);
-      background: var(--cinza-light);
-      border-radius: 10px;
-      padding: 8px 10px;
-      margin-top: 2px;
+      text-align: center;
     }
     .cont-funcao-nota {
       background: #fff6e0;
@@ -3937,7 +3939,7 @@ async function carregarContatosDasTabelas() {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/contatos_pessoas?select=id,card_id,ordem_card,ordem_pessoa,emoji,setor,titulo,fale_com,imagem,caixa_texto1,caixa_texto2&order=ordem_card.asc,ordem_pessoa.asc`, { headers });
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/contatos_pessoas?select=id,card_id,ordem_card,ordem_pessoa,emoji,setor,subtitulo,titulo,fale_com,imagem,caixa_texto1,caixa_texto2&order=ordem_card.asc,ordem_pessoa.asc`, { headers });
   if (!resp.ok) {
     console.warn("Supabase: não foi possível carregar contatos_pessoas (status " + resp.status + ").");
     return null;
