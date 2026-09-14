@@ -241,10 +241,11 @@ function renderPainelCats() {
             ${delBtn}
           </button>`;
   });
+  numero++;
   const arvoreAtiva = currentSection === "arvore" ? "active" : "";
   html += `
           <button class="regras-cat-btn ${arvoreAtiva}" data-painel-cat="arvore">
-            <span class="regras-cat-num" data-num="🌳"></span>
+            <span class="regras-cat-num" data-num="${numero}"></span>
             <span class="regras-cat-label">Árvore Hierárquica</span>
           </button>`;
   cont.innerHTML = html;
@@ -262,10 +263,46 @@ function renderPainelCats() {
   });
 }
 
+// Painel de detalhe (à direita) de volta ao estado vazio padrão.
+function painelResetDetailVazio() {
+  const pane = document.getElementById("detail-pane");
+  if (pane) {
+    pane.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon"></div>
+      <p>Selecione um item para ver os detalhes</p>
+    </div>`;
+  }
+}
+
+// Em vez de um prompt(), abre um formulário direto no painel de
+// detalhe (mesmo padrão usado em "Quem Procurar" para novo setor).
 function abrirNovaCategoriaPainel() {
-  const nome = prompt("Nome da nova categoria:");
-  if (nome === null) return;
-  const nomeLimpo = nome.trim();
+  const pane = document.getElementById("detail-pane");
+  if (!pane) return;
+  pane.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-avatar">➕</div>
+        <div class="detail-header-info"><h2>Nova categoria</h2></div>
+      </div>
+      <div class="field-section">
+        <div class="admin-inline-form">
+          <label>Nome da categoria</label>
+          <input type="text" id="admin-newpainelcat-nome" placeholder="Ex.: Parceiros">
+          <div style="display:flex;gap:8px;">
+            <button class="admin-edit-btn save" onclick="salvarNovaCategoriaPainel()">💾 Salvar</button>
+            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="painelResetDetailVazio()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById("admin-newpainelcat-nome")?.focus(), 50);
+}
+
+function salvarNovaCategoriaPainel() {
+  const nomeEl = document.getElementById("admin-newpainelcat-nome");
+  const nomeLimpo = nomeEl ? nomeEl.value.trim() : "";
   if (!nomeLimpo) {
     alert("Digite um nome para a categoria.");
     return;
@@ -667,7 +704,7 @@ renderDetail = function(item) {
     const valEl = row.querySelector(".field-val");
     if (!valEl || !keyLabel) return;
     const key = Object.keys(labelMap).find(k => labelMap[k] === keyLabel);
-    if (!key || item[key] === undefined) return;
+    if (!key) return;
     if (key === c.idKey) {
       valEl.classList.add("admin-editable");
       valEl.setAttribute("contenteditable", "true");
@@ -675,7 +712,7 @@ renderDetail = function(item) {
       valEl.addEventListener("blur", () => renumerarRegistro(currentSection, item, valEl, row));
       return;
     }
-    if (FK_ORIGEM[key]) {
+    if (FK_ORIGEM[key] && item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== "") {
       valEl.classList.add("admin-fk-link");
       valEl.style.cursor = "pointer";
       valEl.title = "Editar na origem — a mudança vale em todos os lugares que mostram esse nome";
@@ -686,7 +723,8 @@ renderDetail = function(item) {
     valEl.setAttribute("contenteditable", "true");
     valEl.addEventListener("blur", () => {
       const novoValor = valEl.textContent.trim();
-      if (novoValor === String(item[key])) return;
+      const valorAtual = item[key] !== undefined && item[key] !== null ? String(item[key]) : "";
+      if (novoValor === valorAtual) return;
       item[key] = novoValor;
       persistirRegistroInstitucional(currentSection, item);
       mostrarFlashSalvo(row);
@@ -826,26 +864,74 @@ function proximoId(section, idKey) {
   return itens.reduce((max, it) => Math.max(max, Number(it[idKey]) || 0), 0) + 1;
 }
 
+// Em vez de dois prompt() em sequência, abre um formulário direto no
+// painel de detalhe (mesmo padrão usado em "Quem Procurar"), com um
+// seletor pro "pai" (quando existir) e um campo de nome.
 function abrirNovoRegistro(sectionParam) {
   const section = sectionParam || currentSection;
   if (section === "arvore") return;
   const c = cfg[section];
   const parentInfo = REGISTRO_PARENT[section];
+  const pane = document.getElementById("detail-pane");
+  if (!pane) return;
+
+  let parentFieldHtml = "";
+  if (parentInfo) {
+    const parentCfg = cfg[parentInfo.parentSection];
+    const pais = (DB[parentInfo.parentSection] || []).slice().sort((a, b) => Number(a[parentCfg.idKey]) - Number(b[parentCfg.idKey]));
+    const labelParent = parentInfo.parentLabel.charAt(0).toUpperCase() + parentInfo.parentLabel.slice(1);
+    if (pais.length === 0) {
+      parentFieldHtml = `
+              <label>${labelParent}</label>
+              <div class="cont-placeholder" style="padding:8px 0;">Nenhum(a) ${parentInfo.parentLabel} cadastrado(a) ainda — cadastre um(a) antes.</div>`;
+    } else {
+      const options = pais.map(p => {
+        const label = p[parentCfg.nameKey] || p.nome || p.razao_social;
+        return `<option value="${p[parentCfg.idKey]}">${p[parentCfg.idKey]} — ${escapeHtmlRegra(String(label))}</option>`;
+      }).join("");
+      parentFieldHtml = `
+              <label>${labelParent}</label>
+              <select id="admin-newregistro-pai">${options}</select>`;
+    }
+  }
+
+  const artigo = c.label.match(/^(Mantenedoras|Instituições)/) ? "a" : "o";
+  pane.innerHTML = `
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-avatar">➕</div>
+        <div class="detail-header-info"><h2>Nov${artigo} ${c.label.replace(/s$/, "").toLowerCase()}</h2></div>
+      </div>
+      <div class="field-section">
+        <div class="admin-inline-form">
+          ${parentFieldHtml}
+          <label>Nome</label>
+          <input type="text" id="admin-newregistro-nome" placeholder="Nome d${artigo} nov${artigo} ${c.label.replace(/s$/, "").toLowerCase()}">
+          <div style="display:flex;gap:8px;">
+            <button class="admin-edit-btn save" onclick="salvarNovoRegistro('${section}')">💾 Salvar</button>
+            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="painelResetDetailVazio()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById("admin-newregistro-nome")?.focus(), 50);
+}
+
+function salvarNovoRegistro(section) {
+  const c = cfg[section];
+  const parentInfo = REGISTRO_PARENT[section];
   let fkValor = null;
   if (parentInfo) {
-    const paisDisponiveis = (DB[parentInfo.parentSection] || []).map(p => `${p[cfg[parentInfo.parentSection].idKey]} — ${p[cfg[parentInfo.parentSection].nameKey] || p.nome || p.razao_social}`).join("\n");
-    const digitado = prompt(`Qual o ID d${parentInfo.parentLabel === "instituição" ? "a" : "o"} ${parentInfo.parentLabel} deste novo registro?\n\nOpções disponíveis:\n${paisDisponiveis}`, "");
-    if (digitado === null) return;
-    fkValor = Number(digitado.trim());
+    const sel = document.getElementById("admin-newregistro-pai");
+    fkValor = sel ? Number(sel.value) : NaN;
     const paiExiste = (DB[parentInfo.parentSection] || []).some(p => p[cfg[parentInfo.parentSection].idKey] === fkValor);
     if (!fkValor || !paiExiste) {
-      alert("ID inválido. Cadastro cancelado.");
+      alert(`Cadastre ${parentInfo.parentLabel === "instituição" ? "uma" : "um"} ${parentInfo.parentLabel} antes de continuar.`);
       return;
     }
   }
-  const nome = prompt(`Nome d${c.label.toLowerCase().startsWith("i") ? "a" : "a"} nov${c.label.match(/^(Mantenedoras|Instituições)/) ? "a" : "o"} ${c.label.replace(/s$/, "").toLowerCase()}:`, "");
-  if (nome === null) return;
-  const nomeLimpo = nome.trim() || "Novo registro";
+  const nomeEl = document.getElementById("admin-newregistro-nome");
+  const nomeLimpo = (nomeEl ? nomeEl.value.trim() : "") || "Novo registro";
   const novoId = proximoId(section, c.idKey);
   const novoItem = {
     [c.idKey]: novoId
@@ -867,6 +953,8 @@ function abrirNovoRegistro(sectionParam) {
       });
     }
     renderDetail(novoItem);
+  } else {
+    painelResetDetailVazio();
   }
 }
 
