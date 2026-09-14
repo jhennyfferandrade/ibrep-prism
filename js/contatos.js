@@ -60,9 +60,16 @@ function initContatosScreen() {
   const area = document.getElementById("cont-content");
   if (area) {
     area.innerHTML = cards.length
-      ? `<div class="cont-empty">👈 Selecione um setor no menu ao lado</div>`
-      : `<div class="cont-empty">📂 Nenhum setor cadastrado ainda</div>`;
+      ? contEstadoVazio("Selecione um setor no menu ao lado")
+      : contEstadoVazio("Nenhum setor cadastrado ainda");
   }
+}
+
+// Mesmo "cartão" de estado vazio usado em Regras de Atendimento (círculo
+// com o ícone "i" + mensagem), reaproveitado aqui para ficar visualmente
+// idêntico.
+function contEstadoVazio(mensagem) {
+  return `<div class="regras-empty-state"><div class="icon"></div><p>${mensagem}</p></div>`;
 }
 
 // -------------------------------------------------------------------------
@@ -139,8 +146,8 @@ function excluirContCategoria(cardId) {
   const area = document.getElementById("cont-content");
   if (area) {
     area.innerHTML = contatosAgruparEmCards().length
-      ? `<div class="cont-empty">👈 Selecione um setor no menu ao lado</div>`
-      : `<div class="cont-empty">📂 Nenhum setor cadastrado ainda</div>`;
+      ? contEstadoVazio("Selecione um setor no menu ao lado")
+      : contEstadoVazio("Nenhum setor cadastrado ainda");
   }
 }
 
@@ -152,7 +159,7 @@ function renderContContent(cardId) {
   if (!area) return;
   const cat = contatosAgruparEmCards().find(c => c.card_id === cardId);
   if (!cat) {
-    area.innerHTML = `<div class="cont-empty">📂 Setor não encontrado</div>`;
+    area.innerHTML = contEstadoVazio("Setor não encontrado");
     return;
   }
   const editBtn = adminMode
@@ -174,7 +181,7 @@ function renderContContent(cardId) {
     </div>`;
   html += `<div class="cont-funcoes-grid">`;
   cat.funcoes.forEach((f, idx) => {
-    html += renderContFuncaoCard(cat.card_id, f, idx, cat.funcoes.length > 1);
+    html += renderContFuncaoCard(cat.card_id, f, idx, cat.funcoes.length > 1, cat.funcoes.length);
   });
   if (adminMode) {
     html += `
@@ -187,7 +194,7 @@ function renderContContent(cardId) {
   area.innerHTML = html;
 }
 
-function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
+function renderContFuncaoCard(cardId, f, idx, podeExcluir, total) {
   const titulo = f.titulo
     ? escapeHtmlRegra(f.titulo)
     : `<span class="cont-placeholder">Sem nome definido</span>`;
@@ -211,8 +218,9 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
          ${podeExcluir ? `<button class="cont-funcao-card-excluir" onclick="excluirContFuncao('${cardId}', ${idx})">🗑️ Remover</button>` : ""}
        </div>`
     : "";
+  const basis = contFuncaoCardBasis(total, idx);
   return `
-    <div class="cont-funcao-card">
+    <div class="cont-funcao-card" style="flex-basis:${basis};max-width:${basis};">
       <div class="cont-funcao-titulo">${titulo}</div>
       <div class="cont-funcao-situacoes-title">Quando te procuram por isso</div>
       ${situacoesHtml}
@@ -226,6 +234,20 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
       ${acoesAdmin}
     </div>
   `;
+}
+
+// -------------------------------------------------------------------------
+// Largura de cada "quadradinho": no máximo 3 por fila. Se a última fila
+// ficar incompleta (1 ou 2 cards sobrando), esses cards se esticam para
+// ocupar o espaço inteiro da fila (em vez de ficarem pequenos e soltos).
+// -------------------------------------------------------------------------
+function contFuncaoCardBasis(total, idx) {
+  const resto = total % 3;
+  const naUltimaLinhaIncompleta = resto !== 0 && idx >= total - resto;
+  if (naUltimaLinhaIncompleta) {
+    return resto === 1 ? "100%" : "calc(50% - (var(--cont-gap) / 2))";
+  }
+  return "calc(33.333% - (2 * var(--cont-gap) / 3))";
 }
 
 // -------------------------------------------------------------------------
