@@ -2425,18 +2425,19 @@
       color: var(--texto-sec);
       margin-top: 3px;
     }
-    /* ---- Grid de "quadradinhos" — um card por função/situação ----
-       auto-fit (em vez de auto-fill) faz os cards existentes ocuparem
-       toda a largura disponível quando há poucas funções cadastradas —
-       sem sobrar um monte de espaço vazio à direita — e o gap escala
-       com o tamanho da tela via clamp(), então em telas grandes os
-       quadradinhos ficam mais espaçados entre si. */
+    /* ---- Fileira de "quadradinhos" — um card por função/situação ----
+       Flexbox em vez de grid: no máximo 3 cards por fila (flex-basis
+       de ~33% definido por card via JS, em contFuncaoCardBasis()).
+       Quando a última fila fica incompleta (1 ou 2 cards), esses
+       cards recebem flex-basis maior (100% ou 50%) para ocupar todo
+       o espaço da fila, em vez de ficarem pequenos e soltos. */
     .cont-funcoes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: clamp(16px, 2vw, 28px);
+      --cont-gap: clamp(16px, 2vw, 28px);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--cont-gap);
       margin-top: 18px;
-      align-items: start;
+      align-items: stretch;
     }
     .cont-funcao-card {
       display: flex;
@@ -2449,8 +2450,8 @@
       padding: 18px 18px 16px;
       box-shadow: 0 3px 10px rgba(56,5,63,.05);
       transition: box-shadow .12s, transform .12s;
-      width: 100%;
-      max-width: 340px;
+      flex: 1 1 calc(33.333% - (2 * var(--cont-gap) / 3));
+      /* flex-basis/max-width reais vêm inline por card (contFuncaoCardBasis) */
     }
     .cont-funcao-card:hover {
       box-shadow: 0 8px 20px rgba(56,5,63,.10);
@@ -2565,8 +2566,7 @@
       font-size: 12.5px;
       font-weight: 500;
       cursor: pointer;
-      width: 100%;
-      max-width: 340px;
+      flex: 1 1 calc(33.333% - (2 * var(--cont-gap) / 3));
     }
     .cont-add-funcao-card:hover {
       border-color: var(--roxo-medio);
