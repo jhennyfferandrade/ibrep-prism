@@ -1,0 +1,44 @@
+<!--
+  IBREP Prism — Tela: Quem Procurar
+  --------------------------------------------
+  Fragmento HTML da tela "Quem Procurar" (mapa de responsáveis por
+  assunto). Carregado sob demanda (fetch) na primeira vez que o
+  usuário clica no botão "Quem Procurar", e injetado dentro de
+  #tela-contatos-slot no index.html.
+
+  Layout espelha a tela de Tutoriais: menu de setores à esquerda
+  (.tut-cats / .tut-cat-btn, mesmas classes/CSS) e o card do setor
+  selecionado à direita (.tut-content). Os dados (setores, pessoas,
+  fotos e textos) vêm do Supabase (tabela contatos_pessoas) através de
+  CONTATOS_PESSOAS, em js/contatos.js.
+-->
+<div id="contatos-screen">
+  <div class="tut-header">
+    <div class="tut-header-left">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+        alt="IBREP">
+      <div class="header-divider"></div>
+      <div class="header-text">
+        <h1>Quem Procurar</h1>
+        <p>Setores · Situações · Responsáveis</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tut-body">
+    <aside class="tut-cats">
+      <div class="tut-cats-label">Setores</div>
+      <div id="cont-cats-list"></div>
+      <button class="tut-add-cat-btn" onclick="abrirNovoContSetor()">➕ Adicionar setor</button>
+    </aside>
+    <div class="tut-content" id="cont-content"></div>
+  </div>
+</div>
+
+<div class="cont-lightbox" id="cont-lightbox" onclick="fecharFotoContato()">
+  <div class="cont-lightbox-inner" onclick="event.stopPropagation()">
+    <button class="cont-lightbox-close" onclick="fecharFotoContato()">✕</button>
+    <img id="cont-lightbox-img" src="" alt="">
+    <div class="cont-lightbox-name" id="cont-lightbox-nome"></div>
+  </div>
+</div>
