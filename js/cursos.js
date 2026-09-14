@@ -147,10 +147,46 @@ function initCursosScreen() {
         </div>`;
 }
 
-async function adicionarEstadoCursos() {
-  const nome = prompt("Nome do novo estado:", "");
-  if (nome === null) return;
-  const nomeLimpo = nome.trim();
+// Painel de detalhe (3ª coluna) de volta ao estado vazio padrão.
+function cursosResetDetailVazio() {
+  const pane = document.getElementById("cursos-detail-pane");
+  if (pane) {
+    pane.innerHTML = `
+        <div class="regras-empty-state">
+          <div class="icon"></div>
+          <p>Selecione uma instituição para ver os cursos disponíveis</p>
+        </div>`;
+  }
+}
+
+// Em vez de um prompt(), abre um formulário direto no painel de
+// detalhe (mesmo padrão usado em "Quem Procurar" para novo setor).
+function adicionarEstadoCursos() {
+  const pane = document.getElementById("cursos-detail-pane");
+  if (!pane) return;
+  pane.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">➕</div>
+            <div><h2>Novo estado</h2></div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Nome do estado</label>
+              <input type="text" id="admin-newcursosestado-nome" placeholder="Ex.: Santa Catarina">
+              <div style="display:flex;gap:8px;">
+                <button class="admin-edit-btn save" onclick="salvarNovoEstadoCursos()">💾 Salvar</button>
+                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="cursosResetDetailVazio()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+  setTimeout(() => document.getElementById("admin-newcursosestado-nome")?.focus(), 50);
+}
+
+async function salvarNovoEstadoCursos() {
+  const nomeEl = document.getElementById("admin-newcursosestado-nome");
+  const nomeLimpo = nomeEl ? nomeEl.value.trim() : "";
   if (!nomeLimpo) {
     alert("Digite um nome para o estado.");
     return;
@@ -185,29 +221,88 @@ async function excluirEstadoCursos(uf) {
   initCursosScreen();
 }
 
-async function adicionarInstituicaoCursos() {
+// Em vez de criar uma instituição nova aqui, mostra uma caixa de busca
+// com todas as instituições já cadastradas no Painel Institucional
+// (com seus polos, pra ajudar a identificar), e o admin escolhe qual
+// vincular a este estado de "Cursos por Instituição". Isso evita ter
+// instituição duplicada — o cadastro fica todo centralizado no Painel.
+function adicionarInstituicaoCursos() {
   if (!cursosEstadoAtual) {
     alert("Selecione ou adicione um estado primeiro.");
     return;
   }
-  const mantenedoraPadrao = DB.mantenedoras[0];
-  if (!mantenedoraPadrao) {
-    alert("Cadastre uma mantenedora antes de adicionar instituições.");
-    return;
-  }
-  const nome = prompt(`Nome da nova instituição em ${cursosUfLabel(cursosEstadoAtual)}:`, "");
-  if (nome === null) return;
-  const nomeLimpo = nome.trim() || "Nova instituição";
-  const novoId = proximoId("instituicoes", "idinstituicao");
-  DB.instituicoes.push({
-    idinstituicao: novoId,
-    idmantenedora: mantenedoraPadrao.idmantenedora,
-    nome: nomeLimpo,
-    nome_abreviado: nomeLimpo,
-    estado: cursosEstadoAtual
+  const pane = document.getElementById("cursos-detail-pane");
+  if (!pane) return;
+
+  const jaNesteEstado = new Set(DB.instituicoes.filter(i => cursosEstadoReal(i) === cursosEstadoAtual).map(i => i.idinstituicao));
+  const candidatas = DB.instituicoes
+    .filter(i => !jaNesteEstado.has(i.idinstituicao))
+    .slice()
+    .sort((a, b) => (a.nome_abreviado || a.nome || "").localeCompare(b.nome_abreviado || b.nome || ""));
+
+  const itensHtml = candidatas.length === 0
+    ? `<div class="regras-empty-list">Nenhuma instituição disponível para adicionar — cadastre uma nova instituição no Painel Institucional primeiro, ou todas já estão neste estado.</div>`
+    : candidatas.map(inst => {
+        const polosInst = DB.polos.filter(p => p.idinstituicao === inst.idinstituicao);
+        const polosTexto = polosInst.length
+          ? `${polosInst.length} polo${polosInst.length === 1 ? "" : "s"}: ${polosInst.map(p => p.nome_fantasia || p.razao_social || "—").join(", ")}`
+          : "Nenhum polo cadastrado";
+        const estadoTexto = inst.estado ? (cursosUfLabel(inst.estado) || inst.estado) : "";
+        return `
+          <div class="regras-item" data-pick-inst="${inst.idinstituicao}" onclick="selecionarInstCandidataCursos(${inst.idinstituicao})">
+            <div class="regras-item-icon">🏢</div>
+            <div class="regras-item-info">
+              <div class="regras-item-title">${escapeHtmlRegra(inst.nome_abreviado || inst.nome || "—")}</div>
+              <div class="regras-item-preview">${escapeHtmlRegra([ inst.cidade, estadoTexto ].filter(Boolean).join(" · ") || "—")} · ${escapeHtmlRegra(polosTexto)}</div>
+            </div>
+          </div>`;
+      }).join("");
+
+  pane.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">➕</div>
+            <div>
+              <div class="regras-detail-breadcrumb">${escapeHtmlRegra(cursosUfLabel(cursosEstadoAtual))}</div>
+              <h2>Adicionar instituição do Painel Institucional</h2>
+            </div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Buscar instituição (nome ou cidade)</label>
+              <input type="text" id="cursos-pick-inst-search" placeholder="Digite para filtrar..." oninput="filtrarInstCandidatasCursos()">
+            </div>
+            <div class="regras-list-items" id="cursos-pick-inst-list" style="max-height:360px;overflow:auto;margin-top:4px;">
+              ${itensHtml}
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="cursosResetDetailVazio()">Cancelar</button>
+            </div>
+          </div>
+        </div>`;
+  setTimeout(() => document.getElementById("cursos-pick-inst-search")?.focus(), 50);
+}
+
+function filtrarInstCandidatasCursos() {
+  const q = (document.getElementById("cursos-pick-inst-search")?.value || "").trim().toLowerCase();
+  document.querySelectorAll("#cursos-pick-inst-list [data-pick-inst]").forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? "" : "none";
   });
-  const resultado = await resyncDataBlock("db", DB);
+}
+
+async function selecionarInstCandidataCursos(idinstituicao) {
+  if (!cursosEstadoAtual) return;
+  const inst = DB.instituicoes.find(i => i.idinstituicao === idinstituicao);
+  if (!inst) return;
+  if (!confirm(`Adicionar "${inst.nome_abreviado || inst.nome}" ao estado "${cursosUfLabel(cursosEstadoAtual)}" em Cursos por Instituição?`)) return;
+
+  // Vincula a instituição (já cadastrada no Painel) a este estado dos
+  // Cursos por Instituição, sem duplicar o cadastro dela.
+  CURSOS_ESTADO_REAL[String(idinstituicao)] = cursosEstadoAtual;
+  try { localStorage.setItem(LS_PREFIX + "cursosestadoreal", JSON.stringify(CURSOS_ESTADO_REAL)); } catch (e) {}
+  const resultado = await resyncDataBlock("cursosestadoreal", CURSOS_ESTADO_REAL);
   avisarFalhaSalvarNuvem(resultado);
+
   initCursosScreen();
   selectCursosEstado(cursosEstadoAtual);
 }
