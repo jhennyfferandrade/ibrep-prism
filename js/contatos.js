@@ -28,7 +28,9 @@
  *     (texto livre, ex.: "Procure a Camila").
  *   - caixa_texto2  → aviso/observação opcional DA FUNÇÃO.
  *   - ordem_pessoa  → ordem da função dentro do setor.
- *   - imagem        → não é mais usada (sem fotos).
+ *   - imagem        → foto/ícone opcional da FUNÇÃO (ex.: foto do
+ *     responsável). Se não houver foto, mostra um círculo com a
+ *     inicial de quem procurar (ou do nome da função).
  */
 
 // Lista "achatada" — uma entrada por função. Fica vazia até o Supabase
@@ -184,6 +186,10 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
   const titulo = f.titulo
     ? escapeHtmlRegra(f.titulo)
     : `<span class="cont-placeholder">Sem nome definido</span>`;
+  const letraBase = (f.fale_com || f.titulo || "?").trim().charAt(0) || "?";
+  const foto = f.imagem
+    ? `<img class="cont-funcao-foto" src="${f.imagem}" alt="${escapeHtmlRegra(f.titulo || "")}" onclick="abrirFotoContato('${f.imagem}', '${escapeHtmlRegra(f.titulo || "")}')">`
+    : `<div class="cont-funcao-foto cont-funcao-foto-placeholder">${escapeHtmlRegra(letraBase)}</div>`;
   const situacoes = (f.caixa_texto1 || "").split("\n").map(s => s.trim()).filter(Boolean);
   const situacoesHtml = situacoes.length
     ? `<ul class="cont-funcao-situacoes">${situacoes.map(s => `<li>${escapeHtmlRegra(s)}</li>`).join("")}</ul>`
@@ -202,6 +208,9 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
     : "";
   return `
     <div class="cont-funcao-card">
+      <div class="cont-funcao-foto-wrap">
+        ${foto}
+      </div>
       <div class="cont-funcao-titulo">${titulo}</div>
       <div class="cont-funcao-situacoes-title">Quando te procuram por isso</div>
       ${situacoesHtml}
@@ -364,6 +373,8 @@ function abrirEdicaoContFuncao(cardId, idx) {
               <input type="text" id="admin-contfuncao-falecom" value="${escapeHtmlRegra(linha.fale_com || "")}">
               <label>Aviso/observação (opcional)</label>
               <textarea id="admin-contfuncao-caixa2">${escapeHtmlRegra(linha.caixa_texto2 || "")}</textarea>
+              <label>Foto (opcional — deixe em branco para manter a atual)</label>
+              <input type="file" id="admin-contfuncao-foto" accept="image/*">
               <div style="display:flex;gap:8px;">
                 <button class="admin-edit-btn save" onclick="salvarEdicaoContFuncao('${cardId}', ${idx})">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn.active').click()">Cancelar</button>
@@ -381,10 +392,28 @@ function salvarEdicaoContFuncao(cardId, idx) {
   linha.caixa_texto1 = document.getElementById("admin-contfuncao-caixa1").value.trim();
   linha.fale_com = document.getElementById("admin-contfuncao-falecom").value.trim();
   linha.caixa_texto2 = document.getElementById("admin-contfuncao-caixa2").value.trim();
-  const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
-  setContCat(btnAtivo, cardId);
-  mostrarFlashSalvo(document.querySelector("#cont-content"));
-  contatosSalvarENotificar();
+  const fotoInput = document.getElementById("admin-contfuncao-foto");
+  const arquivo = fotoInput && fotoInput.files && fotoInput.files[0];
+  const finalizar = () => {
+    const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
+    setContCat(btnAtivo, cardId);
+    mostrarFlashSalvo(document.querySelector("#cont-content"));
+    contatosSalvarENotificar();
+  };
+  if (arquivo) {
+    if (arquivo.size > 1.5 * 1024 * 1024) {
+      alert("Escolha uma imagem menor que 1,5 MB.");
+      return;
+    }
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      linha.imagem = leitor.result;
+      finalizar();
+    };
+    leitor.readAsDataURL(arquivo);
+  } else {
+    finalizar();
+  }
 }
 
 function excluirContFuncao(cardId, idx) {
@@ -424,6 +453,8 @@ function abrirNovaContFuncao(cardId) {
               <input type="text" id="admin-newcontfuncao-falecom" placeholder="Ex.: Procure a Camila">
               <label>Aviso/observação (opcional)</label>
               <textarea id="admin-newcontfuncao-caixa2" placeholder="Ex.: 💡 Confirme antes de escalar…"></textarea>
+              <label>Foto (opcional)</label>
+              <input type="file" id="admin-newcontfuncao-foto" accept="image/*">
               <div style="display:flex;gap:8px;">
                 <button class="admin-edit-btn save" onclick="salvarNovaContFuncao('${cardId}')">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn[data-cat=\\'${cardId}\\']').click()">Cancelar</button>
@@ -446,7 +477,7 @@ function salvarNovaContFuncao(cardId) {
   const falecom = document.getElementById("admin-newcontfuncao-falecom").value.trim();
   const caixa2 = document.getElementById("admin-newcontfuncao-caixa2").value.trim();
   const base = linhas[0];
-  CONTATOS_PESSOAS.push({
+  const novaLinha = {
     card_id: cardId,
     ordem_card: base.ordem_card,
     ordem_pessoa: linhas.length + 1,
@@ -457,9 +488,44 @@ function salvarNovaContFuncao(cardId) {
     imagem: null,
     caixa_texto1: caixa1,
     caixa_texto2: caixa2
-  });
-  const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
-  setContCat(btnAtivo, cardId);
-  mostrarFlashSalvo(document.querySelector("#cont-content"));
-  contatosSalvarENotificar();
+  };
+  const fotoInput = document.getElementById("admin-newcontfuncao-foto");
+  const arquivo = fotoInput && fotoInput.files && fotoInput.files[0];
+  const finalizar = () => {
+    CONTATOS_PESSOAS.push(novaLinha);
+    const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
+    setContCat(btnAtivo, cardId);
+    mostrarFlashSalvo(document.querySelector("#cont-content"));
+    contatosSalvarENotificar();
+  };
+  if (arquivo) {
+    if (arquivo.size > 1.5 * 1024 * 1024) {
+      alert("Escolha uma imagem menor que 1,5 MB.");
+      return;
+    }
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      novaLinha.imagem = leitor.result;
+      finalizar();
+    };
+    leitor.readAsDataURL(arquivo);
+  } else {
+    finalizar();
+  }
+}
+
+// -------------------------------------------------------------------------
+// Lightbox de foto
+// -------------------------------------------------------------------------
+function abrirFotoContato(src, nome) {
+  const lightbox = document.getElementById("cont-lightbox");
+  if (!lightbox) return;
+  document.getElementById("cont-lightbox-img").src = src;
+  document.getElementById("cont-lightbox-img").alt = nome;
+  document.getElementById("cont-lightbox-nome").textContent = nome;
+  lightbox.classList.add("open");
+}
+
+function fecharFotoContato() {
+  document.getElementById("cont-lightbox")?.classList.remove("open");
 }
