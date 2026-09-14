@@ -136,9 +136,22 @@ function moverLinhaComparativo(id, direcao) {
   renderComparativoTable();
 }
 
+// Seleciona todo o conteúdo de um elemento contenteditable e foca nele,
+// pra quem for editar já poder simplesmente digitar por cima do texto
+// de exemplo (sem precisar apagar manualmente antes).
+function comparativoFocarESelecionar(el) {
+  if (!el) return;
+  el.focus();
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch (e) { /* noop */ }
+}
+
 function adicionarLinhaComparativo() {
-  const nome = prompt("Nome da nova característica (linha):", "Nova característica");
-  if (nome === null) return;
   const id = "row-" + Date.now();
   const cells = {};
   COMPARATIVO_DATA.cols.forEach(c => {
@@ -147,20 +160,22 @@ function adicionarLinhaComparativo() {
   COMPARATIVO_DATA.rows.push({
     id: id,
     icon: "✳️",
-    label: nome.trim() || "Nova característica",
+    label: "Nova característica",
     cells: cells
   });
   resyncDataBlock("comparativo", COMPARATIVO_DATA);
   renderComparativoTable();
+  // Já deixa a linha nova pronta pra edição, direto na tabela.
+  setTimeout(() => {
+    comparativoFocarESelecionar(document.querySelector(`[data-comp-rowlabel="${id}"]`));
+  }, 50);
 }
 
 function adicionarColunaComparativo() {
-  const nome = prompt("Nome do novo estado/plano (coluna):", "Novo estado");
-  if (nome === null) return;
   const id = "col-" + Date.now();
   COMPARATIVO_DATA.cols.push({
     id: id,
-    html: nome.trim() || "Novo estado",
+    html: "Novo estado",
     tti360: false
   });
   COMPARATIVO_DATA.rows.forEach(r => {
@@ -168,6 +183,10 @@ function adicionarColunaComparativo() {
   });
   resyncDataBlock("comparativo", COMPARATIVO_DATA);
   renderComparativoTable();
+  // Já deixa o cabeçalho da coluna nova pronto pra edição, direto na tabela.
+  setTimeout(() => {
+    comparativoFocarESelecionar(document.querySelector(`.comp-col-head-inner[data-comp-col="${id}"]`));
+  }, 50);
 }
 
 function excluirLinhaComparativo(id) {
@@ -196,4 +215,3 @@ function excluirColunaComparativo(id) {
 function aplicarEdicaoComparativo() {
   renderComparativoTable();
 }
-
