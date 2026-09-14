@@ -35,14 +35,14 @@ function flUnidade(titulo, rowsHtml, locais) {
 function flResponsaveis(r) {
   if (!r) return "";
   const linhas = [
-    [ "👤 Secretário(a)", r.nomeSecretario ? `${r.nomeSecretario} <span style="color:var(--texto-muted);">— Portaria nº ${r.portariaSecretario || "—"}</span>` : "" ],
-    [ "🎓 Diretor(a)", r.nomeDiretor ? `${r.nomeDiretor} <span style="color:var(--texto-muted);">— Portaria nº ${r.portariaDiretor || "—"}</span>` : "" ],
+    [ "👤 Secretário(a)", r.nomeSecretario ? `${r.nomeSecretario} <span style="color:var(--texto-muted);"> — Portaria nº ${r.portariaSecretario || "—"}</span>` : "" ],
+    [ "🎓 Diretor(a)", r.nomeDiretor ? `${r.nomeDiretor} <span style="color:var(--texto-muted);"> — Portaria nº ${r.portariaDiretor || "—"}</span>` : "" ],
     [ "📘 Coord. do Curso", r.coordenadorCurso || "" ],
     [ "🧭 Coord. de Estágio", r.coordenadorEstagio || "" ]
   ].filter(([ , v ]) => v);
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;min-height:38px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 140px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${label}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</span>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:4px 14px;min-height:auto;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${label}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</span>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Renderiza uma lista de pares [rótulo, valor] como uma caixa de linhas, pulando valores vazios.
@@ -50,7 +50,7 @@ function flCamposBox(pares) {
   const linhas = (pares || []).filter(([ , v ]) => v !== undefined && v !== null && String(v).trim() !== "");
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;min-height:38px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;">${String(valor)}</span>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:4px 14px;min-height:auto;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;">${String(valor)}</span>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Campos "simples" (texto curto) da Fundamentação Legal e dos Dados do Curso.
@@ -85,7 +85,7 @@ function selectEstado(uf) {
     ...CAMPOS_FUNDAMENTACAO.map(f => [ f.label, dados[f.key] ])
   ]);
   const delBtn = tipo => adminMode ? `<button class="admin-danger-btn" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="excluirBlocoEstado('${uf}','${tipo}')" title="Excluir este bloco">🗑️</button>` : "";
-  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal (texto livre)</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
 }
 
 // Adiciona botões de editar/excluir na ficha do estado quando o modo admin está ativo
@@ -110,7 +110,7 @@ selectEstado = function(uf) {
     const titulo = sec.querySelector(".port-section-title");
     if (!titulo) return;
     const rotulo = (titulo.querySelector("span") || titulo).textContent.trim();
-    if (rotulo === "Fundamentação Legal (texto livre)") {
+    if (rotulo === "Fundamentação Legal") {
       const btn = document.createElement("button");
       btn.className = "admin-edit-btn";
       btn.style.marginLeft = "10px";
@@ -136,7 +136,7 @@ async function criarBlocoEstado(uf, tipo) {
       portariaDiretor: ""
     };
   } else if (tipo === "unidade") {
-    dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flUnidade("Unidade de Ensino", flRow("Parecer", "Preencha aqui o parecer da unidade") + flRow("Portaria", "Preencha aqui a portaria"), []);
+    dados.fundamentacaoLegal = (dados.fundamentacaoLegal || "") + flUnidade("Unidade de Ensino", flRow("Credenciamento - Sede ", "Preencha aqui o parecer da unidade") + flRow("Credenciamento - Polo", "Preencha aqui a portaria"), []);
   }
   const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
@@ -243,7 +243,7 @@ async function excluirDadosEstado(uf) {
 const NOMES_BLOCO_PORTARIA = {
   situacao: "Situação (status)",
   fundamentacao: "Fundamentação Legal",
-  fundamentacaoLivre: "Fundamentação Legal (texto livre)",
+  fundamentacaoLivre: "Fundamentação Legal",
   responsaveis: "Secretário, Diretor e Coordenadores Responsáveis",
   observacoes: "Observações"
 };
