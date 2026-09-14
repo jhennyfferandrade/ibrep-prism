@@ -1,21 +1,37 @@
 /**
  * IBREP Prism — Módulo: Quem Procurar (contatos)
  * ---------------------------------------------------
- * Mapa de responsáveis por assunto (Pedagógico, Financeiro, Comercial,
- * Cancelamento, Administrativo…). O layout é o MESMO da tela de
- * Tutoriais: menu de setores à esquerda (.tut-cats/.tut-cat-btn) e o
- * conteúdo do setor selecionado à direita (.tut-content) — reaproveita
- * as classes/CSS de lá de propósito, pra ficar visualmente idêntico.
+ * Mapa de setores (Pedagógico, Financeiro, Comercial, Administrativo…).
+ * O layout é o MESMO da tela de Tutoriais: menu de setores à esquerda
+ * (.tut-cats/.tut-cat-btn) e o conteúdo do setor selecionado à direita
+ * (.tut-content) — reaproveita as classes/CSS de lá de propósito, pra
+ * ficar visualmente idêntico.
+ *
+ * Dentro de cada setor não existem "pessoas com foto" — existem
+ * FUNÇÕES/situações (ex.: "Cancelamento", "Matricular pessoas"), cada
+ * uma virando o seu próprio "quadradinho" (cont-funcao-card), com o
+ * conteúdo completo dela: quando procuram por isso + quem procurar.
  *
  * Fonte dos dados: tabela contatos_pessoas no Supabase — uma linha por
- * pessoa. Linhas com o mesmo card_id formam um setor só. CONTATOS_PESSOAS
+ * função. Linhas com o mesmo card_id formam um setor só. CONTATOS_PESSOAS
  * (array "achatado") é preenchido por aplicarDadosSalvos()/Realtime, no
- * index.html; aqui a gente só agrupa por card_id para desenhar a tela e
- * cada pessoa vira um "quadradinho" (cont-pessoa-card) separado dentro
- * do setor — nunca um card só compartilhado entre pessoas.
+ * index.html; aqui a gente só agrupa por card_id para desenhar a tela.
+ *
+ * Reaproveitamento de colunas existentes da tabela (sem alterar o
+ * schema no Supabase):
+ *   - emoji / setor / ordem_card → dados do SETOR (compartilhados por
+ *     todas as linhas do mesmo card_id).
+ *   - titulo        → título da FUNÇÃO (ex.: "Cancelamento").
+ *   - caixa_texto1  → "Quando te procuram por isso" DA FUNÇÃO (uma
+ *     situação por linha).
+ *   - fale_com      → quem procurar / instrução de contato DA FUNÇÃO
+ *     (texto livre, ex.: "Procure a Camila").
+ *   - caixa_texto2  → aviso/observação opcional DA FUNÇÃO.
+ *   - ordem_pessoa  → ordem da função dentro do setor.
+ *   - imagem        → não é mais usada (sem fotos).
  */
 
-// Lista "achatada" — uma entrada por pessoa. Fica vazia até o Supabase
+// Lista "achatada" — uma entrada por função. Fica vazia até o Supabase
 // responder (aplicarDadosSalvos()/Realtime, no index.html, populam este
 // array) — os dados moram só na tabela contatos_pessoas, não aqui.
 let CONTATOS_PESSOAS = [];
@@ -27,19 +43,28 @@ function openContatos() {
   irParaTela("contatos");
 }
 
+// Ao entrar na tela, NÃO seleciona nenhum setor automaticamente — fica
+// em branco até a pessoa clicar em algum botão do menu. Isso vale tanto
+// na primeira entrada quanto depois de sair e voltar (contCategoriaAtual
+// é zerado em resetSelecoesTelas() sempre que se volta pro Início).
 function initContatosScreen() {
   renderContCats();
   const cards = contatosAgruparEmCards();
-  const chave = contCategoriaAtual && cards.some(c => c.card_id === contCategoriaAtual)
-    ? contCategoriaAtual
-    : (cards[0] && cards[0].card_id);
-  const btn = document.querySelector(`.tut-cat-btn[data-cat="${chave}"]`);
-  if (btn) setContCat(btn, chave);
-  else document.getElementById("cont-content").innerHTML = `<div class="cont-empty">📂 Nenhum setor cadastrado ainda</div>`;
+  if (contCategoriaAtual && cards.some(c => c.card_id === contCategoriaAtual)) {
+    const btn = document.querySelector(`.tut-cat-btn[data-cat="${contCategoriaAtual}"]`);
+    setContCat(btn, contCategoriaAtual);
+    return;
+  }
+  const area = document.getElementById("cont-content");
+  if (area) {
+    area.innerHTML = cards.length
+      ? `<div class="cont-empty">👈 Selecione um setor no menu ao lado</div>`
+      : `<div class="cont-empty">📂 Nenhum setor cadastrado ainda</div>`;
+  }
 }
 
 // -------------------------------------------------------------------------
-// Agrupamento: transforma a lista achatada de pessoas em cards por setor
+// Agrupamento: transforma a lista achatada de funções em cards por setor
 // -------------------------------------------------------------------------
 function contatosAgruparEmCards() {
   const porCard = new Map();
@@ -50,18 +75,10 @@ function contatosAgruparEmCards() {
         ordem: p.ordem_card || 0,
         icone: p.emoji || "❓",
         setor: p.setor || "",
-        resumo: p.titulo || "",
-        situacoes: (p.caixa_texto1 || "").split("\n").map(s => s.trim()).filter(Boolean),
-        nota: p.caixa_texto2 || "",
-        pessoas: []
+        funcoes: []
       });
     }
-    porCard.get(p.card_id).pessoas.push({
-      nome: (p.fale_com || "").split("—")[0].trim(),
-      papel: (p.fale_com || "").includes("—") ? p.fale_com.split("—").slice(1).join("—").trim() : "",
-      foto: p.imagem || null,
-      _linha: p
-    });
+    porCard.get(p.card_id).funcoes.push(p);
   });
   return Array.from(porCard.values()).sort((a, b) => a.ordem - b.ordem);
 }
@@ -111,23 +128,21 @@ function setContCat(btn, cardId) {
 function excluirContCategoria(cardId) {
   const linhas = contatosLinhasDoCard(cardId);
   if (!linhas.length) return;
-  if (!confirm(`Excluir o setor "${linhas[0].setor || cardId}" e todos os seus contatos? Essa ação não pode ser desfeita.`)) return;
+  if (!confirm(`Excluir o setor "${linhas[0].setor || cardId}" e todas as suas funções? Essa ação não pode ser desfeita.`)) return;
   CONTATOS_PESSOAS = CONTATOS_PESSOAS.filter(p => p.card_id !== cardId);
   contatosSalvarENotificar();
-  const cards = contatosAgruparEmCards();
+  contCategoriaAtual = null;
   renderContCats();
-  if (cards.length) {
-    const proxima = cards[0].card_id;
-    const btn = document.querySelector(`.tut-cat-btn[data-cat="${proxima}"]`);
-    setContCat(btn, proxima);
-  } else {
-    contCategoriaAtual = null;
-    document.getElementById("cont-content").innerHTML = `<div class="cont-empty">📂 Nenhum setor cadastrado ainda</div>`;
+  const area = document.getElementById("cont-content");
+  if (area) {
+    area.innerHTML = contatosAgruparEmCards().length
+      ? `<div class="cont-empty">👈 Selecione um setor no menu ao lado</div>`
+      : `<div class="cont-empty">📂 Nenhum setor cadastrado ainda</div>`;
   }
 }
 
 // -------------------------------------------------------------------------
-// Conteúdo do setor selecionado: cabeçalho + um "quadradinho" por pessoa
+// Conteúdo do setor selecionado: cabeçalho + um "quadradinho" por função
 // -------------------------------------------------------------------------
 function renderContContent(cardId) {
   const area = document.getElementById("cont-content");
@@ -145,54 +160,53 @@ function renderContContent(cardId) {
       <div class="cont-setor-header">
         <div class="cont-setor-emoji">${cat.icone}</div>
         <div>
-          <div class="tut-content-title" style="margin-bottom:2px;">${escapeHtmlRegra(cat.setor)}</div>
-          <div class="tut-content-desc" style="margin-bottom:0;">${cat.resumo ? escapeHtmlRegra(cat.resumo) : `<span class="cont-placeholder">Sem resumo cadastrado</span>`}</div>
+          <div class="tut-content-title" style="margin-bottom:0;">${escapeHtmlRegra(cat.setor)}</div>
         </div>
       </div>
       ${editBtn}
-    </div>
-    <div class="cont-situacoes-box">
-      <div class="cont-situacoes-title">Quando te procuram por isso</div>
-      ${cat.situacoes.length
-        ? `<ul class="cont-situacoes">${cat.situacoes.map(s => `<li>${escapeHtmlRegra(s)}</li>`).join("")}</ul>`
-        : `<span class="cont-placeholder">Nenhuma situação cadastrada ainda</span>`}
     </div>`;
-  if (cat.nota) {
-    html += `<div class="cont-nota">${escapeHtmlRegra(cat.nota)}</div>`;
-  }
-  html += `<div class="cont-pessoas-grid">`;
-  cat.pessoas.forEach((p, idx) => {
-    html += renderContPessoaCard(cat.card_id, p, idx, cat.pessoas.length > 1);
+  html += `<div class="cont-funcoes-grid">`;
+  cat.funcoes.forEach((f, idx) => {
+    html += renderContFuncaoCard(cat.card_id, f, idx, cat.funcoes.length > 1);
   });
   if (adminMode) {
     html += `
-      <button class="cont-add-pessoa-card" onclick="abrirNovaContPessoa('${cat.card_id}')">
+      <button class="cont-add-funcao-card" onclick="abrirNovaContFuncao('${cat.card_id}')">
         <span class="icon">➕</span>
-        Adicionar pessoa
+        Adicionar função
       </button>`;
   }
   html += `</div>`;
   area.innerHTML = html;
 }
 
-function renderContPessoaCard(cardId, p, idx, podeExcluir) {
-  const semNome = !p.nome;
-  const foto = p.foto
-    ? `<img class="cont-foto" src="${p.foto}" alt="${escapeHtmlRegra(p.nome)}" onclick="abrirFotoContato('${p.foto}', '${escapeHtmlRegra(p.nome)}')">`
-    : `<div class="cont-foto cont-foto-placeholder">${escapeHtmlRegra((p.nome || "?").charAt(0) || "?")}</div>`;
+function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
+  const titulo = f.titulo
+    ? escapeHtmlRegra(f.titulo)
+    : `<span class="cont-placeholder">Sem nome definido</span>`;
+  const situacoes = (f.caixa_texto1 || "").split("\n").map(s => s.trim()).filter(Boolean);
+  const situacoesHtml = situacoes.length
+    ? `<ul class="cont-funcao-situacoes">${situacoes.map(s => `<li>${escapeHtmlRegra(s)}</li>`).join("")}</ul>`
+    : `<span class="cont-placeholder">Nenhuma situação cadastrada ainda</span>`;
+  const contatoHtml = f.fale_com
+    ? `<div class="cont-funcao-contato">📞 ${escapeHtmlRegra(f.fale_com)}</div>`
+    : `<div class="cont-funcao-contato cont-placeholder">Quem procurar ainda não foi definido</div>`;
+  const notaHtml = f.caixa_texto2
+    ? `<div class="cont-funcao-nota">${escapeHtmlRegra(f.caixa_texto2)}</div>`
+    : "";
   const acoesAdmin = adminMode
-    ? `<div class="cont-pessoa-card-acoes">
-         <button class="cont-pessoa-card-editar" onclick="abrirEdicaoContPessoa('${cardId}', ${idx})">✏️ Editar</button>
-         ${podeExcluir ? `<button class="cont-pessoa-card-excluir" onclick="excluirContPessoa('${cardId}', ${idx})">🗑️ Remover</button>` : ""}
+    ? `<div class="cont-funcao-card-acoes">
+         <button class="cont-funcao-card-editar" onclick="abrirEdicaoContFuncao('${cardId}', ${idx})">✏️ Editar</button>
+         ${podeExcluir ? `<button class="cont-funcao-card-excluir" onclick="excluirContFuncao('${cardId}', ${idx})">🗑️ Remover</button>` : ""}
        </div>`
     : "";
   return `
-    <div class="cont-pessoa-card">
-      <div class="cont-foto-wrap">
-        ${foto}
-      </div>
-      <div class="cont-pessoa-nome">${semNome ? `<span class="cont-placeholder">Sem responsável</span>` : escapeHtmlRegra(p.nome)}</div>
-      <div class="cont-pessoa-papel">${escapeHtmlRegra(p.papel) || "&nbsp;"}</div>
+    <div class="cont-funcao-card">
+      <div class="cont-funcao-titulo">${titulo}</div>
+      <div class="cont-funcao-situacoes-title">Quando te procuram por isso</div>
+      ${situacoesHtml}
+      ${contatoHtml}
+      ${notaHtml}
       ${acoesAdmin}
     </div>
   `;
@@ -207,7 +221,7 @@ async function contatosSalvarENotificar() {
 }
 
 // -------------------------------------------------------------------------
-// Admin: editar setor (emoji, nome, resumo, situações, aviso)
+// Admin: editar setor (emoji, nome, posição)
 // -------------------------------------------------------------------------
 function abrirEdicaoContSetor(cardId) {
   const linhas = contatosLinhasDoCard(cardId);
@@ -228,12 +242,6 @@ function abrirEdicaoContSetor(cardId) {
               <input type="number" id="admin-contsetor-ordem" min="1" step="1" style="max-width:100px;" value="${base.ordem_card || 1}">
               <label>Nome do setor</label>
               <input type="text" id="admin-contsetor-nome" value="${escapeHtmlRegra(base.setor || "")}">
-              <label>Resumo (aparece embaixo do título)</label>
-              <input type="text" id="admin-contsetor-resumo" value="${escapeHtmlRegra(base.titulo || "")}">
-              <label>Quando te procuram por isso (uma situação por linha)</label>
-              <textarea id="admin-contsetor-caixa1">${escapeHtmlRegra(base.caixa_texto1 || "")}</textarea>
-              <label>Aviso/observação (opcional)</label>
-              <textarea id="admin-contsetor-caixa2">${escapeHtmlRegra(base.caixa_texto2 || "")}</textarea>
               <div style="display:flex;gap:8px;">
                 <button class="admin-edit-btn save" onclick="salvarEdicaoContSetor('${cardId}')">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn.active').click()">Cancelar</button>
@@ -249,15 +257,9 @@ function salvarEdicaoContSetor(cardId) {
   const emoji = document.getElementById("admin-contsetor-emoji").value.trim() || "❓";
   const novaOrdem = parseInt(document.getElementById("admin-contsetor-ordem").value, 10) || 1;
   const nome = document.getElementById("admin-contsetor-nome").value.trim() || linhas[0].setor;
-  const resumo = document.getElementById("admin-contsetor-resumo").value.trim();
-  const caixa1 = document.getElementById("admin-contsetor-caixa1").value.trim();
-  const caixa2 = document.getElementById("admin-contsetor-caixa2").value.trim();
   linhas.forEach(l => {
     l.emoji = emoji;
     l.setor = nome;
-    l.titulo = resumo;
-    l.caixa_texto1 = caixa1;
-    l.caixa_texto2 = caixa2;
   });
   contatosReordenarSetor(cardId, novaOrdem);
   renderContCats();
@@ -280,7 +282,7 @@ function contatosReordenarSetor(cardId, novaOrdem) {
 }
 
 // -------------------------------------------------------------------------
-// Admin: novo setor
+// Admin: novo setor (cria já com uma função em branco pronta pra editar)
 // -------------------------------------------------------------------------
 function abrirNovoContSetor() {
   const area = document.getElementById("cont-content");
@@ -296,12 +298,6 @@ function abrirNovoContSetor() {
               <input type="text" id="admin-newcontsetor-emoji" placeholder="Ex.: 🎓" maxlength="4" style="max-width:80px;">
               <label>Nome do setor</label>
               <input type="text" id="admin-newcontsetor-nome" placeholder="Ex.: Pedagógico">
-              <label>Resumo (aparece embaixo do título)</label>
-              <input type="text" id="admin-newcontsetor-resumo" placeholder="Ex.: Dúvidas sobre disciplinas, notas e currículo">
-              <label>Quando te procuram por isso (uma situação por linha, opcional)</label>
-              <textarea id="admin-newcontsetor-caixa1" placeholder="Uma situação por linha…"></textarea>
-              <label>Aviso/observação (opcional)</label>
-              <textarea id="admin-newcontsetor-caixa2" placeholder="Ex.: 💡 Confirme antes de escalar…"></textarea>
               <div style="display:flex;gap:8px;">
                 <button class="admin-edit-btn save" onclick="salvarNovoContSetor()">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="initContatosScreen()">Cancelar</button>
@@ -319,9 +315,6 @@ function salvarNovoContSetor() {
     alert("Digite um nome para o setor.");
     return;
   }
-  const resumo = document.getElementById("admin-newcontsetor-resumo").value.trim();
-  const caixa1 = document.getElementById("admin-newcontsetor-caixa1").value.trim();
-  const caixa2 = document.getElementById("admin-newcontsetor-caixa2").value.trim();
   let base = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "setor";
   let cardId = base, n = 2;
   while (CONTATOS_PESSOAS.some(p => p.card_id === cardId)) {
@@ -334,90 +327,75 @@ function salvarNovoContSetor() {
     ordem_pessoa: 1,
     emoji: emoji,
     setor: nome,
-    titulo: resumo,
+    titulo: "",
     fale_com: "",
     imagem: null,
-    caixa_texto1: caixa1,
-    caixa_texto2: caixa2
+    caixa_texto1: "",
+    caixa_texto2: ""
   });
   renderContCats();
+  const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
+  setContCat(btnAtivo, cardId);
+  contatosSalvarENotificar();
+  // Já abre a primeira função pra edição, já que ela nasceu em branco.
+  abrirEdicaoContFuncao(cardId, 0);
+}
+
+// -------------------------------------------------------------------------
+// Admin: editar função (título, situações, quem procurar, aviso)
+// -------------------------------------------------------------------------
+function abrirEdicaoContFuncao(cardId, idx) {
+  const linha = contatosLinhasDoCard(cardId)[idx];
+  if (!linha) return;
+  const area = document.getElementById("cont-content");
+  area.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">✏️</div>
+            <div><h2>Editando função</h2></div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Nome da função (ex.: Cancelamento, Matricular pessoas)</label>
+              <input type="text" id="admin-contfuncao-titulo" value="${escapeHtmlRegra(linha.titulo || "")}">
+              <label>Quando te procuram por isso (uma situação por linha)</label>
+              <textarea id="admin-contfuncao-caixa1">${escapeHtmlRegra(linha.caixa_texto1 || "")}</textarea>
+              <label>Quem procurar (ex.: Procure a Camila)</label>
+              <input type="text" id="admin-contfuncao-falecom" value="${escapeHtmlRegra(linha.fale_com || "")}">
+              <label>Aviso/observação (opcional)</label>
+              <textarea id="admin-contfuncao-caixa2">${escapeHtmlRegra(linha.caixa_texto2 || "")}</textarea>
+              <div style="display:flex;gap:8px;">
+                <button class="admin-edit-btn save" onclick="salvarEdicaoContFuncao('${cardId}', ${idx})">💾 Salvar</button>
+                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn.active').click()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+  setTimeout(() => document.getElementById("admin-contfuncao-titulo")?.focus(), 50);
+}
+
+function salvarEdicaoContFuncao(cardId, idx) {
+  const linha = contatosLinhasDoCard(cardId)[idx];
+  if (!linha) return;
+  linha.titulo = document.getElementById("admin-contfuncao-titulo").value.trim();
+  linha.caixa_texto1 = document.getElementById("admin-contfuncao-caixa1").value.trim();
+  linha.fale_com = document.getElementById("admin-contfuncao-falecom").value.trim();
+  linha.caixa_texto2 = document.getElementById("admin-contfuncao-caixa2").value.trim();
   const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
   setContCat(btnAtivo, cardId);
   mostrarFlashSalvo(document.querySelector("#cont-content"));
   contatosSalvarENotificar();
 }
 
-// -------------------------------------------------------------------------
-// Admin: editar pessoa (nome, papel, foto)
-// -------------------------------------------------------------------------
-function abrirEdicaoContPessoa(cardId, idx) {
-  const linha = contatosLinhasDoCard(cardId)[idx];
-  if (!linha) return;
-  const nomeAtual = (linha.fale_com || "").split("—")[0].trim();
-  const papelAtual = (linha.fale_com || "").includes("—") ? linha.fale_com.split("—").slice(1).join("—").trim() : "";
-  const area = document.getElementById("cont-content");
-  area.innerHTML = `
-        <div class="regras-detail-card">
-          <div class="regras-detail-header">
-            <div class="regras-detail-icon">✏️</div>
-            <div><h2>Editando pessoa</h2></div>
-          </div>
-          <div class="regras-detail-content">
-            <div class="admin-inline-form">
-              <label>Nome</label>
-              <input type="text" id="admin-contpessoa-nome" value="${escapeHtmlRegra(nomeAtual)}">
-              <label>Papel/condição (ex.: Responsável, ou "Se a Camila avisar que está fora")</label>
-              <input type="text" id="admin-contpessoa-papel" value="${escapeHtmlRegra(papelAtual)}">
-              <label>Foto (opcional — deixe em branco para manter a atual)</label>
-              <input type="file" id="admin-contpessoa-foto" accept="image/*">
-              <div style="display:flex;gap:8px;">
-                <button class="admin-edit-btn save" onclick="salvarEdicaoContPessoa('${cardId}', ${idx})">💾 Salvar</button>
-                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn.active').click()">Cancelar</button>
-              </div>
-            </div>
-          </div>
-        </div>`;
-}
-
-function salvarEdicaoContPessoa(cardId, idx) {
-  const linha = contatosLinhasDoCard(cardId)[idx];
-  if (!linha) return;
-  const nome = document.getElementById("admin-contpessoa-nome").value.trim();
-  const papel = document.getElementById("admin-contpessoa-papel").value.trim();
-  linha.fale_com = nome ? (papel ? `${nome} — ${papel}` : nome) : "";
-  const fotoInput = document.getElementById("admin-contpessoa-foto");
-  const arquivo = fotoInput && fotoInput.files && fotoInput.files[0];
-  const finalizar = () => {
-    const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
-    setContCat(btnAtivo, cardId);
-    mostrarFlashSalvo(document.querySelector("#cont-content"));
-    contatosSalvarENotificar();
-  };
-  if (arquivo) {
-    if (arquivo.size > 1.5 * 1024 * 1024) {
-      alert("Escolha uma imagem menor que 1,5 MB.");
-      return;
-    }
-    const leitor = new FileReader();
-    leitor.onload = () => {
-      linha.imagem = leitor.result;
-      finalizar();
-    };
-    leitor.readAsDataURL(arquivo);
-  } else {
-    finalizar();
-  }
-}
-
-function excluirContPessoa(cardId, idx) {
+function excluirContFuncao(cardId, idx) {
   const linhas = contatosLinhasDoCard(cardId);
   const linha = linhas[idx];
   if (!linha) return;
   if (linhas.length === 1) {
-    alert("Este é o único contato do setor. Para removê-lo, exclua o setor inteiro.");
+    alert("Esta é a única função do setor. Para removê-la, exclua o setor inteiro.");
     return;
   }
-  if (!confirm(`Remover "${(linha.fale_com || "").split("—")[0].trim() || "esta pessoa"}" deste setor?`)) return;
+  if (!confirm(`Remover a função "${linha.titulo || "sem nome"}" deste setor?`)) return;
   const posGlobal = CONTATOS_PESSOAS.indexOf(linha);
   if (posGlobal >= 0) CONTATOS_PESSOAS.splice(posGlobal, 1);
   const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
@@ -426,93 +404,62 @@ function excluirContPessoa(cardId, idx) {
 }
 
 // -------------------------------------------------------------------------
-// Admin: nova pessoa
+// Admin: nova função
 // -------------------------------------------------------------------------
-function abrirNovaContPessoa(cardId) {
+function abrirNovaContFuncao(cardId) {
   const area = document.getElementById("cont-content");
   area.innerHTML = `
         <div class="regras-detail-card">
           <div class="regras-detail-header">
             <div class="regras-detail-icon">➕</div>
-            <div><h2>Nova pessoa</h2></div>
+            <div><h2>Nova função</h2></div>
           </div>
           <div class="regras-detail-content">
             <div class="admin-inline-form">
-              <label>Nome</label>
-              <input type="text" id="admin-newcontpessoa-nome" placeholder="Ex.: Mariana">
-              <label>Papel/condição (opcional)</label>
-              <input type="text" id="admin-newcontpessoa-papel" placeholder="Ex.: Responsável" value="Responsável">
-              <label>Foto (opcional)</label>
-              <input type="file" id="admin-newcontpessoa-foto" accept="image/*">
+              <label>Nome da função (ex.: Cancelamento, Matricular pessoas)</label>
+              <input type="text" id="admin-newcontfuncao-titulo" placeholder="Ex.: Cancelamento">
+              <label>Quando te procuram por isso (uma situação por linha)</label>
+              <textarea id="admin-newcontfuncao-caixa1" placeholder="Uma situação por linha…"></textarea>
+              <label>Quem procurar (ex.: Procure a Camila)</label>
+              <input type="text" id="admin-newcontfuncao-falecom" placeholder="Ex.: Procure a Camila">
+              <label>Aviso/observação (opcional)</label>
+              <textarea id="admin-newcontfuncao-caixa2" placeholder="Ex.: 💡 Confirme antes de escalar…"></textarea>
               <div style="display:flex;gap:8px;">
-                <button class="admin-edit-btn save" onclick="salvarNovaContPessoa('${cardId}')">💾 Salvar</button>
+                <button class="admin-edit-btn save" onclick="salvarNovaContFuncao('${cardId}')">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn[data-cat=\\'${cardId}\\']').click()">Cancelar</button>
               </div>
             </div>
           </div>
         </div>`;
-  setTimeout(() => document.getElementById("admin-newcontpessoa-nome")?.focus(), 50);
+  setTimeout(() => document.getElementById("admin-newcontfuncao-titulo")?.focus(), 50);
 }
 
-function salvarNovaContPessoa(cardId) {
+function salvarNovaContFuncao(cardId) {
   const linhas = contatosLinhasDoCard(cardId);
   if (!linhas.length) return;
-  const nome = document.getElementById("admin-newcontpessoa-nome").value.trim();
-  if (!nome) {
-    alert("Digite o nome da pessoa.");
+  const titulo = document.getElementById("admin-newcontfuncao-titulo").value.trim();
+  if (!titulo) {
+    alert("Digite o nome da função.");
     return;
   }
-  const papel = document.getElementById("admin-newcontpessoa-papel").value.trim();
+  const caixa1 = document.getElementById("admin-newcontfuncao-caixa1").value.trim();
+  const falecom = document.getElementById("admin-newcontfuncao-falecom").value.trim();
+  const caixa2 = document.getElementById("admin-newcontfuncao-caixa2").value.trim();
   const base = linhas[0];
-  const novaLinha = {
+  CONTATOS_PESSOAS.push({
     card_id: cardId,
     ordem_card: base.ordem_card,
     ordem_pessoa: linhas.length + 1,
     emoji: base.emoji,
     setor: base.setor,
-    titulo: base.titulo,
-    fale_com: papel ? `${nome} — ${papel}` : nome,
+    titulo: titulo,
+    fale_com: falecom,
     imagem: null,
-    caixa_texto1: base.caixa_texto1,
-    caixa_texto2: base.caixa_texto2
-  };
-  const fotoInput = document.getElementById("admin-newcontpessoa-foto");
-  const arquivo = fotoInput && fotoInput.files && fotoInput.files[0];
-  const finalizar = () => {
-    CONTATOS_PESSOAS.push(novaLinha);
-    const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
-    setContCat(btnAtivo, cardId);
-    mostrarFlashSalvo(document.querySelector("#cont-content"));
-    contatosSalvarENotificar();
-  };
-  if (arquivo) {
-    if (arquivo.size > 1.5 * 1024 * 1024) {
-      alert("Escolha uma imagem menor que 1,5 MB.");
-      return;
-    }
-    const leitor = new FileReader();
-    leitor.onload = () => {
-      novaLinha.imagem = leitor.result;
-      finalizar();
-    };
-    leitor.readAsDataURL(arquivo);
-  } else {
-    finalizar();
-  }
-}
-
-// -------------------------------------------------------------------------
-// Lightbox de foto
-// -------------------------------------------------------------------------
-function abrirFotoContato(src, nome) {
-  const lightbox = document.getElementById("cont-lightbox");
-  if (!lightbox) return;
-  document.getElementById("cont-lightbox-img").src = src;
-  document.getElementById("cont-lightbox-img").alt = nome;
-  document.getElementById("cont-lightbox-nome").textContent = nome;
-  lightbox.classList.add("open");
-}
-
-function fecharFotoContato() {
-  document.getElementById("cont-lightbox")?.classList.remove("open");
+    caixa_texto1: caixa1,
+    caixa_texto2: caixa2
+  });
+  const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
+  setContCat(btnAtivo, cardId);
+  mostrarFlashSalvo(document.querySelector("#cont-content"));
+  contatosSalvarENotificar();
 }
