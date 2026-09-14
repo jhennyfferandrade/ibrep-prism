@@ -23,6 +23,7 @@ let CONTATOS_PESSOAS = [];
 let contCategoriaAtual = null;
 
 function openContatos() {
+  if (!exigirPermissao("contatos")) return;
   irParaTela("contatos");
 }
 
