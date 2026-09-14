@@ -46,7 +46,48 @@ function calCorEvento(id) {
   return CAL_PALETA[idx];
 }
 
-let CAL_MES_ATUAL = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+// Chave usada em sessionStorage para lembrar em qual mês do calendário o
+// usuário estava, mas SOMENTE para o caso de um recarregamento de página
+// (F5) enquanto ele ainda está dentro da tela "Calendário". Assim que o
+// usuário sai da tela (navega para outra área), essa chave é apagada por
+// calResetParaMesAtual() — então, na próxima vez que ele entrar no
+// calendário (sem recarregar a página), o mês volta a ser o atual.
+const CAL_SESSAO_MES_KEY = "ibrep_cal_mes_sessao";
+
+function calMesComoChave(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function calRestaurarMesInicial() {
+  try {
+    const telaSalva = sessionStorage.getItem("ibrep_tela_atual");
+    const mesSalvo = sessionStorage.getItem(CAL_SESSAO_MES_KEY);
+    if (telaSalva === "calendario" && mesSalvo) {
+      const [ ano, mes ] = mesSalvo.split("-").map(Number);
+      if (ano && mes) return new Date(ano, mes - 1, 1);
+    }
+  } catch (e) {}
+  const hoje = new Date();
+  return new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+}
+
+function calPersistirMesNaSessao() {
+  try {
+    sessionStorage.setItem(CAL_SESSAO_MES_KEY, calMesComoChave(CAL_MES_ATUAL));
+  } catch (e) {}
+}
+
+// Chamada por irParaTela() (index.html) sempre que o usuário sai da tela
+// "Calendário" para ir a qualquer outra área do sistema.
+function calResetParaMesAtual() {
+  const hoje = new Date();
+  CAL_MES_ATUAL = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  try {
+    sessionStorage.removeItem(CAL_SESSAO_MES_KEY);
+  } catch (e) {}
+}
+
+let CAL_MES_ATUAL = calRestaurarMesInicial();
 
 let calEditando = { data: null, id: null };
 
@@ -62,6 +103,30 @@ function calFormatarData(d) {
   const mes = String(d.getMonth() + 1).padStart(2, "0");
   const dia = String(d.getDate()).padStart(2, "0");
   return `${ano}-${mes}-${dia}`;
+}
+
+// Modo de visualização escolhido pelo usuário nesta sessão: "grid"
+// (calendário em grade) ou "linear" (só a lista de eventos). Fica
+// independente da permissão de edição — qualquer pessoa pode alternar
+// entre as duas visões.
+let CAL_MODO_VISUALIZACAO = null;
+
+const CAL_SESSAO_MODO_KEY = "ibrep_cal_modo_visualizacao";
+
+function calModoInicial() {
+  try {
+    const salvo = sessionStorage.getItem(CAL_SESSAO_MODO_KEY);
+    if (salvo === "grid" || salvo === "linear") return salvo;
+  } catch (e) {}
+  // Sem preferência salva ainda: quem edita começa vendo a grade, quem
+  // só visualiza começa vendo a lista — mas os dois podem trocar.
+  return podeEditarCalendario() ? "grid" : "linear";
+}
+
+function calAlternarVisualizacao(modo) {
+  CAL_MODO_VISUALIZACAO = modo;
+  try { sessionStorage.setItem(CAL_SESSAO_MODO_KEY, modo); } catch (e) {}
+  calRenderMes();
 }
 
 function initCalendarioScreen() {
@@ -80,6 +145,7 @@ function calIrParaHoje() {
 }
 
 function calRenderMes() {
+  calPersistirMesNaSessao();
   const ano = CAL_MES_ATUAL.getFullYear();
   const mes = CAL_MES_ATUAL.getMonth();
   const nomesMeses = [ "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" ];
@@ -92,10 +158,30 @@ function calRenderMes() {
   if (btnNovo) btnNovo.style.display = editavel ? "" : "none";
   if (badgeVer) badgeVer.style.display = editavel ? "none" : "";
 
+  if (!CAL_MODO_VISUALIZACAO) CAL_MODO_VISUALIZACAO = calModoInicial();
+  document.getElementById("cal-toggle-grid")?.classList.toggle("active", CAL_MODO_VISUALIZACAO === "grid");
+  document.getElementById("cal-toggle-linear")?.classList.toggle("active", CAL_MODO_VISUALIZACAO === "linear");
+
+  const gridWrap = document.getElementById("cal-grid-wrap");
+  const linearWrap = document.getElementById("cal-linear-wrap");
+
+  if (CAL_MODO_VISUALIZACAO === "grid") {
+    if (gridWrap) gridWrap.style.display = "";
+    if (linearWrap) linearWrap.style.display = "none";
+    calRenderGrid(ano, mes);
+  } else {
+    if (gridWrap) gridWrap.style.display = "none";
+    if (linearWrap) linearWrap.style.display = "";
+    calRenderLinear(ano, mes);
+  }
+}
+
+function calRenderGrid(ano, mes) {
+  const editavel = podeEditarCalendario();
+  const hojeStr = calFormatarData(new Date());
   const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
   const diasMesAnterior = new Date(ano, mes, 0).getDate();
-  const hojeStr = calFormatarData(new Date());
 
   const celulas = [];
   for (let i = 0; i < primeiroDiaSemana; i++) {
@@ -130,7 +216,10 @@ function calRenderMes() {
           ? `<span class="cal-evento-hora" style="color:${cor.borda};">Dia todo</span>`
           : (ev.hora ? `<span class="cal-evento-hora" style="color:${cor.borda};">${escapeHtmlRegra(ev.hora)}</span>` : "");
         const descHtml = ev.desc ? `<div class="cal-evento-desc">${escapeHtmlRegra(ev.desc)}</div>` : "";
-        return `<div class="cal-evento cal-editavel" style="background:${cor.bg};border-left-color:${cor.borda};" onclick="event.stopPropagation();calAbrirNovoEvento('${dataStr}','${ev.id}')">
+        const cliqueEvento = editavel
+          ? `calAbrirNovoEvento('${dataStr}','${ev.id}')`
+          : `calAbrirVisualizacaoEvento('${dataStr}','${ev.id}')`;
+        return `<div class="cal-evento cal-editavel" style="background:${cor.bg};border-left-color:${cor.borda}; border-radius:10px;" " onclick="event.stopPropagation();${cliqueEvento}">
           <div class="cal-evento-linha">${horaHtml}<span>${escapeHtmlRegra(ev.titulo)}</span>${delBtn}</div>
           ${descHtml}
         </div>`;
@@ -145,6 +234,86 @@ function calRenderMes() {
   }
   const cont = document.getElementById("cal-weeks");
   if (cont) cont.innerHTML = html;
+}
+
+// Visão "somente visualização": lista linear (sem grade/tabela) com os
+// eventos do mês selecionado, um dia embaixo do outro, do jeito mais
+// simples e bonito possível — sem colunas de data/hora separadas.
+function calRenderLinear(ano, mes) {
+  const cont = document.getElementById("cal-linear-list");
+  if (!cont) return;
+
+  const editavel = podeEditarCalendario();
+  const nomesDiaSemana = [ "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb" ];
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const hojeStr = calFormatarData(new Date());
+
+  let html = "";
+  let temEvento = false;
+
+  for (let d = 1; d <= diasNoMes; d++) {
+    const dataObj = new Date(ano, mes, d);
+    const dataStr = calFormatarData(dataObj);
+    const eventos = (CALENDARIO_EVENTOS[dataStr] || []).slice().sort((a, b) => (a.hora || "99:99").localeCompare(b.hora || "99:99"));
+    if (eventos.length === 0) continue;
+    temEvento = true;
+
+    const eventosHtml = eventos.map(ev => {
+      const cor = calCorEvento(ev.id);
+      const horaHtml = ev.diaTodo
+        ? `<span class="cal-linear-event-time" style="color:${cor.borda};">Dia todo</span>`
+        : (ev.hora ? `<span class="cal-linear-event-time" style="color:${cor.borda};">${escapeHtmlRegra(ev.hora)}</span>` : "");
+      const descHtml = ev.desc ? `<div class="cal-linear-event-desc">${escapeHtmlRegra(ev.desc)}</div>` : "";
+      const cliqueEvento = editavel
+        ? `calAbrirNovoEvento('${dataStr}','${ev.id}')`
+        : `calAbrirVisualizacaoEvento('${dataStr}','${ev.id}')`;
+      return `<div class="cal-linear-event" style="background:${cor.bg};border-left-color:${cor.borda};" onclick="${cliqueEvento}">
+          <div class="cal-linear-event-top">${horaHtml}<span class="cal-linear-event-title">${escapeHtmlRegra(ev.titulo)}</span></div>
+          ${descHtml}
+        </div>`;
+    }).join("");
+
+    html += `<div class="cal-linear-day ${dataStr === hojeStr ? "cal-linear-hoje" : ""}">
+        <div class="cal-linear-date">
+          <span class="cal-linear-daynum">${d}</span>
+          <span class="cal-linear-weekday">${nomesDiaSemana[dataObj.getDay()]}</span>
+        </div>
+        <div class="cal-linear-events">${eventosHtml}</div>
+      </div>`;
+  }
+
+  cont.innerHTML = temEvento ? html : `<div class="cal-linear-empty">📅 Nenhum evento cadastrado neste mês</div>`;
+}
+
+// Cartão de visualização (somente leitura) de um evento — mostra só
+// título, data, horário/dia todo e descrição, sem o layout do editor.
+function calAbrirVisualizacaoEvento(dataStr, id) {
+  const lista = CALENDARIO_EVENTOS[dataStr] || [];
+  const ev = lista.find(e => e.id === id);
+  if (!ev) return;
+
+  const cor = calCorEvento(ev.id);
+  const [ y, m, d ] = dataStr.split("-").map(Number);
+  const dataObj = new Date(y, m - 1, d);
+  const nomesDiaSemana = [ "Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado" ];
+  const nomesMeses = [ "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro" ];
+  const dataFormatada = `${d} de ${nomesMeses[m - 1]} de ${y} · ${nomesDiaSemana[dataObj.getDay()]}`;
+  const horaFormatada = ev.diaTodo ? "Dia todo" : (ev.hora ? ev.hora : "Sem horário definido");
+
+  document.getElementById("cal-view-data").textContent = dataFormatada;
+  document.getElementById("cal-view-titulo").textContent = ev.titulo;
+  document.getElementById("cal-view-hora").textContent = horaFormatada;
+  const descEl = document.getElementById("cal-view-desc");
+  descEl.textContent = ev.desc || "";
+  descEl.style.display = ev.desc ? "" : "none";
+
+  const card = document.getElementById("cal-evento-view-card");
+  if (card) card.style.setProperty("--cal-view-cor", cor.borda);
+  document.getElementById("cal-evento-view-overlay").classList.add("open");
+}
+
+function calFecharVisualizacaoEvento() {
+  document.getElementById("cal-evento-view-overlay")?.classList.remove("open");
 }
 
 function calAbrirNovoEvento(dataStr, id) {
