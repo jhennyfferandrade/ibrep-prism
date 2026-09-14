@@ -195,7 +195,7 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
     ? `<ul class="cont-funcao-situacoes">${situacoes.map(s => `<li>${escapeHtmlRegra(s)}</li>`).join("")}</ul>`
     : `<span class="cont-placeholder">Nenhuma situação cadastrada ainda</span>`;
   const contatoHtml = f.fale_com
-    ? `<div class="cont-funcao-contato">📞 ${escapeHtmlRegra(f.fale_com)}</div>`
+    ? `<div class="cont-funcao-contato">${escapeHtmlRegra(f.fale_com)}</div>`
     : `<div class="cont-funcao-contato cont-placeholder">Quem procurar ainda não foi definido</div>`;
   const notaHtml = f.caixa_texto2
     ? `<div class="cont-funcao-nota">${escapeHtmlRegra(f.caixa_texto2)}</div>`
@@ -208,10 +208,12 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
     : "";
   return `
     <div class="cont-funcao-card">
-      <div class="cont-funcao-foto-wrap">
-        ${foto}
+      <div class="cont-funcao-header-box">
+        <div class="cont-funcao-foto-wrap">
+          ${foto}
+        </div>
+        <div class="cont-funcao-titulo">${titulo}</div>
       </div>
-      <div class="cont-funcao-titulo">${titulo}</div>
       <div class="cont-funcao-situacoes-title">Quando te procuram por isso</div>
       ${situacoesHtml}
       ${contatoHtml}
