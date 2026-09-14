@@ -255,13 +255,24 @@ async function excluirBlocoEstado(uf, tipo) {
   if (tipo === "situacao") {
     delete dados.status;
     delete dados.statusLabel;
-  } else if (tipo === "fundamentacao") {
-    delete dados.mantenedoraId;
-    delete dados.razaoSocial;
-    delete dados.documento;
-    CAMPOS_FUNDAMENTACAO.forEach(f => delete dados[f.key]);
-  } else if (tipo === "fundamentacaoLivre") {
-    delete dados.fundamentacaoLegal;
+  } else if (
+  tipo === "fundamentacao" ||
+  tipo === "fundamentacaoLivre"
+) {
+
+  // Mantenedora
+  delete dados.mantenedoraId;
+  delete dados.razaoSocial;
+  delete dados.documento;
+
+  // Campos estruturados
+  CAMPOS_FUNDAMENTACAO.forEach(f => {
+    delete dados[f.key];
+  });
+
+  // Fundamentação livre
+  delete dados.fundamentacaoLegal;
+}
   } else if (tipo === "responsaveis") {
     delete dados.responsaveis;
   } else if (tipo === "observacoes") {
