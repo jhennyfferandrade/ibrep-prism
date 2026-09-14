@@ -2451,8 +2451,16 @@
       box-shadow: 0 8px 20px rgba(56,5,63,.10);
       transform: translateY(-2px);
     }
+    .cont-funcao-header-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: var(--cinza-light);
+      border-radius: 12px;
+      padding: 16px 12px;
+    }
     .cont-funcao-foto-wrap {
-      align-self: center;
       position: relative;
       display: inline-block;
     }
@@ -2461,13 +2469,13 @@
       height: 64px;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid var(--roxo-claro);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 1px var(--cinza-borda);
       cursor: pointer;
       transition: transform .15s, border-color .15s;
     }
     .cont-funcao-foto:hover {
       transform: scale(1.06);
-      border-color: var(--roxo-medio);
     }
     .cont-funcao-foto-placeholder {
       display: flex;
