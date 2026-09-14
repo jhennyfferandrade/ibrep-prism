@@ -26,15 +26,71 @@
         <button class="cal-nav-btn" onclick="calMudarMes(1)">→</button>
         <button class="cal-today-btn" onclick="calIrParaHoje()">📍 Hoje</button>
         <button class="cal-add-btn" id="cal-btn-novo-evento" onclick="calAbrirNovoEvento(null)">➕ Novo evento</button>
+        <div class="cal-view-toggle">
+          <button class="cal-view-toggle-btn" id="cal-toggle-grid" onclick="calAlternarVisualizacao('grid')" title="Ver o calendário em grade">🗓️ Calendário</button>
+          <button class="cal-view-toggle-btn" id="cal-toggle-linear" onclick="calAlternarVisualizacao('linear')" title="Ver só a lista de eventos">📋 Eventos</button>
+        </div>
         <span class="cal-viewonly-badge" id="cal-viewonly-badge" style="display:none;">👁️ Somente visualização</span>
       </div>
 
-      <div class="cal-grid">
+      <div class="cal-grid" id="cal-grid-wrap" style=" border-radius:10px;" >
         <div class="cal-weekdays">
           <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
         </div>
         <div class="cal-weeks" id="cal-weeks"></div>
       </div>
+
+      <!-- Visão "somente visualização": lista linear e mais bonita dos
+           eventos do mês, sem a grade/tabela do editor. -->
+      <div class="cal-linear" id="cal-linear-wrap" style="display:none;">
+        <div class="cal-linear-list" id="cal-linear-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cal-view-toggle { display: flex; gap: 6px; margin-left: 4px; }
+    .cal-view-toggle-btn { padding: 6px 13px; border-radius: 20px; border: 1px solid var(--cinza-borda, #e6e6ec); background: #fff; font-size: 12px; cursor: pointer; color: var(--texto-sec, #6a6a78); }
+    .cal-view-toggle-btn.active { background: #7c5cff; border-color: #7c5cff; color: #fff; font-weight: 600; }
+
+    .cal-linear { margin-top: 4px; }
+    .cal-linear-day { display: flex; gap: 16px; padding: 14px 4px; border-bottom: 1px solid var(--cinza-borda, #e6e6ec); }
+    .cal-linear-day:last-child { border-bottom: none; }
+    .cal-linear-date { flex: 0 0 64px; text-align: center; }
+    .cal-linear-date .cal-linear-daynum { display: block; font-size: 22px; font-weight: 700; color: var(--texto-principal, #2a2a35); line-height: 1.1; }
+    .cal-linear-date .cal-linear-weekday { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-muted, #9a9aa8); margin-top: 2px; }
+    .cal-linear-day.cal-linear-hoje .cal-linear-daynum { color: #7c5cff; }
+    .cal-linear-day.cal-linear-hoje .cal-linear-date { position: relative; }
+    .cal-linear-events { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .cal-linear-event { border-left: 3px solid #7c5cff; background: #f7f6ff; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+    .cal-linear-event-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .cal-linear-event-time { font-size: 11px; font-weight: 700; opacity: .85; }
+    .cal-linear-event-title { font-size: 13.5px; font-weight: 600; color: var(--texto-principal, #2a2a35); }
+    .cal-linear-event-desc { margin-top: 3px; font-size: 12px; color: var(--texto-sec, #6a6a78); line-height: 1.4; }
+    .cal-linear-empty { text-align: center; padding: 48px 12px; color: var(--texto-muted, #9a9aa8); font-size: 13px; }
+
+    /* Cartão de visualização (somente leitura) de um evento — usado por
+       quem só visualiza, tanto na grade quanto na lista linear. */
+    #cal-evento-view-overlay { display: none; position: fixed; inset: 0; background: rgba(20,20,30,.45); align-items: center; justify-content: center; z-index: 9999; }
+    #cal-evento-view-overlay.open { display: flex; }
+    .cal-evento-view-card { background: #fff; border-radius: 14px; padding: 22px 24px; max-width: 380px; width: 92%; box-shadow: 0 12px 40px rgba(0,0,0,.22); position: relative; border-top: 4px solid var(--cal-view-cor, #7c5cff); }
+    .cal-evento-view-close { position: absolute; top: 10px; right: 12px; border: none; background: transparent; font-size: 16px; cursor: pointer; color: var(--texto-muted, #9a9aa8); }
+    .cal-evento-view-data { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-muted, #9a9aa8); margin-bottom: 6px; }
+    .cal-evento-view-card h3 { margin: 0 0 12px; font-size: 18px; color: var(--texto-principal, #2a2a35); }
+    .cal-evento-view-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 10px; }
+    .cal-evento-view-desc { font-size: 13px; color: var(--texto-sec, #6a6a78); line-height: 1.5; white-space: pre-wrap; }
+  </style>
+
+  <div id="cal-evento-view-overlay">
+    <div class="cal-evento-view-card" id="cal-evento-view-card">
+      <button class="cal-evento-view-close" onclick="calFecharVisualizacaoEvento()">✕</button>
+      <div class="cal-evento-view-data" id="cal-view-data">—</div>
+      <h3 id="cal-view-titulo">—</h3>
+      <div class="cal-evento-view-row">
+        <span>🕒</span>
+        <span id="cal-view-hora">—</span>
+      </div>
+      <div class="cal-evento-view-desc" id="cal-view-desc"></div>
     </div>
   </div>
 
