@@ -2451,10 +2451,39 @@
       box-shadow: 0 8px 20px rgba(56,5,63,.10);
       transform: translateY(-2px);
     }
+    .cont-funcao-foto-wrap {
+      align-self: center;
+      position: relative;
+      display: inline-block;
+    }
+    .cont-funcao-foto {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--roxo-claro);
+      cursor: pointer;
+      transition: transform .15s, border-color .15s;
+    }
+    .cont-funcao-foto:hover {
+      transform: scale(1.06);
+      border-color: var(--roxo-medio);
+    }
+    .cont-funcao-foto-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--roxo-claro);
+      color: var(--roxo-medio);
+      font-weight: 700;
+      font-size: 20px;
+      cursor: default;
+    }
     .cont-funcao-titulo {
       font-size: 14.5px;
       font-weight: 700;
       color: var(--roxo);
+      text-align: center;
     }
     .cont-funcao-situacoes-title {
       font-size: 10.5px;
@@ -2541,6 +2570,56 @@
       padding: 40px 20px;
       text-align: center;
       color: var(--texto-muted);
+      font-size: 13px;
+    }
+    /* ---- Lightbox de foto ---- */
+    .cont-lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 10, 25, .72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10050;
+      padding: 24px;
+    }
+    .cont-lightbox.open {
+      display: flex;
+    }
+    .cont-lightbox-inner {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .cont-lightbox-inner img {
+      max-width: 70vw;
+      max-height: 70vh;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+    .cont-lightbox-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--roxo);
+    }
+    .cont-lightbox-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      border: 0;
+      background: var(--cinza-light);
+      color: var(--texto-sec);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
       font-size: 13px;
     }
     .admin-lock-link {
