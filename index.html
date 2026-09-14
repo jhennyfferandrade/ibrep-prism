@@ -2420,11 +2420,16 @@
       background: var(--roxo-claro);
       border-radius: 12px;
     }
-    /* ---- Grid de "quadradinhos" — um card por pessoa ---- */
+    /* ---- Grid de "quadradinhos" — um card por pessoa ----
+       auto-fit (em vez de auto-fill) faz os cards existentes ocuparem
+       toda a largura disponível quando há poucas pessoas — sem sobrar
+       um monte de espaço vazio à direita — e o gap escala com o
+       tamanho da tela via clamp(), então em telas grandes os
+       quadradinhos ficam mais espaçados entre si. */
     .cont-pessoas-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: clamp(16px, 2vw, 28px);
       margin-top: 18px;
     }
     .cont-pessoa-card {
@@ -2439,6 +2444,9 @@
       padding: 20px 14px 16px;
       box-shadow: 0 3px 10px rgba(56,5,63,.05);
       transition: box-shadow .12s, transform .12s;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
     }
     .cont-pessoa-card:hover {
       box-shadow: 0 8px 20px rgba(56,5,63,.10);
@@ -2520,6 +2528,9 @@
       font-size: 12.5px;
       font-weight: 500;
       cursor: pointer;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
     }
     .cont-add-pessoa-card:hover {
       border-color: var(--roxo-medio);
@@ -4397,6 +4408,10 @@ if (portPane) {
   cursosEstadoAtual = null;
   activeCursoId = null;
   activeInstId = null;
+
+  // Quem Procurar (contatos): esquece o setor selecionado, pra sempre
+  // reabrir no primeiro setor da lista (como se fosse a primeira vez)
+  if (typeof contCategoriaAtual !== "undefined") contCategoriaAtual = null;
 }
 
 // initTutorialsScreen, renderTutCats e excluirTutCategoria agora moram
