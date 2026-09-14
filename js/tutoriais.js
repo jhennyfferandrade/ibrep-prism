@@ -16,6 +16,17 @@ const TUTORIAIS = {};
 
 let tutCategoriaAtual = null;
 
+// Garante que o player do Panda Video sempre comece do zero (0s) e nunca
+// ofereça "Continuar assistindo" com o tempo salvo de uma sessão anterior.
+// Documentação: https://pandavideo.readme.io/reference/query-params-1
+//   saveProgress=false -> desliga o salvamento/retomada de progresso do Panda
+//   startTime=0        -> garante que, mesmo que algo salve progresso, o vídeo inicia em 0s
+function pandaEmbedUrl(url) {
+  if (!url) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}saveProgress=false&startTime=0`;
+}
+
 function openTutorials() {
   if (!exigirPermissao("tutoriais")) return;
   irParaTela("tutorials");
@@ -72,7 +83,6 @@ function excluirTutCategoria(cat) {
 }
 
 // Pausa qualquer outro vídeo de tutorial quando um novo começa a tocar (API do Panda Video)
-// Pausa qualquer outro vídeo de tutorial quando um novo começa a tocar (API do Panda Video)
 window.addEventListener("message", (event) => {
   const data = event.data;
   if (data && data.message === "panda_play") {
@@ -83,6 +93,19 @@ window.addEventListener("message", (event) => {
     });
   }
 });
+
+// Pausa TODOS os vídeos de tutorial (API do Panda Video). Chamada por
+// irParaTela() (index.html) sempre que o usuário sai da tela
+// "Tutoriais" para ir a qualquer outra área do sistema — assim o
+// vídeo não continua tocando (nem o áudio) em segundo plano depois
+// que o usuário sai da tela.
+function tutPararTodosVideos() {
+  document.querySelectorAll(".tut-video-thumb iframe").forEach(f => {
+    if (f.contentWindow) {
+      f.contentWindow.postMessage({ type: "pause" }, "*");
+    }
+  });
+}
 
 function filterTutorials(q) {
   q = q.trim().toLowerCase();
@@ -110,7 +133,7 @@ function filterTutorials(q) {
   let html = `\n    <div class="tut-content-title">🔍 Resultados para "${q}"</div>\n    <div class="tut-content-desc">${resultados.length} tutorial(is) encontrado(s)</div>\n    <div class="tut-video-grid">`;
   resultados.forEach(v => {
     if (v.url) {
-      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb">\n          <iframe src="${v.url}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n        </div>\n      </div>`;
+      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb">\n          <iframe src="${pandaEmbedUrl(v.url)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n        </div>\n      </div>`;
     } else {
       html += `<div class="tut-video-card">\n        <div class="tut-video-thumb" style="cursor:default">\n          <div class="play-overlay" style="flex-direction:column;gap:8px;font-size:14px;color:var(--roxo);font-weight:500">\n            <span style="font-size:36px">🎬</span>Em breve\n          </div>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n        </div>\n      </div>`;
     }
@@ -134,7 +157,7 @@ function setTutCat(btn, cat) {
   data.videos.forEach((v, idx) => {
     const editVideoBtn = adminMode ? `<button class="admin-edit-btn" style="margin-top:6px;" onclick="abrirEdicaoTutVideo('${cat}', ${idx})">✏️ Editar</button>\n             <button class="admin-danger-btn" style="margin-top:6px;margin-left:6px;" onclick="excluirTutVideo('${cat}', ${idx})">🗑️ Excluir</button>` : "";
     if (v.url) {
-      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb">\n          <iframe src="${v.url}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n          ${editVideoBtn}\n        </div>\n      </div>`;
+      html += `<div class="tut-video-card">\n        <div class="tut-video-thumb">\n          <iframe src="${pandaEmbedUrl(v.url)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n          ${editVideoBtn}\n        </div>\n      </div>`;
     } else {
       html += `<div class="tut-video-card">\n        <div class="tut-video-thumb" style="cursor:default">\n          <div class="play-overlay" style="flex-direction:column;gap:8px;font-size:14px;color:var(--roxo);font-weight:500">\n            <span style="font-size:36px">🎬</span>\n            Em breve\n          </div>\n        </div>\n        <div class="tut-video-info">\n          <span class="tut-video-tag">${v.tag}</span>\n          <div class="tut-video-title">${v.titulo}</div>\n          <div class="tut-video-desc">${v.desc}</div>\n          ${editVideoBtn}\n        </div>\n      </div>`;
     }
