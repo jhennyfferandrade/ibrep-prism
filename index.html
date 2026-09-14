@@ -4512,7 +4512,7 @@ function podeEditarCalendario() {
 }
 
 function aplicarPermissoes() {
-  const areas = [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel", "calendario" ];
+  const areas = [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel", "calendario", "contatos" ];
   areas.forEach(area => {
     const btn = document.getElementById(`btn-area-${area}`);
     if (!btn) return;
@@ -4744,7 +4744,8 @@ function telaParaArea(tela) {
     portarias: "portarias",
     regras: "regras",
     comparativo: "comparativo",
-    cursos: "cursos"
+    cursos: "cursos",
+    contatos: "contatos"
   };
   return mapa[tela] || null;
 }
@@ -4756,7 +4757,7 @@ function currentSectionTela() {
   if (document.getElementById("portarias-screen")?.classList.contains("open")) return "portarias";
   if (document.getElementById("regras-screen")?.classList.contains("open")) return "regras";
   if (document.getElementById("comparativo-screen")?.classList.contains("open")) return "comparativo";
-  if (document.getElementById("cursos-screen").classList.contains("open")) return "cursos";
+  if (document.getElementById("cursos-screen")?.classList.contains("open")) return "cursos";
   if (document.getElementById("calendario-screen")?.classList.contains("open")) return "calendario";
   if (document.getElementById("contatos-screen")?.classList.contains("open")) return "contatos";
   return "panel";
