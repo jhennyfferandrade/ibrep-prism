@@ -2420,101 +2420,99 @@
       background: var(--roxo-claro);
       border-radius: 12px;
     }
-    /* ---- Grid de "quadradinhos" — um card por pessoa ----
+    /* ---- Grid de "quadradinhos" — um card por função/situação ----
        auto-fit (em vez de auto-fill) faz os cards existentes ocuparem
-       toda a largura disponível quando há poucas pessoas — sem sobrar
-       um monte de espaço vazio à direita — e o gap escala com o
-       tamanho da tela via clamp(), então em telas grandes os
+       toda a largura disponível quando há poucas funções cadastradas —
+       sem sobrar um monte de espaço vazio à direita — e o gap escala
+       com o tamanho da tela via clamp(), então em telas grandes os
        quadradinhos ficam mais espaçados entre si. */
-    .cont-pessoas-grid {
+    .cont-funcoes-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: clamp(16px, 2vw, 28px);
       margin-top: 18px;
+      align-items: start;
     }
-    .cont-pessoa-card {
+    .cont-funcao-card {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 6px;
+      text-align: left;
+      gap: 8px;
       background: #fff;
       border: 1px solid var(--cinza-borda);
       border-radius: 14px;
-      padding: 20px 14px 16px;
+      padding: 18px 18px 16px;
       box-shadow: 0 3px 10px rgba(56,5,63,.05);
       transition: box-shadow .12s, transform .12s;
       width: 100%;
-      max-width: 300px;
-      margin: 0 auto;
+      max-width: 340px;
     }
-    .cont-pessoa-card:hover {
+    .cont-funcao-card:hover {
       box-shadow: 0 8px 20px rgba(56,5,63,.10);
       transform: translateY(-2px);
     }
-    .cont-foto-wrap {
-      position: relative;
-      display: inline-block;
-    }
-    .cont-foto {
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid var(--roxo-claro);
-      cursor: pointer;
-      transition: transform .15s, border-color .15s;
-    }
-    .cont-foto:hover {
-      transform: scale(1.06);
-      border-color: var(--roxo-medio);
-    }
-    .cont-foto-placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--roxo-claro);
-      color: var(--roxo-medio);
+    .cont-funcao-titulo {
+      font-size: 14.5px;
       font-weight: 700;
-      font-size: 20px;
-      cursor: default;
+      color: var(--roxo);
     }
-    .cont-pessoa-nome {
-      font-size: 13.5px;
+    .cont-funcao-situacoes-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--texto-sec);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      margin-top: 2px;
+    }
+    .cont-funcao-situacoes {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12.5px;
+      color: var(--texto);
+      line-height: 1.55;
+    }
+    .cont-funcao-contato {
+      font-size: 12.5px;
       font-weight: 600;
       color: var(--texto);
-      margin-top: 4px;
+      background: var(--cinza-light);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-top: 2px;
     }
-    .cont-pessoa-papel {
-      font-size: 11px;
-      color: var(--texto-muted);
-      line-height: 1.4;
+    .cont-funcao-nota {
+      background: #fff6e0;
+      border: 1px solid #f3e0a8;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 11.5px;
+      color: #6b5522;
     }
-    .cont-pessoa-card-acoes {
+    .cont-funcao-card-acoes {
       display: flex;
       gap: 10px;
-      margin-top: 6px;
+      margin-top: 4px;
     }
-    .cont-pessoa-card-acoes button {
+    .cont-funcao-card-acoes button {
       border: 0;
       background: transparent;
       font-size: 10.5px;
       cursor: pointer;
       padding: 2px 4px;
     }
-    .cont-pessoa-card-editar {
+    .cont-funcao-card-editar {
       color: var(--roxo-medio);
     }
-    .cont-pessoa-card-editar:hover {
+    .cont-funcao-card-editar:hover {
       text-decoration: underline;
     }
-    .cont-pessoa-card-excluir {
+    .cont-funcao-card-excluir {
       color: #c0392b;
     }
-    .cont-pessoa-card-excluir:hover {
+    .cont-funcao-card-excluir:hover {
       text-decoration: underline;
     }
-    .cont-add-pessoa-card {
+    .cont-add-funcao-card {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -2529,71 +2527,20 @@
       font-weight: 500;
       cursor: pointer;
       width: 100%;
-      max-width: 300px;
-      margin: 0 auto;
+      max-width: 340px;
     }
-    .cont-add-pessoa-card:hover {
+    .cont-add-funcao-card:hover {
       border-color: var(--roxo-medio);
       color: var(--roxo-medio);
       background: var(--roxo-claro);
     }
-    .cont-add-pessoa-card .icon {
+    .cont-add-funcao-card .icon {
       font-size: 24px;
     }
     .cont-empty {
       padding: 40px 20px;
       text-align: center;
       color: var(--texto-muted);
-      font-size: 13px;
-    }
-    /* ---- Lightbox de foto ---- */
-    .cont-lightbox {
-      position: fixed;
-      inset: 0;
-      background: rgba(20, 10, 25, .72);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 10050;
-      padding: 24px;
-    }
-    .cont-lightbox.open {
-      display: flex;
-    }
-    .cont-lightbox-inner {
-      position: relative;
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      max-width: 90vw;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .cont-lightbox-inner img {
-      max-width: 70vw;
-      max-height: 70vh;
-      border-radius: 12px;
-      object-fit: contain;
-    }
-    .cont-lightbox-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--roxo);
-    }
-    .cont-lightbox-close {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      border: 0;
-      background: var(--cinza-light);
-      color: var(--texto-sec);
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      cursor: pointer;
       font-size: 13px;
     }
     .admin-lock-link {
