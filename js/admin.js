@@ -102,6 +102,11 @@ function setAdminCat(btn, secaoId) {
   secao.render(area);
 }
 
+function irParaSecaoAdmin(secaoId) {
+  const btn = document.querySelector(`.tut-cat-btn[data-admsec="${secaoId}"]`);
+  if (btn) setAdminCat(btn, secaoId);
+}
+
 // -------------------------------------------------------------------------
 // Cache de perfis — usado tanto na seção Usuários (mostrar o nome do
 // perfil de cada login) quanto na seção Cadastrar usuário (popular o
