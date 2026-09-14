@@ -261,6 +261,19 @@ async function salvarEdicaoRegra(catId, itemId, contentEl, editBtn) {
   }
 }
 
+// Volta o painel de detalhe (3ª coluna) para o estado vazio padrão —
+// usado ao cancelar um formulário de "novo" ou depois de salvar.
+function regrasResetPaneVazio() {
+  const pane = document.getElementById("regras-detail-pane");
+  if (pane) {
+    pane.innerHTML = `
+        <div class="regras-empty-state">
+          <div class="icon">💬</div>
+          <p>Selecione um tópico para ver a mensagem</p>
+        </div>`;
+  }
+}
+
 function proximoIdRegra() {
   let maior = 0;
   REGRAS_DATA.categorias.forEach(c => (c.itens || []).forEach(i => {
@@ -270,10 +283,34 @@ function proximoIdRegra() {
   return String(maior + 1);
 }
 
+// Em vez de um prompt(), abre um formulário direto no painel de
+// detalhe (mesmo padrão usado em "Quem Procurar" para novo setor).
 function adicionarCategoriaRegra() {
-  const nome = prompt("Nome da nova categoria:");
-  if (nome === null) return;
-  const nomeLimpo = nome.trim();
+  const pane = document.getElementById("regras-detail-pane");
+  if (!pane) return;
+  pane.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">➕</div>
+            <div><h2>Nova categoria</h2></div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Nome da categoria</label>
+              <input type="text" id="admin-newregracat-nome" placeholder="Ex.: Financeiro">
+              <div style="display:flex;gap:8px;">
+                <button class="admin-edit-btn save" onclick="salvarNovaCategoriaRegra()">💾 Salvar</button>
+                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="regrasResetPaneVazio()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+  setTimeout(() => document.getElementById("admin-newregracat-nome")?.focus(), 50);
+}
+
+function salvarNovaCategoriaRegra() {
+  const nomeEl = document.getElementById("admin-newregracat-nome");
+  const nomeLimpo = nomeEl ? nomeEl.value.trim() : "";
   if (!nomeLimpo) {
     alert("Digite um nome para a categoria.");
     return;
@@ -288,6 +325,7 @@ function adicionarCategoriaRegra() {
   regrasCategoriaAtual = id;
   renderRegrasCats();
   renderRegrasList();
+  regrasResetPaneVazio();
   syncRegrasDataScript();
 }
 
@@ -304,25 +342,59 @@ async function excluirCategoriaRegra(catId) {
   await syncRegrasDataScript();
 }
 
+// Em vez de dois prompt() em sequência, abre direto o quadro de edição
+// (mesmo formato de "regras-detail-card" usado ao editar um tópico) já
+// no painel de detalhe, com campos de título e mensagem.
 function adicionarItemRegra() {
   const cat = regrasCategoriaAtualObj();
   if (!cat) {
     alert("Selecione uma categoria antes de adicionar um tópico.");
     return;
   }
-  const subtitulo = prompt("Título do novo tópico:");
-  if (subtitulo === null) return;
-  const subtituloLimpo = subtitulo.trim();
+  const pane = document.getElementById("regras-detail-pane");
+  if (!pane) return;
+  pane.innerHTML = `
+        <div class="regras-detail-card">
+          <div class="regras-detail-header">
+            <div class="regras-detail-icon">➕</div>
+            <div>
+              <div class="regras-detail-breadcrumb">${escapeHtmlRegra(cat.titulo || "")}</div>
+              <h2>Novo tópico</h2>
+            </div>
+          </div>
+          <div class="regras-detail-content">
+            <div class="admin-inline-form">
+              <label>Título do tópico</label>
+              <input type="text" id="admin-newregraitem-titulo" placeholder="Ex.: Cancelamento de matrícula">
+              <label>Mensagem padrão</label>
+              <textarea id="admin-newregraitem-conteudo" style="min-height:160px;" placeholder="Escreva aqui a mensagem padrão deste tópico..."></textarea>
+              <div style="display:flex;gap:8px;">
+                <button class="admin-edit-btn save" onclick="salvarNovoItemRegra('${cat.id}')">💾 Salvar</button>
+                <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="regrasResetPaneVazio()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+  setTimeout(() => document.getElementById("admin-newregraitem-titulo")?.focus(), 50);
+}
+
+function salvarNovoItemRegra(catId) {
+  const cat = REGRAS_DATA.categorias.find(c => c.id === catId);
+  if (!cat) return;
+  const tituloEl = document.getElementById("admin-newregraitem-titulo");
+  const subtituloLimpo = tituloEl ? tituloEl.value.trim() : "";
   if (!subtituloLimpo) {
     alert("Digite um título para o tópico.");
     return;
   }
-  const conteudo = prompt("Mensagem padrão deste tópico:", "") || "";
+  const conteudoEl = document.getElementById("admin-newregraitem-conteudo");
+  const conteudo = conteudoEl ? conteudoEl.value.trim() : "";
   const novoItem = { id: proximoIdRegra(), subtitulo: subtituloLimpo, conteudo };
   cat.itens = cat.itens || [];
   cat.itens.push(novoItem);
   renderRegrasCats();
   renderRegrasList();
+  regrasResetPaneVazio();
   syncRegrasDataScript();
 }
 
