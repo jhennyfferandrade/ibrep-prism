@@ -1034,13 +1034,17 @@
     }
     #br-map-svg {
       display: block;
-      width: 100%;
-      max-width: 420px;
-      height: auto;
+      
       margin: 0 auto;
       border: none;
       outline: none;
       box-shadow: none;
+       width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+
+  display: block;
     }
     #br-map-svg a.uf {
       outline: none;
@@ -1174,6 +1178,35 @@
       overflow: hidden;
     }
     #tutorial-screen.open {
+      display: flex;
+    }
+    #painel-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--cinza-bg);
+      display: none;
+      flex-direction: column;
+      z-index: 9998;
+      overflow: hidden;
+    }
+    #painel-screen.open {
+      display: flex;
+    }
+    /* ---- Tela "Painel do Administrador" ---- */
+    /* Mesmo padrão fixed/full-screen das telas acima. O layout interno
+       (cabeçalho + menu de seções + conteúdo) reaproveita as classes
+       .tut-header/.tut-body/.tut-cats/.tut-cat-btn/.tut-content da tela
+       de Tutoriais — não duplicamos CSS aqui. */
+    #admin-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--cinza-bg);
+      display: none;
+      flex-direction: column;
+      z-index: 9998;
+      overflow: hidden;
+    }
+    #admin-screen.open {
       display: flex;
     }
     .tut-header {
@@ -1934,6 +1967,7 @@
       font-size: 10px;
       font-weight: 600;
       color: var(--texto-muted);
+      text-transform: uppercase;
       letter-spacing: .08em;
       padding: 12px 16px 6px;
     }
@@ -2214,12 +2248,6 @@
       color: var(--roxo-hover);
       font-weight: 700;
     }
-    .regras-link {
-      color: var(--roxo);
-      font-weight: 600;
-      text-decoration: underline;
-      word-break: break-all;
-    }
     #comparativo-screen {
       position: fixed;
       inset: 0;
@@ -2302,6 +2330,260 @@
       border: 1px solid var(--cinza-borda);
       border-radius: 99px;
       padding: 5px 12px;
+    }
+
+    /* ---- Tela "Quem Procurar" (mapa de responsáveis) ---- */
+    /* O layout (cabeçalho + menu lateral de setores + painel de conteúdo)
+       reaproveita exatamente as classes .tut-header/.tut-body/.tut-cats/
+       .tut-cat-btn/.tut-content da tela de Tutoriais — não duplicamos CSS
+       aqui. O que é específico desta tela: os "quadradinhos" de pessoa
+       (um card por responsável), as caixas de situações/aviso e o
+       lightbox de foto. */
+    #contatos-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--cinza-bg);
+      display: none;
+      flex-direction: column;
+      z-index: 9998;
+      overflow: hidden;
+    }
+    #contatos-screen.open {
+      display: flex;
+    }
+    .cont-situacoes-box {
+      background: var(--cinza-light);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 16px 0 12px;
+    }
+    .cont-situacoes-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--texto-sec);
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      margin-bottom: 6px;
+    }
+    .cont-situacoes {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12.5px;
+      color: var(--texto);
+      line-height: 1.6;
+    }
+    .cont-nota {
+      background: #fff6e0;
+      border: 1px solid #f3e0a8;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #6b5522;
+      margin-bottom: 4px;
+    }
+    .cont-admin-only {
+      display: none;
+    }
+    body.admin-mode .cont-admin-only {
+      display: inline-flex;
+    }
+    body.admin-mode .cont-admin-editable {
+      cursor: pointer;
+      outline: 1.5px dashed transparent;
+      outline-offset: 3px;
+      border-radius: 6px;
+      transition: outline-color .12s, background .12s;
+    }
+    body.admin-mode .cont-admin-editable:hover {
+      outline-color: var(--roxo-medio);
+      background: var(--roxo-claro);
+    }
+    .cont-placeholder {
+      color: var(--texto-muted);
+      font-style: italic;
+    }
+    /* ---- Setor: cabeçalho (emoji + nome + resumo) dentro do .tut-content ---- */
+    .cont-setor-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+    .cont-setor-emoji {
+      font-size: 26px;
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--roxo-claro);
+      border-radius: 12px;
+    }
+    /* ---- Grid de "quadradinhos" — um card por pessoa ---- */
+    .cont-pessoas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .cont-pessoa-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid var(--cinza-borda);
+      border-radius: 14px;
+      padding: 20px 14px 16px;
+      box-shadow: 0 3px 10px rgba(56,5,63,.05);
+      transition: box-shadow .12s, transform .12s;
+    }
+    .cont-pessoa-card:hover {
+      box-shadow: 0 8px 20px rgba(56,5,63,.10);
+      transform: translateY(-2px);
+    }
+    .cont-foto-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .cont-foto {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--roxo-claro);
+      cursor: pointer;
+      transition: transform .15s, border-color .15s;
+    }
+    .cont-foto:hover {
+      transform: scale(1.06);
+      border-color: var(--roxo-medio);
+    }
+    .cont-foto-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--roxo-claro);
+      color: var(--roxo-medio);
+      font-weight: 700;
+      font-size: 20px;
+      cursor: default;
+    }
+    .cont-pessoa-nome {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--texto);
+      margin-top: 4px;
+    }
+    .cont-pessoa-papel {
+      font-size: 11px;
+      color: var(--texto-muted);
+      line-height: 1.4;
+    }
+    .cont-pessoa-card-acoes {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .cont-pessoa-card-acoes button {
+      border: 0;
+      background: transparent;
+      font-size: 10.5px;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+    .cont-pessoa-card-editar {
+      color: var(--roxo-medio);
+    }
+    .cont-pessoa-card-editar:hover {
+      text-decoration: underline;
+    }
+    .cont-pessoa-card-excluir {
+      color: #c0392b;
+    }
+    .cont-pessoa-card-excluir:hover {
+      text-decoration: underline;
+    }
+    .cont-add-pessoa-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 150px;
+      border: 2px dashed var(--cinza-borda);
+      border-radius: 14px;
+      background: #fbfcfc;
+      color: var(--texto-sec);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .cont-add-pessoa-card:hover {
+      border-color: var(--roxo-medio);
+      color: var(--roxo-medio);
+      background: var(--roxo-claro);
+    }
+    .cont-add-pessoa-card .icon {
+      font-size: 24px;
+    }
+    .cont-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--texto-muted);
+      font-size: 13px;
+    }
+    /* ---- Lightbox de foto ---- */
+    .cont-lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 10, 25, .72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10050;
+      padding: 24px;
+    }
+    .cont-lightbox.open {
+      display: flex;
+    }
+    .cont-lightbox-inner {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .cont-lightbox-inner img {
+      max-width: 70vw;
+      max-height: 70vh;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+    .cont-lightbox-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--roxo);
+    }
+    .cont-lightbox-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      border: 0;
+      background: var(--cinza-light);
+      color: var(--texto-sec);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 13px;
     }
     .admin-lock-link {
       position: fixed;
@@ -2419,6 +2701,10 @@
     .admin-login-confirm:hover {
       background: var(--roxo-hover);
     }
+    /* Botão flutuante (a "bolinha") que aparece no canto inferior
+       direito quando o modo admin está ativo — só um atalho clicável
+       para a tela do Painel do Administrador, sem textos nem barra
+       expansível. */
     #admin-toolbar {
       position: fixed;
       bottom: 14px;
@@ -2426,84 +2712,44 @@
       z-index: 10600;
       display: none;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
       background: #1e1e2e;
       color: #fff;
-      padding: 8px 10px 8px 16px;
-      border-radius: 99px;
+      font-size: 19px;
+      line-height: 1;
+      cursor: pointer;
       box-shadow: 0 10px 34px rgba(30, 20, 60, .35);
-      font-family: "Poppins", sans-serif;
-      transition: padding .15s;
+      transition: background .15s, transform .15s;
     }
     #admin-toolbar.open {
       display: flex;
     }
-    #admin-toolbar.collapsed {
-      padding: 8px;
-      gap: 0;
+    #admin-toolbar:hover {
+      background: #2c2c42;
+      transform: scale(1.06);
     }
-    #admin-toolbar.collapsed .admin-toolbar-label, #admin-toolbar.collapsed .admin-toolbar-btn {
-      display: none;
-    }
-    .admin-toolbar-toggle {
-      border: none;
-      background: rgba(255, 255, 255, .12);
-      color: #fff;
-      width: 26px;
-      height: 26px;
-      min-width: 26px;
-      border-radius: 50%;
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .15s;
-      order: 99;
-    }
-    .admin-toolbar-toggle:hover {
-      background: rgba(255, 255, 255, .22);
-    }
-    #admin-toolbar.collapsed .admin-toolbar-toggle {
-      order: 0;
-    }
-    .admin-toolbar-label {
-      font-size: 11.5px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-    .admin-toolbar-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #3ddc84;
-      display: inline-block;
-      animation: admin-pulse 1.8s infinite;
-    }
-    .admin-toolbar-btn {
-      border: none;
-      background: rgba(255, 255, 255, .12);
-      color: #fff;
+    /* Botão "Voltar ao início" no cabeçalho (claro) da tela de admin. */
+    .admin-header-back-btn {
+      border: 1px solid var(--cinza-borda);
+      background: #fff;
+      color: var(--texto-sec);
       border-radius: 99px;
-      padding: 7px 14px;
+      padding: 7px 16px;
       font-family: "Poppins", sans-serif;
-      font-size: 11.5px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
-      transition: background .15s;
+      transition: background .15s, border-color .15s, color .15s;
     }
-    .admin-toolbar-btn:hover {
-      background: rgba(255, 255, 255, .22);
-    }
-    .admin-toolbar-btn.primary {
-      background: var(--roxo);
-    }
-    .admin-toolbar-btn.primary:hover {
-      background: var(--roxo-hover);
+    .admin-header-back-btn:hover {
+      background: var(--cinza-light);
+      border-color: var(--roxo-medio);
+      color: var(--roxo);
     }
     .admin-editable {
       outline: 1.5px dashed var(--roxo-medio);
@@ -2586,7 +2832,7 @@
     #user-login-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(30, 30, 46, .55);
+      background: rgb(234, 234, 240);
       backdrop-filter: blur(6px);
       z-index: 10000;
       display: flex;
@@ -2594,6 +2840,19 @@
       justify-content: center;
     }
     #user-login-overlay.hidden {
+      display: none;
+    }
+    #primeiro-acesso-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgb(234, 234, 240);
+      backdrop-filter: blur(6px);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #primeiro-acesso-overlay.hidden {
       display: none;
     }
     .user-login-card {
@@ -2689,40 +2948,11 @@
     .welcome-btn.hidden-area {
       display: none !important;
     }
-    #users-admin-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(30, 30, 46, .45);
-      z-index: 10700;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    #users-admin-overlay.open {
-      display: flex;
-    }
-    .users-admin-card {
-      background: #fff;
-      border-radius: 16px;
-      width: min(860px, 96vw);
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .15);
-    }
-    .users-admin-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--cinza-borda);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .users-admin-header h3 {
-      font-size: 16px;
-      font-weight: 600;
-    }
+    /* .users-admin-body, .users-table, .users-form etc. abaixo são
+       reaproveitados pela seção "Usuários e permissões" da tela do
+       Painel do Administrador (telas/admin.html + js/admin.js) — o
+       antigo wrapper de modal (#users-admin-overlay/.users-admin-card/
+       .users-admin-header) foi removido, essa tela agora é própria. */
     .users-admin-body {
       padding: 20px 24px;
       overflow-y: auto;
@@ -2776,13 +3006,20 @@
       color: var(--texto-sec);
       margin-bottom: 4px;
     }
-    .users-form-grid input[type="text"], .users-form-grid input[type="password"] {
+    .users-form-grid input[type="text"], .users-form-grid input[type="password"], .users-form-grid select {
       width: 100%;
       padding: 8px 10px;
       border: 1px solid var(--cinza-borda);
       border-radius: 8px;
       font-family: "Poppins", sans-serif;
       font-size: 12px;
+      background: #fff;
+      color: var(--texto);
+    }
+    .users-form-hint {
+      font-size: 11px;
+      color: var(--texto-muted);
+      margin-top: 10px;
     }
     .users-perms-row {
       display: flex;
@@ -2945,7 +3182,7 @@
       border-radius: 3px;
     }
     .welcome-sub::before {
-      content: "CENTRAL INSTITUCIONAL";
+      content: "SUA CENTRAL DE GESTÃO INSTITUCIONAL";
       display: block;
       margin-bottom: 12px;
       color: #d8b56a;
@@ -3121,10 +3358,6 @@
       overflow-y: auto;
       }
     }
-    @keyframes admin-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .35; }
-    }
     @keyframes admin-flash-fade {
       0% { opacity: 1; }
       70% { opacity: 1; }
@@ -3156,68 +3389,28 @@
     </div>
   </div>
 
-  <div id="users-admin-overlay">
-    <div class="users-admin-card">
-      <div class="users-admin-header">
-        <h3>👥 Usuários e permissões</h3>
-        <button class="admin-login-cancel" onclick="fecharGestaoUsuarios()">✕ Fechar</button>
-      </div>
-      <div class="users-admin-body">
-        <div class="users-msg" id="users-admin-msg"></div>
-        <table class="users-table">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Login</th>
-              <th class="users-perm-check">🎬</th>
-              <th class="users-perm-check">📊</th>
-              <th class="users-perm-check">📖</th>
-              <th class="users-perm-check">📜</th>
-              <th class="users-perm-check">🎓</th>
-              <th class="users-perm-check">🏛️</th>
-              <th class="users-perm-check">📅 Ver</th>
-              <th class="users-perm-check">📅✏️ Editar</th>
-              <th class="users-perm-check">Admin</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="users-table-body"></tbody>
-        </table>
-        <div class="users-form" id="users-form">
-          <h4 id="users-form-title" style="font-size:14px;margin-bottom:12px;">Novo usuário</h4>
-          <div class="users-form-grid">
-            <div>
-              <label>Nome</label>
-              <input type="text" id="users-form-nome">
-            </div>
-            <div>
-              <label>Login</label>
-              <input type="text" id="users-form-login">
-            </div>
-            <div>
-              <label>Senha <span id="users-form-senha-hint" style="font-weight:400;color:var(--texto-muted)"></span></label>
-              <input type="password" id="users-form-senha" placeholder="Obrigatória para novo usuário">
-            </div>
-          </div>
-          <div class="users-perms-row">
-            <label><input type="checkbox" id="users-perm-tutoriais"> Tutoriais</label>
-            <label><input type="checkbox" id="users-perm-comparativo"> Comparativo</label>
-            <label><input type="checkbox" id="users-perm-regras"> Regras</label>
-            <label><input type="checkbox" id="users-perm-portarias"> Atos Normativos</label>
-            <label><input type="checkbox" id="users-perm-cursos"> Cursos</label>
-            <label><input type="checkbox" id="users-perm-painel"> Painel</label>
-            <label><input type="checkbox" id="users-perm-calendario"> Calendário (ver)</label>
-            <label><input type="checkbox" id="users-perm-calendario-editar"> Calendário (editar)</label>
-            <label><input type="checkbox" id="users-perm-is-admin"> Administradora</label>
-          </div>
-          <div class="users-form-actions">
-            <button class="users-btn-save" onclick="salvarUsuarioForm()">Salvar</button>
-            <button class="users-btn-cancel" onclick="limparUsuarioForm()">Limpar</button>
-          </div>
-        </div>
-      </div>
+  <!-- Tela de "primeiro acesso": aparece no lugar do login assim que o
+       usuário faz login com a senha provisória pela primeira vez,
+       obrigando a definir uma senha só dele antes de continuar (veja
+       tentarLoginUsuario() e salvarNovaSenhaPrimeiroAcesso()). -->
+  <div id="primeiro-acesso-overlay" class="hidden">
+    <div class="user-login-card">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png"
+        alt="IBREP" style="height:28px;margin-bottom:16px;">
+      <h3>Defina sua senha</h3>
+      <p>Este é seu primeiro acesso. Por segurança, escolha uma senha só sua antes de continuar.</p>
+      <input type="password" id="primeiro-acesso-senha1" placeholder="Nova senha" autocomplete="new-password"
+        onkeydown="if(event.key==='Enter') document.getElementById('primeiro-acesso-senha2').focus()">
+      <input type="password" id="primeiro-acesso-senha2" placeholder="Confirmar nova senha" autocomplete="new-password"
+        onkeydown="if(event.key==='Enter') salvarNovaSenhaPrimeiroAcesso()">
+      <div class="user-login-error" id="primeiro-acesso-error"></div>
+      <button class="user-login-btn" id="primeiro-acesso-btn" onclick="salvarNovaSenhaPrimeiroAcesso()">Salvar e continuar</button>
     </div>
   </div>
+
+  <!-- O antigo modal de "Usuários e permissões" (#users-admin-overlay)
+       virou tela própria: telas/admin.html + js/admin.js, injetada sob
+       demanda em #tela-admin-slot (veja mais abaixo). -->
 
   <div id="admin-login-overlay">
     <div class="admin-login-card">
@@ -3236,12 +3429,7 @@
 
   <div class="admin-lock-link" id="admin-lock-link" style="display:none" onclick="abrirLoginAdmin()">🔒 Área do administrador</div>
 
-  <div id="admin-toolbar">
-    <button class="admin-toolbar-toggle" onclick="alternarToolbarAdmin()" title="Recolher/expandir barra">➖</button>
-    <span class="admin-toolbar-label"><span class="admin-toolbar-dot"></span> Modo admin ativo — alterações salvas automaticamente</span>
-    <button class="admin-toolbar-btn primary" onclick="abrirGestaoUsuarios()">👥 Usuários</button>
-    <button class="admin-toolbar-btn" onclick="sairAdmin()">Sair</button>
-  </div>
+  <button id="admin-toolbar" onclick="irParaTela('admin')" title="Painel do administrador">🛠️</button>
 
   <script type="application/json" id="regras-data">
 {"categorias": []}
@@ -3261,6 +3449,8 @@
   <script src="js/regras.js"></script>
   <script src="js/cursos.js"></script>
   <script src="js/painel.js"></script>
+  <script src="js/contatos.js"></script>
+  <script src="js/admin.js"></script>
 
   <div id="welcome-screen" style="display:none">
     <div class="welcome-user-bar" id="welcome-user-bar">
@@ -3302,6 +3492,10 @@
         <div class="welcome-btn-label">Painel Institucional</div>
         <div class="welcome-btn-desc">Mantenedoras, instituições,<br>polos e locais de provas</div>
       </button>
+      <button class="welcome-btn" id="btn-area-contatos" data-area="contatos" onclick="openContatos()">
+        <div class="welcome-btn-label">Quem Procurar</div>
+        <div class="welcome-btn-desc">Financeiro, comercial e cancelamento:<br>o responsável certo pra cada caso</div>
+      </button>
     </div>
     <div class="welcome-footer">IBREP — Instituto Brasileiro de Educação Profissional</div>
   </div>
@@ -3336,6 +3530,16 @@
        e é injetado aqui na primeira vez que essa tela é aberta (veja
        garantirTelaPainel() no script principal). -->
   <div id="tela-painel-slot"></div>
+
+  <!-- Tela "Quem Procurar": o HTML real fica em telas/contatos.html e é
+       injetado aqui na primeira vez que o usuário clica no botão. -->
+  <div id="tela-contatos-slot"></div>
+
+  <!-- Tela "Painel do Administrador": o HTML real fica em telas/admin.html
+       e é injetado aqui na primeira vez que a administradora clica em
+       "🛠️ Painel do administrador" na barra de admin (veja
+       garantirTelaAdmin() no script principal). -->
+  <div id="tela-admin-slot"></div>
 
   <script>
 const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
@@ -3683,6 +3887,19 @@ async function carregarRegrasDasTabelas() {
   return { categorias: out };
 }
 
+async function carregarContatosDasTabelas() {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/contatos_pessoas?select=id,card_id,ordem_card,ordem_pessoa,emoji,setor,titulo,fale_com,imagem,caixa_texto1,caixa_texto2&order=ordem_card.asc,ordem_pessoa.asc`, { headers });
+  if (!resp.ok) {
+    console.warn("Supabase: não foi possível carregar contatos_pessoas (status " + resp.status + ").");
+    return null;
+  }
+  return await resp.json();
+}
+
 async function carregarTtiDasTabelas() {
   const headers = {
     apikey: SUPABASE_ANON_KEY,
@@ -3850,6 +4067,14 @@ async function iniciarPainel() {
     console.warn("Supabase: falha ao carregar regras das tabelas separadas. Usando dados locais/padrão deste navegador.", e);
   }
   try {
+    const contatos = await comPrazoMaximo(carregarContatosDasTabelas(), 6e3);
+    if (contatos) {
+      localStorage.setItem(LS_PREFIX + "contatos", JSON.stringify(contatos));
+    }
+  } catch (e) {
+    console.warn("Supabase: falha ao carregar contatos_pessoas. Usando dados locais/padrão deste navegador.", e);
+  }
+  try {
     const tti = await comPrazoMaximo(carregarTtiDasTabelas(), 6e3);
     if (tti) {
       localStorage.setItem(LS_PREFIX + "atividadepresencial", JSON.stringify(tti.atividadepresencial));
@@ -3978,14 +4203,30 @@ async function garantirTelaCursos() {
   }
 }
 
+let telaContatosCarregada = false;
+
+async function garantirTelaContatos() {
+  if (telaContatosCarregada) return;
+  const slot = document.getElementById("tela-contatos-slot");
+  if (!slot) return;
+  try {
+    const resp = await fetch("telas/contatos.html");
+    slot.innerHTML = await resp.text();
+    telaContatosCarregada = true;
+  } catch (e) {
+    console.error("Não foi possível carregar telas/contatos.html", e);
+    slot.innerHTML = '<div style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar a tela "Quem Procurar". Recarregue a página.</div>';
+  }
+}
+
 let telaPainelCarregada = false;
 
 // Busca telas/painel.html na primeira vez que a tela é aberta e injeta
-// no placeholder #tela-painel-slot. Diferente das outras telas, o
-// Painel Institucional não tem uma div "screen" própria com classe
-// .open — ele é o conteúdo padrão por trás da welcome-screen — por
-// isso, além de injetar o HTML, esta função já dispara a renderização
-// inicial (initPainelScreen(), em js/painel.js) na primeira vez.
+// no placeholder #tela-painel-slot. Assim como as demais telas, o HTML
+// injetado já vem com sua própria div "screen" (#painel-screen) com
+// classe .open — a renderização inicial (initPainelScreen(), em
+// js/painel.js) é disparada em toda navegação, dentro de irParaTela(),
+// e não só na primeira vez que a tela é carregada.
 async function garantirTelaPainel() {
   if (telaPainelCarregada) return;
   const slot = document.getElementById("tela-painel-slot");
@@ -3994,22 +4235,57 @@ async function garantirTelaPainel() {
     const resp = await fetch("telas/painel.html");
     slot.innerHTML = await resp.text();
     telaPainelCarregada = true;
-    initPainelScreen();
   } catch (e) {
     console.error("Não foi possível carregar telas/painel.html", e);
-    slot.innerHTML = '<div style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar o Painel Institucional. Recarregue a página.</div>';
+    slot.innerHTML = '<div id="painel-screen" style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar o Painel Institucional. Recarregue a página.</div>';
+  }
+}
+
+let telaAdminCarregada = false;
+
+// Busca telas/admin.html na primeira vez que a tela é aberta e injeta
+// no placeholder #tela-admin-slot. A renderização (initAdminScreen(),
+// em js/admin.js) é disparada em toda navegação, dentro de irParaTela().
+async function garantirTelaAdmin() {
+  if (telaAdminCarregada) return;
+  const slot = document.getElementById("tela-admin-slot");
+  if (!slot) return;
+  try {
+    const resp = await fetch("telas/admin.html");
+    slot.innerHTML = await resp.text();
+    telaAdminCarregada = true;
+  } catch (e) {
+    console.error("Não foi possível carregar telas/admin.html", e);
+    slot.innerHTML = '<div id="admin-screen" style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar o Painel do Administrador. Recarregue a página.</div>';
   }
 }
 
 async function irParaTela(tela, pushHistory) {
+  
   if (pushHistory === undefined) pushHistory = true;
+  // Se o usuário está saindo da tela do Calendário para ir a qualquer
+  // outra área (não voltando pro próprio calendário), o mês exibido
+  // reinicia pro mês atual — assim, na próxima vez que ele abrir o
+  // calendário, começa sempre no mês de hoje, e não onde ele deixou.
+  if (tela !== "calendario" && document.getElementById("calendario-screen")?.classList.contains("open") && typeof calResetParaMesAtual === "function") {
+    calResetParaMesAtual();
+  }
+  // Se o usuário está saindo da tela de Tutoriais para ir a qualquer
+  // outra área, pausa qualquer vídeo que esteja tocando — assim ele
+  // não continua rodando (nem o áudio) em segundo plano.
+  if (tela !== "tutorials" && document.getElementById("tutorial-screen")?.classList.contains("open") && typeof tutPararTodosVideos === "function") {
+    tutPararTodosVideos();
+  }
   document.getElementById("welcome-screen").style.display = "none";
+  document.getElementById("painel-screen")?.classList.remove("open");
   document.getElementById("tutorial-screen")?.classList.remove("open");
   document.getElementById("portarias-screen")?.classList.remove("open");
   document.getElementById("regras-screen")?.classList.remove("open");
   document.getElementById("comparativo-screen")?.classList.remove("open");
   document.getElementById("cursos-screen")?.classList.remove("open");
   document.getElementById("calendario-screen")?.classList.remove("open");
+  document.getElementById("contatos-screen")?.classList.remove("open");
+  document.getElementById("admin-screen")?.classList.remove("open");
   switch (tela) {
    case "welcome":
     document.getElementById("welcome-screen").style.display = "grid";
@@ -4017,6 +4293,8 @@ async function irParaTela(tela, pushHistory) {
 
    case "panel":
     await garantirTelaPainel();
+    document.getElementById("painel-screen")?.classList.add("open");
+    initPainelScreen();
     break;
 
    case "tutorials":
@@ -4053,6 +4331,18 @@ async function irParaTela(tela, pushHistory) {
     document.getElementById("calendario-screen").classList.add("open");
     initCalendarioScreen();
     break;
+
+   case "contatos":
+    await garantirTelaContatos();
+    document.getElementById("contatos-screen").classList.add("open");
+    initContatosScreen();
+    break;
+
+   case "admin":
+    await garantirTelaAdmin();
+    document.getElementById("admin-screen")?.classList.add("open");
+    initAdminScreen();
+    break;
   }
   if (pushHistory) {
     history.pushState({
@@ -4078,13 +4368,24 @@ async function irParaTela(tela, pushHistory) {
 
 // openCalendario() agora mora em js/calendario.js.
 
+// openContatos() agora mora em js/contatos.js.
+
 function resetSelecoesTelas() {
-  // Atos Normativos: tira o estado marcado no mapa e volta o painel de detalhes ao estado inicial
-  document.querySelectorAll("#br-map-svg a.uf.active").forEach(a => a.classList.remove("active"));
-  const portPane = document.getElementById("port-detail-pane");
-  if (portPane) {
-    portPane.innerHTML = `\n        <div class="port-empty">\n          <div class="icon">🗺️</div>\n          <p>Selecione um estado no mapa para ver os detalhes</p>\n        </div>`;
-  }
+ // Atos Normativos: tira o estado marcado no mapa e volta o painel de detalhes ao estado inicial
+document
+  .querySelectorAll("#br-map-svg a.uf.active")
+  .forEach(a => a.classList.remove("active"));
+
+const portPane = document.getElementById("port-detail-pane");
+
+if (portPane) {
+  portPane.innerHTML = `
+    <div class="empty-state">
+          <div class="empty-icon"></div>
+          <p>Selecione um estado no mapa para ver os detalhes</p>
+        </div>
+  `;
+}
 
   // Tutoriais: esquece a categoria/vídeo selecionado
   tutCategoriaAtual = null;
@@ -4152,16 +4453,15 @@ let currentUser = null;
 let adminSenha = null;
 
 let adminMode = false;
-
-let usersEditId = null;
+// usersEditId agora mora em js/admin.js.
 
 let _refreshPermInterval = null;
 
 const REFRESH_PERMISSOES_MS = 2e4;
 
 // setSection("mantenedoras") — a renderização inicial da lista agora
-// acontece em initPainelScreen() (js/painel.js), chamada por
-// garantirTelaPainel() na primeira vez que a tela é aberta.
+// acontece em initPainelScreen() (js/painel.js), chamada dentro de
+// irParaTela() a cada vez que a tela do Painel Institucional é aberta.
 
 async function supabaseRpc(fn, params) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
@@ -4234,6 +4534,7 @@ function atualizarVisibilidadeLinkAdmin() {
 
 function mostrarLoginUsuario() {
   document.getElementById("user-login-overlay").classList.remove("hidden");
+  document.getElementById("primeiro-acesso-overlay").classList.add("hidden");
   document.getElementById("welcome-screen").style.display = "grid";
   document.getElementById("admin-lock-link").style.display = "none";
 }
@@ -4272,6 +4573,10 @@ async function tentarLoginUsuario() {
       is_admin: data.is_admin,
       permissoes: data.permissoes
     };
+    if (data.primeiro_acesso) {
+      abrirPrimeiroAcesso(senha);
+      return;
+    }
     salvarSessaoUsuario(currentUser);
     esconderLoginUsuario();
     aplicarPermissoes();
@@ -4281,6 +4586,67 @@ async function tentarLoginUsuario() {
   } finally {
     btn.disabled = false;
     btn.textContent = "Entrar";
+  }
+}
+
+// Guarda temporariamente a senha provisória digitada no login, só para
+// confirmar a identidade do usuário na hora de trocar a senha (ver
+// definir_senha_primeiro_acesso() no banco) — nunca é persistida.
+let _senhaProvisoriaPrimeiroAcesso = null;
+
+// Mostra a tela de "defina sua senha", chamada quando login_usuario
+// retorna primeiro_acesso = true (senha ainda é a provisória).
+function abrirPrimeiroAcesso(senhaAtual) {
+  _senhaProvisoriaPrimeiroAcesso = senhaAtual;
+  document.getElementById("user-login-overlay").classList.add("hidden");
+  document.getElementById("primeiro-acesso-overlay").classList.remove("hidden");
+  document.getElementById("primeiro-acesso-senha1").value = "";
+  document.getElementById("primeiro-acesso-senha2").value = "";
+  document.getElementById("primeiro-acesso-error").textContent = "";
+  setTimeout(() => document.getElementById("primeiro-acesso-senha1")?.focus(), 50);
+}
+
+async function salvarNovaSenhaPrimeiroAcesso() {
+  const s1 = document.getElementById("primeiro-acesso-senha1").value;
+  const s2 = document.getElementById("primeiro-acesso-senha2").value;
+  const errEl = document.getElementById("primeiro-acesso-error");
+  const btn = document.getElementById("primeiro-acesso-btn");
+  errEl.textContent = "";
+  if (!s1 || !s2) {
+    errEl.textContent = "Preencha os dois campos.";
+    return;
+  }
+  if (s1.length < 6) {
+    errEl.textContent = "A nova senha deve ter pelo menos 6 caracteres.";
+    return;
+  }
+  if (s1 !== s2) {
+    errEl.textContent = "As senhas digitadas não coincidem.";
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Salvando…";
+  try {
+    const data = await supabaseRpc("definir_senha_primeiro_acesso", {
+      p_id: currentUser.id,
+      p_senha_atual: _senhaProvisoriaPrimeiroAcesso,
+      p_nova_senha: s1
+    });
+    if (!data.ok) {
+      errEl.textContent = data.erro || "Não foi possível salvar a nova senha.";
+      return;
+    }
+    _senhaProvisoriaPrimeiroAcesso = null;
+    document.getElementById("primeiro-acesso-overlay").classList.add("hidden");
+    salvarSessaoUsuario(currentUser);
+    esconderLoginUsuario();
+    aplicarPermissoes();
+    iniciarAtualizacaoAutomaticaPermissoes();
+  } catch (e) {
+    errEl.textContent = e.message || "Erro ao conectar. Verifique sua internet.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Salvar e continuar";
   }
 }
 
@@ -4385,12 +4751,14 @@ function telaParaArea(tela) {
 
 function currentSectionTela() {
   if (document.getElementById("welcome-screen").style.display !== "none") return "welcome";
+  if (document.getElementById("painel-screen")?.classList.contains("open")) return "panel";
   if (document.getElementById("tutorial-screen")?.classList.contains("open")) return "tutorials";
   if (document.getElementById("portarias-screen")?.classList.contains("open")) return "portarias";
   if (document.getElementById("regras-screen")?.classList.contains("open")) return "regras";
   if (document.getElementById("comparativo-screen")?.classList.contains("open")) return "comparativo";
   if (document.getElementById("cursos-screen").classList.contains("open")) return "cursos";
   if (document.getElementById("calendario-screen")?.classList.contains("open")) return "calendario";
+  if (document.getElementById("contatos-screen")?.classList.contains("open")) return "contatos";
   return "panel";
 }
 
@@ -4441,257 +4809,25 @@ function sairAdmin() {
   document.body.classList.remove("admin-mode");
   document.getElementById("admin-toolbar").classList.remove("open");
   atualizarVisibilidadeLinkAdmin();
-  fecharGestaoUsuarios();
+  if (document.getElementById("admin-screen")?.classList.contains("open")) {
+    irParaTela("welcome");
+  }
   refrescarTelaAtual();
 }
-
-let adminToolbarTimer = null;
-
-function agendarRecolhimentoToolbar() {
-  clearTimeout(adminToolbarTimer);
-  adminToolbarTimer = setTimeout(() => {
-    const bar = document.getElementById("admin-toolbar");
-    if (!bar) return;
-    bar.classList.add("collapsed");
-    const btn = bar.querySelector(".admin-toolbar-toggle");
-    if (btn) {
-      btn.textContent = "🛠️";
-      btn.title = "Expandir barra";
-    }
-  }, 2500);
-}
-
-function expandirToolbarAdmin() {
-  const bar = document.getElementById("admin-toolbar");
-  if (!bar) return;
-  bar.classList.remove("collapsed");
-  const btn = bar.querySelector(".admin-toolbar-toggle");
-  if (btn) {
-    btn.textContent = "➖";
-    btn.title = "Recolher barra";
-  }
-  agendarRecolhimentoToolbar();
-}
-
-function alternarToolbarAdmin() {
-  const bar = document.getElementById("admin-toolbar");
-  if (!bar) return;
-  if (bar.classList.contains("collapsed")) {
-    expandirToolbarAdmin();
-  } else {
-    clearTimeout(adminToolbarTimer);
-    bar.classList.add("collapsed");
-    const btn = bar.querySelector(".admin-toolbar-toggle");
-    if (btn) {
-      btn.textContent = "🛠️";
-      btn.title = "Expandir barra";
-    }
-  }
-}
-
-// Recolhe a barra sozinha sempre que o mouse sai dela; expande ao passar o mouse ou tocar nela.
-(function configurarAutoRecolhimentoToolbar() {
-  const bar = document.getElementById("admin-toolbar");
-  if (!bar) return;
-  bar.addEventListener("mouseenter", () => {
-    clearTimeout(adminToolbarTimer);
-    bar.classList.remove("collapsed");
-    const btn = bar.querySelector(".admin-toolbar-toggle");
-    if (btn) { btn.textContent = "➖"; btn.title = "Recolher barra"; }
-  });
-  bar.addEventListener("mouseleave", agendarRecolhimentoToolbar);
-  bar.addEventListener("click", (e) => {
-    if (bar.classList.contains("collapsed")) expandirToolbarAdmin();
-  });
-})();
 
 function ativarModoAdmin() {
   adminMode = true;
   document.body.classList.add("admin-mode");
-  const bar = document.getElementById("admin-toolbar");
-  bar.classList.add("open");
-  bar.classList.remove("collapsed");
-  const btn = bar.querySelector(".admin-toolbar-toggle");
-  if (btn) {
-    btn.textContent = "➖";
-    btn.title = "Recolher barra";
-  }
-  agendarRecolhimentoToolbar();
+  document.getElementById("admin-toolbar")?.classList.add("open");
   atualizarVisibilidadeLinkAdmin();
   refrescarTelaAtual();
 }
 
-function abrirGestaoUsuarios() {
-  if (!adminSenha) {
-    abrirLoginAdmin();
-    return;
-  }
-  document.getElementById("users-admin-overlay").classList.add("open");
-  limparUsuarioForm();
-  carregarListaUsuarios();
-}
-
-function fecharGestaoUsuarios() {
-  document.getElementById("users-admin-overlay").classList.remove("open");
-}
-
-function setUsersMsg(texto, tipo) {
-  const el = document.getElementById("users-admin-msg");
-  el.textContent = texto || "";
-  el.className = "users-msg" + (tipo ? " " + tipo : "");
-}
-
-function permIcon(val) {
-  return val ? "✅" : "—";
-}
-
-async function carregarListaUsuarios() {
-  if (!adminSenha) return;
-  setUsersMsg("Carregando…", "");
-  try {
-    const data = await supabaseRpc("listar_usuarios", {
-      p_admin_senha: adminSenha
-    });
-    if (!data.ok) {
-      setUsersMsg(data.erro || "Erro ao listar.", "erro");
-      return;
-    }
-    setUsersMsg("", "");
-    const tbody = document.getElementById("users-table-body");
-    tbody.innerHTML = (data.usuarios || []).map(u => {
-      const p = u.permissoes || {};
-      return `<tr>\n            <td>${escapeHtmlRegra(u.nome)}</td>\n            <td>${escapeHtmlRegra(u.login)}</td>\n            <td class="users-perm-check">${permIcon(p.tutoriais)}</td>\n            <td class="users-perm-check">${permIcon(p.comparativo)}</td>\n            <td class="users-perm-check">${permIcon(p.regras)}</td>\n            <td class="users-perm-check">${permIcon(p.portarias)}</td>\n            <td class="users-perm-check">${permIcon(p.cursos)}</td>\n            <td class="users-perm-check">${permIcon(p.painel)}</td>\n            <td class="users-perm-check">${permIcon(p.calendario)}</td>\n            <td class="users-perm-check">${permIcon(p.calendario_editar)}</td>\n            <td class="users-perm-check">${u.is_admin ? "✅" : "—"}</td>\n            <td class="users-actions">\n              <button onclick="editarUsuarioForm('${u.id}')">Editar</button>\n              <button onclick="excluirUsuarioConfirm('${u.id}')">Excluir</button>\n            </td>\n          </tr>`;
-    }).join("") || `<tr><td colspan="12" style="text-align:center;color:var(--texto-muted);padding:20px;">Nenhum usuário cadastrado</td></tr>`;
-    window._usuariosCache = data.usuarios || [];
-  } catch (e) {
-    setUsersMsg(e.message || "Erro ao carregar usuários.", "erro");
-  }
-}
-
-function lerPermissoesForm() {
-  return {
-    p_area_tutoriais: document.getElementById("users-perm-tutoriais").checked,
-    p_area_comparativo: document.getElementById("users-perm-comparativo").checked,
-    p_area_regras: document.getElementById("users-perm-regras").checked,
-    p_area_portarias: document.getElementById("users-perm-portarias").checked,
-    p_area_cursos: document.getElementById("users-perm-cursos").checked,
-    p_area_painel: document.getElementById("users-perm-painel").checked,
-    p_area_calendario: document.getElementById("users-perm-calendario").checked,
-    p_calendario_editar: document.getElementById("users-perm-calendario-editar").checked,
-    p_is_admin: document.getElementById("users-perm-is-admin").checked
-  };
-}
-
-function limparUsuarioForm() {
-  usersEditId = null;
-  document.getElementById("users-form-title").textContent = "Novo usuário";
-  document.getElementById("users-form-senha-hint").textContent = "";
-  document.getElementById("users-form-nome").value = "";
-  document.getElementById("users-form-login").value = "";
-  document.getElementById("users-form-senha").value = "";
-  document.getElementById("users-form-senha").placeholder = "Obrigatória para novo usuário";
-  [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel" ].forEach(a => {
-    document.getElementById(`users-perm-${a}`).checked = false;
-  });
-  document.getElementById("users-perm-calendario").checked = false;
-  document.getElementById("users-perm-calendario-editar").checked = false;
-  document.getElementById("users-perm-is-admin").checked = false;
-}
-
-function editarUsuarioForm(id) {
-  const u = (window._usuariosCache || []).find(x => x.id === id);
-  if (!u) return;
-  usersEditId = id;
-  document.getElementById("users-form-title").textContent = "Editar usuário";
-  document.getElementById("users-form-senha-hint").textContent = "(deixe em branco para manter)";
-  document.getElementById("users-form-nome").value = u.nome;
-  document.getElementById("users-form-login").value = u.login;
-  document.getElementById("users-form-senha").value = "";
-  document.getElementById("users-form-senha").placeholder = "Nova senha (opcional)";
-  const p = u.permissoes || {};
-  document.getElementById("users-perm-tutoriais").checked = !!p.tutoriais;
-  document.getElementById("users-perm-comparativo").checked = !!p.comparativo;
-  document.getElementById("users-perm-regras").checked = !!p.regras;
-  document.getElementById("users-perm-portarias").checked = !!p.portarias;
-  document.getElementById("users-perm-cursos").checked = !!p.cursos;
-  document.getElementById("users-perm-painel").checked = !!p.painel;
-  document.getElementById("users-perm-calendario").checked = !!p.calendario;
-  document.getElementById("users-perm-calendario-editar").checked = !!p.calendario_editar;
-  document.getElementById("users-perm-is-admin").checked = !!u.is_admin;
-  document.getElementById("users-form").scrollIntoView({
-    behavior: "smooth"
-  });
-}
-
-async function salvarUsuarioForm() {
-  if (!adminSenha) return;
-  const nome = document.getElementById("users-form-nome").value.trim();
-  const login = document.getElementById("users-form-login").value.trim();
-  const senha = document.getElementById("users-form-senha").value;
-  const perms = lerPermissoesForm();
-  if (!nome || !login) {
-    setUsersMsg("Nome e login são obrigatórios.", "erro");
-    return;
-  }
-  if (!usersEditId && !senha) {
-    setUsersMsg("Senha é obrigatória para novo usuário.", "erro");
-    return;
-  }
-  setUsersMsg("Salvando…", "");
-  try {
-    let data;
-    if (usersEditId) {
-      data = await supabaseRpc("editar_usuario", {
-        p_admin_senha: adminSenha,
-        p_id: usersEditId,
-        p_nome: nome,
-        p_login: login,
-        p_senha: senha || null,
-        ...perms
-      });
-    } else {
-      data = await supabaseRpc("criar_usuario", {
-        p_admin_senha: adminSenha,
-        p_nome: nome,
-        p_login: login,
-        p_senha: senha,
-        ...perms
-      });
-    }
-    if (!data.ok) {
-      setUsersMsg(data.erro || "Erro ao salvar.", "erro");
-      return;
-    }
-    setUsersMsg(usersEditId ? "Usuário atualizado!" : "Usuário criado!", "ok");
-    limparUsuarioForm();
-    carregarListaUsuarios();
-  } catch (e) {
-    setUsersMsg(e.message || "Erro ao salvar.", "erro");
-  }
-}
-
-async function excluirUsuarioConfirm(id) {
-  if (!adminSenha) return;
-  const u = (window._usuariosCache || []).find(x => x.id === id);
-  const nome = u ? u.nome : "este usuário";
-  if (!confirm(`Excluir o usuário "${nome}"?`)) return;
-  setUsersMsg("Excluindo…", "");
-  try {
-    const data = await supabaseRpc("excluir_usuario", {
-      p_admin_senha: adminSenha,
-      p_id: id
-    });
-    if (!data.ok) {
-      setUsersMsg(data.erro || "Erro ao excluir.", "erro");
-      return;
-    }
-    setUsersMsg("Usuário excluído.", "ok");
-    if (usersEditId === id) limparUsuarioForm();
-    carregarListaUsuarios();
-  } catch (e) {
-    setUsersMsg(e.message || "Erro ao excluir.", "erro");
-  }
-}
+// abrirGestaoUsuarios, fecharGestaoUsuarios, setUsersMsg, permIcon,
+// carregarListaUsuarios, lerPermissoesForm, limparUsuarioForm,
+// editarUsuarioForm, salvarUsuarioForm e excluirUsuarioConfirm agora
+// moram em js/admin.js (seções "Usuários", "Perfis" e "Cadastrar
+// usuário" da tela do Painel do Administrador).
 
 function refrescarTelaAtual() {
   renderPainelCats();
@@ -4802,6 +4938,11 @@ async function salvarNoSupabase(chave, valor) {
           p_admin_senha: adminSenha,
           p_categorias: valor.categorias
         })
+      : chave === "contatos"
+      ? await supabaseRpc("salvar_contatos", {
+          p_admin_senha: adminSenha,
+          p_pessoas: valor
+        })
       : await supabaseRpc("salvar_dado_painel", {
           p_admin_senha: adminSenha,
           p_chave: chave,
@@ -4906,6 +5047,15 @@ function aplicarDadosSalvos() {
     } catch (e) { /* noop */ }
   }
   DIAG.push(["regras", !!salvosRegras]);
+  const salvosContatos = carregarDoLocalStorage("contatos");
+  if (salvosContatos && Array.isArray(salvosContatos) && typeof CONTATOS_PESSOAS !== "undefined" && Array.isArray(CONTATOS_PESSOAS)) {
+    CONTATOS_PESSOAS.length = 0;
+    CONTATOS_PESSOAS.push(...salvosContatos);
+    if (document.getElementById("contatos-screen")?.classList.contains("open") && typeof initContatosScreen === "function") {
+      initContatosScreen();
+    }
+  }
+  DIAG.push(["contatos", !!salvosContatos]);
   const aplicarObjeto = (marcador, alvo) => {
     const salvo = carregarDoLocalStorage(marcador);
     if (salvo) Object.assign(alvo, salvo);
@@ -5261,6 +5411,36 @@ function iniciarSincronizacaoEmTempoReal() {
       schema: "public",
       table: "regras_itens"
     }, agendarRecargaRegras).subscribe();
+
+    let timerRedesenhoContatos = null;
+    const agendarRecargaContatos = () => {
+      const agora = Date.now();
+      const ultimoLocal = ULTIMO_SALVAMENTO_LOCAL["contatos"] || 0;
+      if (agora - ultimoLocal < 4e3) return;
+      if (timerRedesenhoContatos) clearTimeout(timerRedesenhoContatos);
+      timerRedesenhoContatos = setTimeout(async () => {
+        try {
+          const contatos = await carregarContatosDasTabelas();
+          if (contatos) {
+            localStorage.setItem(LS_PREFIX + "contatos", JSON.stringify(contatos));
+            if (typeof CONTATOS_PESSOAS !== "undefined" && Array.isArray(CONTATOS_PESSOAS)) {
+              CONTATOS_PESSOAS.length = 0;
+              CONTATOS_PESSOAS.push(...contatos);
+              if (document.getElementById("contatos-screen")?.classList.contains("open") && typeof initContatosScreen === "function") {
+                initContatosScreen();
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Supabase Realtime: erro ao recarregar contatos_pessoas.", e);
+        }
+      }, 500);
+    };
+    client.channel("contatos_mudancas").on("postgres_changes", {
+      event: "*",
+      schema: "public",
+      table: "contatos_pessoas"
+    }, agendarRecargaContatos).subscribe();
   } catch (e) {
     console.warn("Supabase Realtime: não foi possível iniciar a sincronização ao vivo. As edições continuam sendo salvas na nuvem normalmente.", e);
   }
