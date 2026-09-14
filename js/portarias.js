@@ -50,7 +50,7 @@ function flCamposBox(pares) {
   const linhas = (pares || []).filter(([ , v ]) => v !== undefined && v !== null && String(v).trim() !== "");
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:4px 14px;min-height:auto;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;">${String(valor)}</span>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:4px 14px;min-height:auto;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;display:block;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;">${String(valor)}</span>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Campos "simples" (texto curto) da Fundamentação Legal e dos Dados do Curso.
@@ -255,13 +255,24 @@ async function excluirBlocoEstado(uf, tipo) {
   if (tipo === "situacao") {
     delete dados.status;
     delete dados.statusLabel;
-  } else if (tipo === "fundamentacao") {
-    delete dados.mantenedoraId;
-    delete dados.razaoSocial;
-    delete dados.documento;
-    CAMPOS_FUNDAMENTACAO.forEach(f => delete dados[f.key]);
-  } else if (tipo === "fundamentacaoLivre") {
-    delete dados.fundamentacaoLegal;
+  } else if (
+  tipo === "fundamentacao" ||
+  tipo === "fundamentacaoLivre"
+) {
+
+  // Mantenedora
+  delete dados.mantenedoraId;
+  delete dados.razaoSocial;
+  delete dados.documento;
+
+  // Campos estruturados
+  CAMPOS_FUNDAMENTACAO.forEach(f => {
+    delete dados[f.key];
+  });
+
+  // Fundamentação livre
+  delete dados.fundamentacaoLegal;
+}
   } else if (tipo === "responsaveis") {
     delete dados.responsaveis;
   } else if (tipo === "observacoes") {
