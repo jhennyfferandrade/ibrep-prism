@@ -77,6 +77,7 @@ function contatosAgruparEmCards() {
         ordem: p.ordem_card || 0,
         icone: p.emoji || "❓",
         setor: p.setor || "",
+        subtitulo: p.subtitulo || "",
         funcoes: []
       });
     }
@@ -157,12 +158,16 @@ function renderContContent(cardId) {
   const editBtn = adminMode
     ? `<button class="admin-edit-btn" style="margin-left:8px;" onclick="abrirEdicaoContSetor('${cat.card_id}')">✏️ Editar setor</button>`
     : "";
+  const subtituloHtml = cat.subtitulo
+    ? `<div class="cont-setor-subtitulo">${escapeHtmlRegra(cat.subtitulo)}</div>`
+    : "";
   let html = `
     <div style="display:flex;align-items:center;">
       <div class="cont-setor-header">
         <div class="cont-setor-emoji">${cat.icone}</div>
         <div>
           <div class="tut-content-title" style="margin-bottom:0;">${escapeHtmlRegra(cat.setor)}</div>
+          ${subtituloHtml}
         </div>
       </div>
       ${editBtn}
@@ -195,8 +200,8 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
     ? `<ul class="cont-funcao-situacoes">${situacoes.map(s => `<li>${escapeHtmlRegra(s)}</li>`).join("")}</ul>`
     : `<span class="cont-placeholder">Nenhuma situação cadastrada ainda</span>`;
   const contatoHtml = f.fale_com
-    ? `<div class="cont-funcao-contato">${escapeHtmlRegra(f.fale_com)}</div>`
-    : `<div class="cont-funcao-contato cont-placeholder">Quem procurar ainda não foi definido</div>`;
+    ? `<div class="cont-funcao-contato-nome">${escapeHtmlRegra(f.fale_com)}</div>`
+    : `<div class="cont-funcao-contato-nome cont-placeholder">Quem procurar ainda não foi definido</div>`;
   const notaHtml = f.caixa_texto2
     ? `<div class="cont-funcao-nota">${escapeHtmlRegra(f.caixa_texto2)}</div>`
     : "";
@@ -208,15 +213,15 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir) {
     : "";
   return `
     <div class="cont-funcao-card">
+      <div class="cont-funcao-titulo">${titulo}</div>
+      <div class="cont-funcao-situacoes-title">Quando te procuram por isso</div>
+      ${situacoesHtml}
       <div class="cont-funcao-header-box">
         <div class="cont-funcao-foto-wrap">
           ${foto}
         </div>
-        <div class="cont-funcao-titulo">${titulo}</div>
+        ${contatoHtml}
       </div>
-      <div class="cont-funcao-situacoes-title">Quando te procuram por isso</div>
-      ${situacoesHtml}
-      ${contatoHtml}
       ${notaHtml}
       ${acoesAdmin}
     </div>
@@ -253,6 +258,8 @@ function abrirEdicaoContSetor(cardId) {
               <input type="number" id="admin-contsetor-ordem" min="1" step="1" style="max-width:100px;" value="${base.ordem_card || 1}">
               <label>Nome do setor</label>
               <input type="text" id="admin-contsetor-nome" value="${escapeHtmlRegra(base.setor || "")}">
+              <label>Subtítulo (opcional)</label>
+              <input type="text" id="admin-contsetor-subtitulo" value="${escapeHtmlRegra(base.subtitulo || "")}">
               <div style="display:flex;gap:8px;">
                 <button class="admin-edit-btn save" onclick="salvarEdicaoContSetor('${cardId}')">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="document.querySelector('.tut-cat-btn.active').click()">Cancelar</button>
@@ -268,9 +275,11 @@ function salvarEdicaoContSetor(cardId) {
   const emoji = document.getElementById("admin-contsetor-emoji").value.trim() || "❓";
   const novaOrdem = parseInt(document.getElementById("admin-contsetor-ordem").value, 10) || 1;
   const nome = document.getElementById("admin-contsetor-nome").value.trim() || linhas[0].setor;
+  const subtitulo = document.getElementById("admin-contsetor-subtitulo").value.trim();
   linhas.forEach(l => {
     l.emoji = emoji;
     l.setor = nome;
+    l.subtitulo = subtitulo;
   });
   contatosReordenarSetor(cardId, novaOrdem);
   renderContCats();
@@ -309,6 +318,8 @@ function abrirNovoContSetor() {
               <input type="text" id="admin-newcontsetor-emoji" placeholder="Ex.: 🎓" maxlength="4" style="max-width:80px;">
               <label>Nome do setor</label>
               <input type="text" id="admin-newcontsetor-nome" placeholder="Ex.: Pedagógico">
+              <label>Subtítulo (opcional)</label>
+              <input type="text" id="admin-newcontsetor-subtitulo" placeholder="Ex.: Vendas e matrículas">
               <div style="display:flex;gap:8px;">
                 <button class="admin-edit-btn save" onclick="salvarNovoContSetor()">💾 Salvar</button>
                 <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="initContatosScreen()">Cancelar</button>
@@ -322,6 +333,7 @@ function abrirNovoContSetor() {
 function salvarNovoContSetor() {
   const emoji = document.getElementById("admin-newcontsetor-emoji").value.trim() || "❓";
   const nome = document.getElementById("admin-newcontsetor-nome").value.trim();
+  const subtitulo = document.getElementById("admin-newcontsetor-subtitulo").value.trim();
   if (!nome) {
     alert("Digite um nome para o setor.");
     return;
@@ -338,6 +350,7 @@ function salvarNovoContSetor() {
     ordem_pessoa: 1,
     emoji: emoji,
     setor: nome,
+    subtitulo: subtitulo,
     titulo: "",
     fale_com: "",
     imagem: null,
