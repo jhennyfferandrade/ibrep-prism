@@ -3779,7 +3779,7 @@ async function carregarPortariasDasTabelas() {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor,coordenador_curso,coordenador_estagio,cofeci,observacoes,mantenedora_id,razao_social,documento,lei_principal,resolucao,parecer,sistec,censo_escolar,validade,ficha_tecnica`, { headers });
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/portarias_estados?select=uf,status,status_label,fundamentacao_legal_html,nome_secretario,portaria_secretario,nome_diretor,portaria_diretor,coordenador_curso,coordenador_estagio,cofeci,observacoes,mantenedora_id,razao_social,documento,lei_principal,resolucao,parecer,sistec,censo_escolar,validade,ficha_nome:ficha_tecnica->>nome,ficha_tipo:ficha_tecnica->>tipo`, { headers });
   if (!resp.ok) {
     console.warn("Supabase: não foi possível carregar portarias_estados (status " + resp.status + ").");
     return null;
@@ -3809,7 +3809,7 @@ async function carregarPortariasDasTabelas() {
       censoEscolar: l.censo_escolar,
       validade: l.validade
     };
-    if (l.ficha_tecnica) item.fichaTecnica = l.ficha_tecnica;
+    if (l.ficha_nome) item.fichaTecnica = { nome: l.ficha_nome, tipo: l.ficha_tipo, mantida: true };
     if (l.status !== null && l.status !== undefined) item.status = l.status;
     if (l.status_label !== null && l.status_label !== undefined) item.statusLabel = l.status_label;
     out[l.uf] = item;
