@@ -321,7 +321,14 @@ function clienteSupabaseFicha() {
       if (c && typeof c.from === "function") return c;
     } catch (e) {}
   }
-  return window.supabaseClient || window.sb || null;
+  // Última tentativa: procura em window qualquer objeto que pareça um cliente Supabase.
+  try {
+    for (const k of Object.getOwnPropertyNames(window)) {
+      let v; try { v = window[k]; } catch (e) { continue; }
+      if (v && typeof v === "object" && typeof v.from === "function" && (v.supabaseUrl || v.auth || v.rest)) return v;
+    }
+  } catch (e) {}
+  return null;
 }
 
 const FICHAS_CARREGADAS = {};
