@@ -85,17 +85,13 @@ function selectEstado(uf) {
     ...CAMPOS_FUNDAMENTACAO.map(f => [ f.label, dados[f.key] ])
   ]);
   const delBtn = tipo => adminMode ? `<button class="admin-danger-btn" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="excluirBlocoEstado('${uf}','${tipo}')" title="Excluir este bloco">🗑️</button>` : "";
-  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${FICHAS_TECNICAS[uf] && FICHAS_TECNICAS[uf].dataUrl ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Ficha Técnica Institucional</span>${delBtn("fichaTecnica")}</div>\n          <div class="port-section-text">${fichaTecnicaHtml(FICHAS_TECNICAS[uf], uf)}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n          ${dados.statusLabel ? `<div class="port-status-badge port-status-${dados.status}">${dados.statusLabel}${delBtn("situacao")}</div>` : ""}\n        </div>\n        ${fundamentacaoBox ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacao")}</div>\n          <div class="port-section-text">${fundamentacaoBox}</div>\n        </div>` : ""}\n        ${dados.fichaTecnica && dados.fichaTecnica.dataUrl ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Ficha Técnica Institucional</span>${delBtn("fichaTecnica")}</div>\n          <div class="port-section-text">${fichaTecnicaHtml(dados.fichaTecnica, uf)}</div>\n        </div>` : ""}\n        ${dados.fundamentacaoLegal ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Fundamentação Legal</span>${delBtn("fundamentacaoLivre")}</div>\n          <div class="port-section-text">${dados.fundamentacaoLegal}</div>\n        </div>` : ""}\n        ${dados.responsaveis ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Secretário, Diretor e Coordenadores Responsáveis</span>${delBtn("responsaveis")}</div>\n          <div class="port-section-text">${flResponsaveis(dados.responsaveis)}</div>\n        </div>` : ""}\n        ${dados.observacoes ? `\n        <div class="port-section">\n          <div class="port-section-title" style="display:flex;align-items:center;"><span style="flex:1;">Observações</span>${delBtn("observacoes")}</div>\n          <div class="port-section-text">${dados.observacoes}</div>\n        </div>` : ""}\n        ${dados.portarias && dados.portarias.length ? `\n        <div class="port-section">\n          <div class="port-section-title">Portarias e Documentos</div>\n          ${docsHtml}\n        </div>` : ""}\n        ${adminMode ? `\n        <div style="display:flex;flex-direction:column;gap:10px;margin:22px auto 0;max-width:320px;">\n          <button class="admin-edit-btn" onclick="abrirFormularioEstadoCompleto('${uf}')">✏️ Editar todos os dados</button>\n          <button class="admin-dashed-btn" onclick="criarBlocoEstado('${uf}','unidade')">➕ Unidade de Ensino</button>\n        </div>` : ""}`;
 }
 
 // Adiciona botões de editar/excluir na ficha do estado quando o modo admin está ativo
 const _selectEstadoOriginal = selectEstado;
 
 selectEstado = function(uf) {
-  PORTARIAS_UF_ATUAL = uf;
-  if (!FICHAS_CARREGADAS[uf]) {
-    carregarFichaTecnica(uf).then(ok => { if (ok && PORTARIAS_UF_ATUAL === uf) selectEstado(uf); });
-  }
   _selectEstadoOriginal(uf);
   if (!adminMode) return;
   removerBotoesEditarBloco();
@@ -189,7 +185,7 @@ function abrirFormularioEstadoCompleto(uf) {
     `<label>${f.label}</label>\n          <div style="display:flex;gap:6px;margin-bottom:4px;">\n            <button type="button" onclick="aplicarFormatoCampo('pf-fund-${f.key}','b')" style="border:1px solid var(--cinza-borda);background:#fff;border-radius:5px;width:26px;height:24px;font-weight:700;cursor:pointer;font-size:12px;" title="Negrito">B</button>\n            <button type="button" onclick="aplicarFormatoCampo('pf-fund-${f.key}','u')" style="border:1px solid var(--cinza-borda);background:#fff;border-radius:5px;width:26px;height:24px;text-decoration:underline;cursor:pointer;font-size:12px;" title="Sublinhado">S</button>\n          </div>\n          <textarea id="pf-fund-${f.key}" rows="2" style="width:100%;box-sizing:border-box;resize:vertical;">${escapeHtmlRegra(dados[f.key] || "")}</textarea>`
   ).join("\n          ");
 
-  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n        </div>\n        <div class="admin-inline-form" style="max-width:560px;">\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">📌 Situação</h3>\n          <label>Status</label>\n          <select id="pf-status">\n            <option value="" ${!dados.status ? "selected" : ""}>Sem selo de status</option>\n            <option value="ok" ${dados.status === "ok" ? "selected" : ""}>OK (verde)</option>\n            <option value="alerta" ${dados.status === "alerta" ? "selected" : ""}>Alerta (amarelo)</option>\n            <option value="pendente" ${dados.status === "pendente" ? "selected" : ""}>Pendente (vermelho)</option>\n          </select>\n          <label>Rótulo do status (texto exibido no selo)</label>\n          <input type="text" id="pf-status-label" value="${escapeHtmlRegra(dados.statusLabel || "")}" placeholder="Ex.: Regularizado">\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">📄 Fundamentação Legal</h3>\n          <label>Mantenedora</label>\n          <select id="pf-mantenedora" onchange="preencherMantenedoraSelecionada()">\n            <option value="">Selecione a mantenedora...</option>\n            ${opcoesMantenedoras}\n          </select>\n          <label>Razão Social</label>\n          <input type="text" id="pf-razao-social" value="${escapeHtmlRegra(dados.razaoSocial || "")}" readonly style="background:var(--cinza-light);">\n          <label>Documento (CNPJ)</label>\n          <input type="text" id="pf-documento" value="${escapeHtmlRegra(dados.documento || "")}" readonly style="background:var(--cinza-light);">\n          ${camposFundamentacaoHtml}\n          <label>Observações (aceita HTML simples, sempre visível na ficha do estado)</label>\n          <textarea id="pf-observacoes" style="width:100%;box-sizing:border-box;resize:vertical;">${dados.observacoes || ""}</textarea>\n          <label>Ficha Técnica Institucional (PDF, Word, Excel ou imagem — até 3 MB)</label>\n          <input type="file" id="pf-ficha-arquivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm,.png,.jpg,.jpeg,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/*" style="width:100%;box-sizing:border-box;">\n          ${FICHAS_TECNICAS[uf] && FICHAS_TECNICAS[uf].dataUrl ? `<div style="font-size:12px;margin:4px 0 8px;color:var(--texto-sec);">Arquivo atual: <b>${escapeHtmlRegra(FICHAS_TECNICAS[uf].nome)}</b> — escolher outro arquivo substitui este. <label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;"><input type="checkbox" id="pf-ficha-remover"> remover</label></div>` : ""}\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">👤 Secretário, Diretor e Coordenadores Responsáveis</h3>\n          <label>Nome do(a) Secretário(a)</label>\n          <input type="text" id="pf-nome-sec" value="${escapeHtmlRegra(r.nomeSecretario || "")}">\n          <label>Portaria do(a) Secretário(a)</label>\n          <input type="text" id="pf-portaria-sec" value="${escapeHtmlRegra(r.portariaSecretario || "")}">\n          <label>Nome do(a) Diretor(a)</label>\n          <input type="text" id="pf-nome-dir" value="${escapeHtmlRegra(r.nomeDiretor || "")}">\n          <label>Portaria do(a) Diretor(a)</label>\n          <input type="text" id="pf-portaria-dir" value="${escapeHtmlRegra(r.portariaDiretor || "")}">\n          <label>Coordenador(a) do Curso</label>\n          <input type="text" id="pf-coord-curso" value="${escapeHtmlRegra(r.coordenadorCurso || "")}">\n          <label>Coordenador(a) de Estágio</label>\n          <input type="text" id="pf-coord-estagio" value="${escapeHtmlRegra(r.coordenadorEstagio || "")}">\n\n          <div style="display:flex;gap:8px;margin-top:6px;">\n            <button class="admin-edit-btn save" onclick="salvarFormularioEstadoCompleto('${uf}')">💾 Salvar tudo</button>\n            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="selectEstado('${uf}')">Cancelar</button>\n          </div>\n        </div>`;
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n        </div>\n        <div class="admin-inline-form" style="max-width:560px;">\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">📌 Situação</h3>\n          <label>Status</label>\n          <select id="pf-status">\n            <option value="" ${!dados.status ? "selected" : ""}>Sem selo de status</option>\n            <option value="ok" ${dados.status === "ok" ? "selected" : ""}>OK (verde)</option>\n            <option value="alerta" ${dados.status === "alerta" ? "selected" : ""}>Alerta (amarelo)</option>\n            <option value="pendente" ${dados.status === "pendente" ? "selected" : ""}>Pendente (vermelho)</option>\n          </select>\n          <label>Rótulo do status (texto exibido no selo)</label>\n          <input type="text" id="pf-status-label" value="${escapeHtmlRegra(dados.statusLabel || "")}" placeholder="Ex.: Regularizado">\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">📄 Fundamentação Legal</h3>\n          <label>Mantenedora</label>\n          <select id="pf-mantenedora" onchange="preencherMantenedoraSelecionada()">\n            <option value="">Selecione a mantenedora...</option>\n            ${opcoesMantenedoras}\n          </select>\n          <label>Razão Social</label>\n          <input type="text" id="pf-razao-social" value="${escapeHtmlRegra(dados.razaoSocial || "")}" readonly style="background:var(--cinza-light);">\n          <label>Documento (CNPJ)</label>\n          <input type="text" id="pf-documento" value="${escapeHtmlRegra(dados.documento || "")}" readonly style="background:var(--cinza-light);">\n          ${camposFundamentacaoHtml}\n          <label>Observações (aceita HTML simples, sempre visível na ficha do estado)</label>\n          <textarea id="pf-observacoes" style="width:100%;box-sizing:border-box;resize:vertical;">${dados.observacoes || ""}</textarea>\n          <label>Ficha Técnica Institucional (PDF, Word, Excel ou imagem — até 3 MB)</label>\n          <input type="file" id="pf-ficha-arquivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm,.png,.jpg,.jpeg,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/*" style="width:100%;box-sizing:border-box;">\n          ${dados.fichaTecnica && dados.fichaTecnica.dataUrl ? `<div style="font-size:12px;margin:4px 0 8px;color:var(--texto-sec);">Arquivo atual: <b>${escapeHtmlRegra(dados.fichaTecnica.nome)}</b> — escolher outro arquivo substitui este. <label style="display:inline-flex;gap:4px;align-items:center;cursor:pointer;"><input type="checkbox" id="pf-ficha-remover"> remover</label></div>` : ""}\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">👤 Secretário, Diretor e Coordenadores Responsáveis</h3>\n          <label>Nome do(a) Secretário(a)</label>\n          <input type="text" id="pf-nome-sec" value="${escapeHtmlRegra(r.nomeSecretario || "")}">\n          <label>Portaria do(a) Secretário(a)</label>\n          <input type="text" id="pf-portaria-sec" value="${escapeHtmlRegra(r.portariaSecretario || "")}">\n          <label>Nome do(a) Diretor(a)</label>\n          <input type="text" id="pf-nome-dir" value="${escapeHtmlRegra(r.nomeDiretor || "")}">\n          <label>Portaria do(a) Diretor(a)</label>\n          <input type="text" id="pf-portaria-dir" value="${escapeHtmlRegra(r.portariaDiretor || "")}">\n          <label>Coordenador(a) do Curso</label>\n          <input type="text" id="pf-coord-curso" value="${escapeHtmlRegra(r.coordenadorCurso || "")}">\n          <label>Coordenador(a) de Estágio</label>\n          <input type="text" id="pf-coord-estagio" value="${escapeHtmlRegra(r.coordenadorEstagio || "")}">\n\n          <div style="display:flex;gap:8px;margin-top:6px;">\n            <button class="admin-edit-btn save" onclick="salvarFormularioEstadoCompleto('${uf}')">💾 Salvar tudo</button>\n            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="selectEstado('${uf}')">Cancelar</button>\n          </div>\n        </div>`;
 
   if (dados.mantenedoraId) preencherMantenedoraSelecionada();
 }
@@ -257,10 +253,7 @@ async function salvarFormularioEstadoCompleto(uf) {
 
   const fichaInput = document.getElementById("pf-ficha-arquivo");
   const fichaRemover = document.getElementById("pf-ficha-remover");
-  let fichaErro = null;
-  if (fichaRemover && fichaRemover.checked) {
-    fichaErro = await removerFichaTecnicaDB(uf);
-  }
+  if (fichaRemover && fichaRemover.checked) delete dados.fichaTecnica;
   if (fichaInput && fichaInput.files && fichaInput.files[0]) {
     const arq = fichaInput.files[0];
     if (arq.size > 3 * 1024 * 1024) {
@@ -274,14 +267,13 @@ async function salvarFormularioEstadoCompleto(uf) {
         r.onerror = () => erro(r.error);
         r.readAsDataURL(arq);
       });
-      fichaErro = await salvarFichaTecnicaDB(uf, { nome: arq.name, tipo: arq.type || "", tamanho: arq.size, dataUrl });
+      dados.fichaTecnica = { nome: arq.name, tipo: arq.type || "", tamanho: arq.size, dataUrl };
     } catch (e) {
       alert("Não foi possível ler o arquivo da Ficha Técnica.");
       return;
     }
   }
 
-  if (fichaErro) alert("A Ficha Técnica não foi salva no Supabase: " + fichaErro);
   const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
   const header = document.querySelector("#port-detail-pane .port-detail-header");
@@ -309,69 +301,6 @@ const NOMES_BLOCO_PORTARIA = {
 
 
 
-// ---- Ficha Técnica Institucional: coluna ficha_tecnica da tabela portarias_estados ----
-const FICHAS_TECNICAS = {};
-let PORTARIAS_UF_ATUAL = null;
-
-function clienteSupabaseFicha() {
-  const nomes = ["supabaseClient", "supabase", "sb", "_supabase", "db"];
-  for (const n of nomes) {
-    try {
-      const c = (0, eval)(`typeof ${n} !== "undefined" ? ${n} : null`);
-      if (c && typeof c.from === "function") return c;
-    } catch (e) {}
-  }
-  // Última tentativa: procura em window qualquer objeto que pareça um cliente Supabase.
-  try {
-    for (const k of Object.getOwnPropertyNames(window)) {
-      let v; try { v = window[k]; } catch (e) { continue; }
-      if (v && typeof v === "object" && typeof v.from === "function" && (v.supabaseUrl || v.auth || v.rest)) return v;
-    }
-  } catch (e) {}
-  return null;
-}
-
-const FICHAS_CARREGADAS = {};
-
-// Carrega a ficha do estado direto da tabela. Só marca como carregada se der certo,
-// então tenta de novo a cada vez que o estado é aberto.
-async function carregarFichaTecnica(uf) {
-  const c = clienteSupabaseFicha();
-  if (!c) { console.warn("[Ficha Técnica] cliente Supabase não encontrado"); return false; }
-  const { data, error } = await c.from("portarias_estados").select("ficha_tecnica").eq("uf", uf).maybeSingle();
-  if (error) { console.warn("[Ficha Técnica] erro ao carregar " + uf + ":", error.message); return false; }
-  const f = data && data.ficha_tecnica;
-  if (f && f.arquivo) FICHAS_TECNICAS[uf] = { nome: f.nome, tipo: f.tipo, tamanho: f.tamanho, dataUrl: f.arquivo };
-  else delete FICHAS_TECNICAS[uf];
-  FICHAS_CARREGADAS[uf] = true;
-  console.log("[Ficha Técnica] " + uf + ":", f ? "encontrada (" + f.nome + ")" : "nenhuma ficha cadastrada");
-  return true;
-}
-
-async function salvarFichaTecnicaDB(uf, f) {
-  const c = clienteSupabaseFicha();
-  if (!c) return "cliente Supabase não encontrado no projeto";
-  const valor = { nome: f.nome, tipo: f.tipo, tamanho: f.tamanho, arquivo: f.dataUrl };
-  let r = await c.from("portarias_estados").update({ ficha_tecnica: valor }).eq("uf", uf).select("uf");
-  if (r.error) return r.error.message;
-  if (!r.data || !r.data.length) {
-    r = await c.from("portarias_estados").insert({ uf, ficha_tecnica: valor });
-    if (r.error) return r.error.message;
-  }
-  FICHAS_TECNICAS[uf] = f;
-  FICHAS_CARREGADAS[uf] = true;
-  return null;
-}
-
-async function removerFichaTecnicaDB(uf) {
-  const c = clienteSupabaseFicha();
-  if (!c) return "cliente Supabase não encontrado no projeto";
-  const { error } = await c.from("portarias_estados").update({ ficha_tecnica: null }).eq("uf", uf);
-  if (error) return error.message;
-  delete FICHAS_TECNICAS[uf];
-  return null;
-}
-
 // ---- Ficha Técnica Institucional (exibição) ----
 function fichaTecnicaHtml(f, uf) {
   const ehImagem = /^data:image\//.test(f.dataUrl);
@@ -381,7 +310,7 @@ function fichaTecnicaHtml(f, uf) {
 }
 
 function abrirFichaTecnica(uf) {
-  const f = FICHAS_TECNICAS[uf];
+  const f = PORTARIAS_DATA[uf] && PORTARIAS_DATA[uf].fichaTecnica;
   if (!f) return;
   const [cab, b64] = f.dataUrl.split(",");
   const mime = (cab.match(/data:([^;]+)/) || [])[1] || "application/octet-stream";
@@ -418,8 +347,7 @@ async function excluirBlocoEstado(uf, tipo) {
   } else if (tipo === "observacoes") {
     delete dados.observacoes;
   } else if (tipo === "fichaTecnica") {
-    const err = await removerFichaTecnicaDB(uf);
-    if (err) alert("Erro ao excluir a Ficha Técnica: " + err);
+    delete dados.fichaTecnica;
   }
   const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
