@@ -4075,8 +4075,7 @@ async function iniciarPainel() {
   }
   try {
     const portarias = await comPrazoMaximo(carregarPortariasDasTabelas(), 6e3);
-    const ultimoLocalPortarias = ULTIMO_SALVAMENTO_LOCAL["portarias"] || 0;
-    if (portarias && Date.now() - ultimoLocalPortarias > 4e3) {
+    if (portarias) {
       localStorage.setItem(LS_PREFIX + "portarias", JSON.stringify(portarias));
     }
   } catch (e) {
@@ -5060,10 +5059,7 @@ function aplicarDadosSalvos() {
   if (salvosDb) Object.assign(DB, salvosDb);
   DIAG.push(["db", !!salvosDb, salvosDb && Object.keys(salvosDb).length]);
   const salvosPortarias = carregarDoLocalStorage("portarias");
-  if (salvosPortarias) {
-    Object.keys(PORTARIAS_DATA).forEach(k => delete PORTARIAS_DATA[k]);
-    Object.assign(PORTARIAS_DATA, salvosPortarias);
-  }
+  if (salvosPortarias) Object.assign(PORTARIAS_DATA, salvosPortarias);
   DIAG.push(["portarias", !!salvosPortarias, salvosPortarias && Object.keys(salvosPortarias).length]);
   const salvosTutoriais = carregarDoLocalStorage("tutoriais");
   if (salvosTutoriais) Object.assign(TUTORIAIS, salvosTutoriais);
