@@ -219,7 +219,7 @@ function calRenderGrid(ano, mes) {
         const cliqueEvento = editavel
           ? `calAbrirNovoEvento('${dataStr}','${ev.id}')`
           : `calAbrirVisualizacaoEvento('${dataStr}','${ev.id}')`;
-        return `<div class="cal-evento cal-editavel" style="background:${cor.bg};border-left-color:${cor.borda}; border-radius:10px;" " onclick="event.stopPropagation();${cliqueEvento}">
+        return `<div class="cal-evento cal-editavel" style="background:${cor.bg};border-left-color:${cor.borda}; border-radius:10px;" onclick="event.stopPropagation();${cliqueEvento}">
           <div class="cal-evento-linha">${horaHtml}<span>${escapeHtmlRegra(ev.titulo)}</span>${delBtn}</div>
           ${descHtml}
         </div>`;
