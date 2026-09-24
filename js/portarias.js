@@ -20,7 +20,7 @@ function openPortarias() {
 const ESTADOS_GRID = [];
 
 function flRow(label, value) {
-  return `<div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--cinza-borda);">\n    <span style="flex:0 0 118px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:1px;">${label}</span>\n    <div class="fl-valor" style="flex:1;min-width:0;display:block;font-size:13px;line-height:1.55;color:var(--texto);white-space:pre-line;">${value}</div>\n  </div>`;
+  return `<div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--cinza-borda);">\n    <span style="flex:0 0 118px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:1px;">${label}</span>\n    <div class="fl-valor" style="flex:1;min-width:0;display:block !important;font-size:13px;line-height:1.55;color:var(--texto);white-space:pre-line;">${value}</div>\n  </div>`;
 }
 
 function flBox(rowsHtml) {
@@ -42,7 +42,7 @@ function flResponsaveis(r) {
   ].filter(([ , v ]) => v);
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:2px;">${label}</span>\n      <div class="fl-valor" style="flex:1;min-width:0;display:block;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</div>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:2px;">${label}</span>\n      <div class="fl-valor" style="flex:1;min-width:0;display:block !important;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</div>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Renderiza uma lista de pares [rótulo, valor] como uma caixa de linhas, pulando valores vazios.
@@ -50,7 +50,7 @@ function flCamposBox(pares) {
   const linhas = (pares || []).filter(([ , v ]) => v !== undefined && v !== null && String(v).trim() !== "");
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:2px;">${escapeHtmlRegra(String(label))}</span>\n      <div class="fl-valor" style="flex:1;min-width:0;display:block;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;overflow-wrap:anywhere;">${String(valor)}</div>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:2px;">${escapeHtmlRegra(String(label))}</span>\n      <div class="fl-valor" style="flex:1;min-width:0;display:block !important;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;overflow-wrap:anywhere;">${String(valor)}</div>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Campos "simples" (texto curto) da Fundamentação Legal e dos Dados do Curso.
@@ -131,10 +131,22 @@ selectEstado = function(uf) {
 })();
 
 // Remove o botão "Editar" ao lado dos títulos de bloco (fica só o de excluir).
+window.PORTARIAS_JS_VERSAO = "ajustes-v2";
+console.log("[portarias.js] versão", window.PORTARIAS_JS_VERSAO);
+(function observarPainel() {
+  const iniciar = () => {
+    const pane = document.getElementById("port-detail-pane");
+    if (!pane) { setTimeout(iniciar, 500); return; }
+    new MutationObserver(() => removerBotoesEditarBloco()).observe(pane, { childList: true, subtree: true });
+    removerBotoesEditarBloco();
+  };
+  iniciar();
+})();
+
 function removerBotoesEditarBloco() {
-  document.querySelectorAll("#port-detail-pane .port-section-title button, #port-detail-pane .port-detail-header button").forEach(b => {
-    if (b.classList.contains("admin-danger-btn")) return;
-    if (/editar/i.test(b.textContent) || /✏/.test(b.textContent)) b.remove();
+  document.querySelectorAll("#port-detail-pane .port-section-title *, #port-detail-pane .port-detail-header *").forEach(b => {
+    if (b.classList.contains("admin-danger-btn") || b.closest(".admin-danger-btn")) return;
+    if (b.children.length === 0 && (/^\s*(✏️?\s*)?editar\s*$/i.test(b.textContent))) (b.closest("button, a") || b).remove();
   });
 }
 
