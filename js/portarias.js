@@ -59,7 +59,7 @@ const CAMPOS_FUNDAMENTACAO = [
   { key: "leiPrincipal", label: "Lei Principal" },
   { key: "resolucao", label: "Resolução" },
   { key: "parecer", label: "Autorização" },
-  { key: "cofeci", label: "Código COFECI" },
+  { key: "cofeci", label: "COFECI" },
   { key: "sistec", label: "SISTEC" },
   { key: "censoEscolar", label: "Censo Escolar" },
   { key: "validade", label: "Validade" }
