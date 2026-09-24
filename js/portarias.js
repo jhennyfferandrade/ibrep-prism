@@ -1,5 +1,5 @@
 /**
- * IBREP Prism — Módulo: Atos Normativos (Portarias)
+ * IBREP Prism — Módulo: Atos Normativos (Portarias).
  * -----------------------------------------------------
  * Tudo que é específico da tela "Atos Normativos" (mapa do Brasil,
  * ficha por estado, portarias/pareceres, formulário completo de admin)
