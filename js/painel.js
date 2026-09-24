@@ -201,10 +201,91 @@ async function persistirRegistroInstitucional(section, item) {
     } else if (data.id !== undefined && data.id !== null) {
       item[cfg[section].idKey] = data.id;
     }
+    if (data.ok && item.cep) verificarCepGravado(section, item);
   } catch (e) {
     console.warn("Supabase: falha ao salvar " + tipo + " na nuvem.", e);
     alert("⚠️ O registro foi salvo apenas neste navegador — houve uma falha ao sincronizar com o banco de dados.");
   }
+}
+
+// Confere no banco se o CEP realmente foi gravado (a função salvar_* do
+// Supabase pode estar ignorando as colunas de endereço) e avisa se não.
+async function verificarCepGravado(section, item) {
+  try {
+    const idKey = cfg[section].idKey;
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${section}?select=cep&${idKey}=eq.${encodeURIComponent(item[idKey])}`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    if (!r.ok) {
+      alert("⚠️ Não consegui conferir o CEP no banco: a tabela \"" + section + "\" não respondeu com a coluna \"cep\". Verifique se a coluna existe.");
+      return;
+    }
+    const rows = await r.json();
+    if (rows.length && !rows[0].cep) {
+      alert("⚠️ O CEP não foi gravado no banco de dados. A função salvar no Supabase provavelmente não inclui os campos de endereço (cep, endereco, bairro, cidade, estado).");
+    }
+  } catch (e) {
+    console.warn("Não foi possível conferir o CEP no banco.", e);
+  }
+}
+
+// Formata 8 dígitos como 00000-000.
+function formatarCep(digitos) {
+  return digitos.length === 8 ? digitos.slice(0, 5) + "-" + digitos.slice(5) : digitos;
+}
+
+// Ao digitar o CEP no detalhe do registro (modo admin), busca o endereço
+// no ViaCEP e preenche endereço, bairro, cidade e estado (UF).
+async function aplicarCepNoRegistro(item, valEl, row) {
+  const section = currentSection;
+  const digitos = valEl.textContent.replace(/\D/g, "");
+  const atual = item.cep !== undefined && item.cep !== null ? String(item.cep) : "";
+
+  if (digitos === "") {
+    if (atual === "") return;
+    item.cep = "";
+    persistirRegistroInstitucional(section, item);
+    mostrarFlashSalvo(row);
+    return;
+  }
+  if (digitos.length !== 8) {
+    alert("CEP inválido: informe os 8 dígitos.");
+    valEl.textContent = atual;
+    return;
+  }
+  if (digitos === atual.replace(/\D/g, "")) {
+    valEl.textContent = formatarCep(digitos);
+    return;
+  }
+
+  const cepFmt = formatarCep(digitos);
+  valEl.textContent = cepFmt;
+  item.cep = cepFmt;
+
+  try {
+    const resp = await fetch(`https://viacep.com.br/ws/${digitos}/json/`);
+    const dados = await resp.json();
+    if (dados.erro) {
+      alert("CEP não encontrado. Ele foi salvo, mas preencha o endereço manualmente.");
+    } else {
+      const campos = { endereco: dados.logradouro, bairro: dados.bairro, cidade: dados.localidade, estado: dados.uf };
+      Object.keys(campos).forEach(k => {
+        if (!campos[k]) return;
+        item[k] = campos[k];
+        if (!document.body.contains(row)) return;
+        const linha = Array.from(row.parentElement.querySelectorAll(".field-row"))
+          .find(r => r.querySelector(".field-key")?.textContent === labelMap[k]);
+        const fv = linha && linha.querySelector(".field-val");
+        if (fv) fv.textContent = campos[k];
+      });
+    }
+  } catch (e) {
+    console.warn("ViaCEP: falha ao buscar o CEP.", e);
+    alert("Não consegui buscar o endereço agora (sem conexão com o ViaCEP). O CEP foi salvo; preencha o restante manualmente.");
+  }
+
+  persistirRegistroInstitucional(section, item);
+  if (document.body.contains(row)) mostrarFlashSalvo(row);
 }
 
 async function excluirRegistroInstitucional(section, id) {
@@ -717,6 +798,15 @@ renderDetail = function(item) {
       valEl.style.cursor = "pointer";
       valEl.title = "Editar na origem — a mudança vale em todos os lugares que mostram esse nome";
       valEl.addEventListener("click", () => irParaRegistroOrigem(key, item[key]));
+      return;
+    }
+    if (key === "cep") {
+      valEl.classList.add("admin-editable");
+      valEl.setAttribute("contenteditable", "true");
+      valEl.setAttribute("inputmode", "numeric");
+      valEl.title = "Digite o CEP — endereço, bairro, cidade e estado são preenchidos automaticamente";
+      valEl.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); valEl.blur(); } });
+      valEl.addEventListener("blur", () => aplicarCepNoRegistro(item, valEl, row));
       return;
     }
     valEl.classList.add("admin-editable");
