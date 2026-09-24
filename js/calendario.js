@@ -105,6 +105,13 @@ function calFormatarData(d) {
   return `${ano}-${mes}-${dia}`;
 }
 
+function calCodificarQuebras(txt) {
+  return (txt || "").replace(/\r\n/g, "\n").replace(/\n/g, "\u2424"); // ␤
+}
+function calDecodificarQuebras(txt) {
+  return (txt || "").replace(/\u2424/g, "\n");
+}
+
 // Modo de visualização escolhido pelo usuário nesta sessão: "grid"
 // (calendário em grade) ou "linear" (só a lista de eventos). Fica
 // independente da permissão de edição — qualquer pessoa pode alternar
@@ -378,7 +385,7 @@ async function calPersistirEvento(evento, dataStr) {
       p_hora: evento.hora || null,
       p_dia_todo: !!evento.diaTodo,
       p_titulo: evento.titulo,
-      p_descricao: evento.desc || null
+       p_descricao: evento.desc ? calCodificarQuebras(evento.desc) : null   // 👈 mudou aqui
     });
     if (!data.ok) {
       alert("⚠️ O evento foi salvo apenas neste navegador — falha ao sincronizar com o banco de dados: " + (data.erro || ""));
