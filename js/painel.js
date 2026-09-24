@@ -64,6 +64,7 @@ const labelMap = {
   cep: "CEP",
   endereco: "Endereço",
   bairro: "Bairro",
+  numero: "Número",
   complemento: "Complemento",
   cidade: "Cidade",
   estado: "Estado",
@@ -88,7 +89,7 @@ const sectionGroups = {
     keys: [ "email", "telefone" ]
   }, {
     title: "Endereço",
-    keys: [ "cep", "endereco", "bairro", "complemento", "cidade", "estado" ]
+    keys: [ "cep", "endereco", "bairro", "numero", "complemento", "cidade", "estado" ]
   }, {
     title: "Responsável",
     keys: [ "gerente_nome", "gerente_email" ]
@@ -104,7 +105,7 @@ const sectionGroups = {
     keys: [ "email", "telefone" ]
   }, {
     title: "Endereço",
-    keys: [ "cep", "endereco", "bairro", "complemento", "cidade", "estado" ]
+    keys: [ "cep", "endereco", "bairro", "numero", "complemento", "cidade", "estado" ]
   }, {
     title: "Responsável",
     keys: [ "gerente_nome", "gerente_email" ]
@@ -120,7 +121,7 @@ const sectionGroups = {
     keys: [ "email", "telefone" ]
   }, {
     title: "Endereço",
-    keys: [ "cep", "endereco", "bairro", "complemento", "cidade", "estado" ]
+    keys: [ "cep", "endereco", "bairro", "numero", "complemento", "cidade", "estado" ]
   }, {
     title: "Responsável",
     keys: [ "gerente_nome", "gerente_telefone", "gerente_celular", "gerente_email" ]
@@ -136,7 +137,7 @@ const sectionGroups = {
     keys: [ "email", "telefone" ]
   }, {
     title: "Endereço",
-    keys: [ "cep", "endereco", "bairro", "complemento", "cidade", "estado" ]
+    keys: [ "cep", "endereco", "bairro", "numero", "complemento", "cidade", "estado" ]
   }, {
     title: "Responsável",
     keys: [ "gerente_nome", "gerente_telefone", "gerente_celular", "gerente_email" ]
@@ -229,6 +230,16 @@ async function verificarCepGravado(section, item) {
   }
 }
 
+// Nome por extenso das UFs (usado quando o ViaCEP devolve só a sigla).
+const UF_NOMES = {
+  AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará",
+  DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão",
+  MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais", PA: "Pará",
+  PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro",
+  RN: "Rio Grande do Norte", RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima",
+  SC: "Santa Catarina", SP: "São Paulo", SE: "Sergipe", TO: "Tocantins"
+};
+
 // Formata 8 dígitos como 00000-000.
 function formatarCep(digitos) {
   return digitos.length === 8 ? digitos.slice(0, 5) + "-" + digitos.slice(5) : digitos;
@@ -268,7 +279,7 @@ async function aplicarCepNoRegistro(item, valEl, row) {
     if (dados.erro) {
       alert("CEP não encontrado. Ele foi salvo, mas preencha o endereço manualmente.");
     } else {
-      const campos = { endereco: dados.logradouro, bairro: dados.bairro, cidade: dados.localidade, estado: dados.uf };
+      const campos = { endereco: dados.logradouro, bairro: dados.bairro, cidade: dados.localidade, estado: dados.estado || UF_NOMES[dados.uf] || dados.uf };
       Object.keys(campos).forEach(k => {
         if (!campos[k]) return;
         item[k] = campos[k];
