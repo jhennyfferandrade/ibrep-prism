@@ -3983,7 +3983,7 @@ async function carregarEventosCalendarioDaTabela() {
       hora: r.hora || "",
       diaTodo: !!r.dia_todo,
       titulo: r.titulo,
-     desc: calDecodificarQuebras(r.descricao || "") 
+      desc: r.descricao || ""
     });
   });
   return agrupado;
