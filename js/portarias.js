@@ -93,9 +93,8 @@ const _selectEstadoOriginal = selectEstado;
 
 selectEstado = function(uf) {
   PORTARIAS_UF_ATUAL = uf;
-  if (!FICHAS_TENTOU_CARREGAR) {
-    FICHAS_TENTOU_CARREGAR = true;
-    carregarFichasTecnicas().then(() => { if (PORTARIAS_UF_ATUAL === uf) selectEstado(uf); });
+  if (!FICHAS_CARREGADAS[uf]) {
+    carregarFichaTecnica(uf).then(ok => { if (ok && PORTARIAS_UF_ATUAL === uf) selectEstado(uf); });
   }
   _selectEstadoOriginal(uf);
   if (!adminMode) return;
@@ -310,9 +309,8 @@ const NOMES_BLOCO_PORTARIA = {
 
 
 
-// ---- Ficha Técnica Institucional: tabela própria no Supabase (portarias_fichas_tecnicas) ----
+// ---- Ficha Técnica Institucional: coluna ficha_tecnica da tabela portarias_estados ----
 const FICHAS_TECNICAS = {};
-let FICHAS_TENTOU_CARREGAR = false;
 let PORTARIAS_UF_ATUAL = null;
 
 function clienteSupabaseFicha() {
@@ -326,31 +324,42 @@ function clienteSupabaseFicha() {
   return window.supabaseClient || window.sb || null;
 }
 
-async function carregarFichasTecnicas() {
-  FICHAS_TENTOU_CARREGAR = true;
+const FICHAS_CARREGADAS = {};
+
+// Carrega a ficha do estado direto da tabela. Só marca como carregada se der certo,
+// então tenta de novo a cada vez que o estado é aberto.
+async function carregarFichaTecnica(uf) {
   const c = clienteSupabaseFicha();
-  if (!c) { console.warn("[Ficha Técnica] cliente Supabase não encontrado"); return; }
-  const { data, error } = await c.from("portarias_fichas_tecnicas").select("uf,nome,tipo,tamanho,arquivo");
-  if (error) { console.warn("[Ficha Técnica] erro ao carregar:", error.message); return; }
-  Object.keys(FICHAS_TECNICAS).forEach(k => delete FICHAS_TECNICAS[k]);
-  (data || []).forEach(r => { FICHAS_TECNICAS[r.uf] = { nome: r.nome, tipo: r.tipo, tamanho: r.tamanho, dataUrl: r.arquivo }; });
+  if (!c) { console.warn("[Ficha Técnica] cliente Supabase não encontrado"); return false; }
+  const { data, error } = await c.from("portarias_estados").select("ficha_tecnica").eq("uf", uf).maybeSingle();
+  if (error) { console.warn("[Ficha Técnica] erro ao carregar " + uf + ":", error.message); return false; }
+  const f = data && data.ficha_tecnica;
+  if (f && f.arquivo) FICHAS_TECNICAS[uf] = { nome: f.nome, tipo: f.tipo, tamanho: f.tamanho, dataUrl: f.arquivo };
+  else delete FICHAS_TECNICAS[uf];
+  FICHAS_CARREGADAS[uf] = true;
+  console.log("[Ficha Técnica] " + uf + ":", f ? "encontrada (" + f.nome + ")" : "nenhuma ficha cadastrada");
+  return true;
 }
 
 async function salvarFichaTecnicaDB(uf, f) {
   const c = clienteSupabaseFicha();
   if (!c) return "cliente Supabase não encontrado no projeto";
-  const { error } = await c.from("portarias_fichas_tecnicas").upsert({
-    uf, nome: f.nome, tipo: f.tipo, tamanho: f.tamanho, arquivo: f.dataUrl, updated_at: new Date().toISOString()
-  }, { onConflict: "uf" });
-  if (error) return error.message;
+  const valor = { nome: f.nome, tipo: f.tipo, tamanho: f.tamanho, arquivo: f.dataUrl };
+  let r = await c.from("portarias_estados").update({ ficha_tecnica: valor }).eq("uf", uf).select("uf");
+  if (r.error) return r.error.message;
+  if (!r.data || !r.data.length) {
+    r = await c.from("portarias_estados").insert({ uf, ficha_tecnica: valor });
+    if (r.error) return r.error.message;
+  }
   FICHAS_TECNICAS[uf] = f;
+  FICHAS_CARREGADAS[uf] = true;
   return null;
 }
 
 async function removerFichaTecnicaDB(uf) {
   const c = clienteSupabaseFicha();
   if (!c) return "cliente Supabase não encontrado no projeto";
-  const { error } = await c.from("portarias_fichas_tecnicas").delete().eq("uf", uf);
+  const { error } = await c.from("portarias_estados").update({ ficha_tecnica: null }).eq("uf", uf);
   if (error) return error.message;
   delete FICHAS_TECNICAS[uf];
   return null;
