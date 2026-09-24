@@ -1,5 +1,5 @@
 /**
- * IBREP Prism — Módulo: Atos Normativos (Portarias).
+ * IBREP Prism — Módulo: Atos Normativos (Portarias)
  * -----------------------------------------------------
  * Tudo que é específico da tela "Atos Normativos" (mapa do Brasil,
  * ficha por estado, portarias/pareceres, formulário completo de admin)
@@ -42,7 +42,7 @@ function flResponsaveis(r) {
   ].filter(([ , v ]) => v);
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:2px;">${label}</span>\n      <span style="flex:1;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</span>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:4px 14px;min-height:auto;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${label}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);">${valor}</span>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Renderiza uma lista de pares [rótulo, valor] como uma caixa de linhas, pulando valores vazios.
@@ -50,7 +50,7 @@ function flCamposBox(pares) {
   const linhas = (pares || []).filter(([ , v ]) => v !== undefined && v !== null && String(v).trim() !== "");
   if (!linhas.length) return "";
   return `<div style="border:1px solid var(--cinza-borda);border-radius:10px;overflow:hidden;background:#fff;">` +
-    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:8px 14px;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);padding-top:2px;">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;">${String(valor)}</span>\n    </div>`).join("") + `\n  </div>`;
+    linhas.map(([ label, valor ], i) => `\n    <div style="display:flex;gap:10px;padding:4px 14px;min-height:auto;box-sizing:border-box;${i < linhas.length - 1 ? "border-bottom:1px solid var(--cinza-borda);" : ""}">\n      <span style="flex:0 0 170px;display:flex;align-items:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--roxo);">${escapeHtmlRegra(String(label))}</span>\n      <span style="flex:1;display:flex;align-items:center;font-size:13px;line-height:1.35;color:var(--texto);white-space:pre-line;">${String(valor)}</span>\n    </div>`).join("") + `\n  </div>`;
 }
 
 // Campos "simples" (texto curto) da Fundamentação Legal e dos Dados do Curso.
@@ -105,6 +105,22 @@ selectEstado = function(uf) {
     delBtn.onclick = () => excluirDadosEstado(uf);
     header.appendChild(delBtn);
   }
+  const secoes = document.querySelectorAll("#port-detail-pane .port-section");
+  secoes.forEach(sec => {
+    const titulo = sec.querySelector(".port-section-title");
+    if (!titulo) return;
+    const rotulo = (titulo.querySelector("span") || titulo).textContent.trim();
+    if (rotulo === "Fundamentação Legal") {
+      const btn = document.createElement("button");
+      btn.className = "admin-edit-btn";
+      btn.style.marginLeft = "10px";
+      btn.textContent = "✏️ Editar";
+      const textoDiv = sec.querySelector(".port-section-text");
+      btn.onclick = () => ativarEdicaoFundamentacao(uf, textoDiv, btn);
+      const lixeira = titulo.querySelector(".admin-danger-btn");
+      if (lixeira) titulo.insertBefore(btn, lixeira); else titulo.appendChild(btn);
+    }
+  });
 };
 
 async function criarBlocoEstado(uf, tipo) {
@@ -139,10 +155,10 @@ function abrirFormularioEstadoCompleto(uf) {
   ).join("");
 
   const camposFundamentacaoHtml = CAMPOS_FUNDAMENTACAO.map(f =>
-    `<label>${f.label}</label>\n          <div style="display:flex;gap:6px;margin-bottom:4px;">\n            <button type="button" onclick="aplicarFormatoCampo('pf-fund-${f.key}','b')" style="border:1px solid var(--cinza-borda);background:#fff;border-radius:5px;width:26px;height:24px;font-weight:700;cursor:pointer;font-size:12px;" title="Negrito">B</button>\n            <button type="button" onclick="aplicarFormatoCampo('pf-fund-${f.key}','u')" style="border:1px solid var(--cinza-borda);background:#fff;border-radius:5px;width:26px;height:24px;text-decoration:underline;cursor:pointer;font-size:12px;" title="Sublinhado">S</button>\n          </div>\n          <textarea id="pf-fund-${f.key}" rows="2" style="width:100%;box-sizing:border-box;resize:vertical;">${escapeHtmlRegra(dados[f.key] || "")}</textarea>`
+    `<label>${f.label}</label>\n          <div style="display:flex;gap:6px;margin-bottom:4px;">\n            <button type="button" onclick="aplicarFormatoCampo('pf-fund-${f.key}','b')" style="border:1px solid var(--cinza-borda);background:#fff;border-radius:5px;width:26px;height:24px;font-weight:700;cursor:pointer;font-size:12px;" title="Negrito">B</button>\n            <button type="button" onclick="aplicarFormatoCampo('pf-fund-${f.key}','u')" style="border:1px solid var(--cinza-borda);background:#fff;border-radius:5px;width:26px;height:24px;text-decoration:underline;cursor:pointer;font-size:12px;" title="Sublinhado">S</button>\n          </div>\n          <textarea id="pf-fund-${f.key}" rows="2" style="resize:vertical;">${escapeHtmlRegra(dados[f.key] || "")}</textarea>`
   ).join("\n          ");
 
-  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n        </div>\n        <div class="admin-inline-form" style="max-width:560px;">\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">📌 Situação</h3>\n          <label>Status</label>\n          <select id="pf-status">\n            <option value="" ${!dados.status ? "selected" : ""}>Sem selo de status</option>\n            <option value="ok" ${dados.status === "ok" ? "selected" : ""}>OK (verde)</option>\n            <option value="alerta" ${dados.status === "alerta" ? "selected" : ""}>Alerta (amarelo)</option>\n            <option value="pendente" ${dados.status === "pendente" ? "selected" : ""}>Pendente (vermelho)</option>\n          </select>\n          <label>Rótulo do status (texto exibido no selo)</label>\n          <input type="text" id="pf-status-label" value="${escapeHtmlRegra(dados.statusLabel || "")}" placeholder="Ex.: Regularizado">\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">📄 Fundamentação Legal</h3>\n          <label>Mantenedora</label>\n          <select id="pf-mantenedora" onchange="preencherMantenedoraSelecionada()">\n            <option value="">Selecione a mantenedora...</option>\n            ${opcoesMantenedoras}\n          </select>\n          <label>Razão Social</label>\n          <input type="text" id="pf-razao-social" value="${escapeHtmlRegra(dados.razaoSocial || "")}" readonly style="background:var(--cinza-light);">\n          <label>Documento (CNPJ)</label>\n          <input type="text" id="pf-documento" value="${escapeHtmlRegra(dados.documento || "")}" readonly style="background:var(--cinza-light);">\n          ${camposFundamentacaoHtml}\n          <label>Observações (aceita HTML simples, sempre visível na ficha do estado)</label>\n          <textarea id="pf-observacoes" style="width:100%;box-sizing:border-box;resize:vertical;">${dados.observacoes || ""}</textarea>\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">👤 Secretário, Diretor e Coordenadores Responsáveis</h3>\n          <label>Nome do(a) Secretário(a)</label>\n          <input type="text" id="pf-nome-sec" value="${escapeHtmlRegra(r.nomeSecretario || "")}">\n          <label>Portaria do(a) Secretário(a)</label>\n          <input type="text" id="pf-portaria-sec" value="${escapeHtmlRegra(r.portariaSecretario || "")}">\n          <label>Nome do(a) Diretor(a)</label>\n          <input type="text" id="pf-nome-dir" value="${escapeHtmlRegra(r.nomeDiretor || "")}">\n          <label>Portaria do(a) Diretor(a)</label>\n          <input type="text" id="pf-portaria-dir" value="${escapeHtmlRegra(r.portariaDiretor || "")}">\n          <label>Coordenador(a) do Curso</label>\n          <input type="text" id="pf-coord-curso" value="${escapeHtmlRegra(r.coordenadorCurso || "")}">\n          <label>Coordenador(a) de Estágio</label>\n          <input type="text" id="pf-coord-estagio" value="${escapeHtmlRegra(r.coordenadorEstagio || "")}">\n\n          <div style="display:flex;gap:8px;margin-top:6px;">\n            <button class="admin-edit-btn save" onclick="salvarFormularioEstadoCompleto('${uf}')">💾 Salvar tudo</button>\n            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="selectEstado('${uf}')">Cancelar</button>\n          </div>\n        </div>`;
+  pane.innerHTML = `\n        <div class="port-detail-header">\n          <div class="port-detail-title">${estado.nome} (${uf})</div>\n        </div>\n        <div class="admin-inline-form" style="max-width:560px;">\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">📌 Situação</h3>\n          <label>Status</label>\n          <select id="pf-status">\n            <option value="" ${!dados.status ? "selected" : ""}>Sem selo de status</option>\n            <option value="ok" ${dados.status === "ok" ? "selected" : ""}>OK (verde)</option>\n            <option value="alerta" ${dados.status === "alerta" ? "selected" : ""}>Alerta (amarelo)</option>\n            <option value="pendente" ${dados.status === "pendente" ? "selected" : ""}>Pendente (vermelho)</option>\n          </select>\n          <label>Rótulo do status (texto exibido no selo)</label>\n          <input type="text" id="pf-status-label" value="${escapeHtmlRegra(dados.statusLabel || "")}" placeholder="Ex.: Regularizado">\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">📄 Fundamentação Legal</h3>\n          <label>Mantenedora</label>\n          <select id="pf-mantenedora" onchange="preencherMantenedoraSelecionada()">\n            <option value="">Selecione a mantenedora...</option>\n            ${opcoesMantenedoras}\n          </select>\n          <label>Razão Social</label>\n          <input type="text" id="pf-razao-social" value="${escapeHtmlRegra(dados.razaoSocial || "")}" readonly style="background:var(--cinza-light);">\n          <label>Documento (CNPJ)</label>\n          <input type="text" id="pf-documento" value="${escapeHtmlRegra(dados.documento || "")}" readonly style="background:var(--cinza-light);">\n          ${camposFundamentacaoHtml}\n          <label>Observações (aceita HTML simples, sempre visível na ficha do estado)</label>\n          <textarea id="pf-observacoes">${dados.observacoes || ""}</textarea>\n\n          <h3 style="font-size:12.5px;color:var(--roxo);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 10px;">👤 Secretário, Diretor e Coordenadores Responsáveis</h3>\n          <label>Nome do(a) Secretário(a)</label>\n          <input type="text" id="pf-nome-sec" value="${escapeHtmlRegra(r.nomeSecretario || "")}">\n          <label>Portaria do(a) Secretário(a)</label>\n          <input type="text" id="pf-portaria-sec" value="${escapeHtmlRegra(r.portariaSecretario || "")}">\n          <label>Nome do(a) Diretor(a)</label>\n          <input type="text" id="pf-nome-dir" value="${escapeHtmlRegra(r.nomeDiretor || "")}">\n          <label>Portaria do(a) Diretor(a)</label>\n          <input type="text" id="pf-portaria-dir" value="${escapeHtmlRegra(r.portariaDiretor || "")}">\n          <label>Coordenador(a) do Curso</label>\n          <input type="text" id="pf-coord-curso" value="${escapeHtmlRegra(r.coordenadorCurso || "")}">\n          <label>Coordenador(a) de Estágio</label>\n          <input type="text" id="pf-coord-estagio" value="${escapeHtmlRegra(r.coordenadorEstagio || "")}">\n\n          <div style="display:flex;gap:8px;margin-top:6px;">\n            <button class="admin-edit-btn save" onclick="salvarFormularioEstadoCompleto('${uf}')">💾 Salvar tudo</button>\n            <button class="admin-edit-btn" style="background:var(--cinza-borda);color:var(--texto-sec);" onclick="selectEstado('${uf}')">Cancelar</button>\n          </div>\n        </div>`;
 
   if (dados.mantenedoraId) preencherMantenedoraSelecionada();
 }
@@ -254,4 +270,25 @@ async function excluirBlocoEstado(uf, tipo) {
   const resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
   selectEstado(uf);
   avisarFalhaSalvarNuvem(resultado);
+}
+
+function ativarEdicaoFundamentacao(uf, textoDiv, btn) {
+  textoDiv.setAttribute("contenteditable", "true");
+  textoDiv.classList.add("admin-editable");
+  textoDiv.focus();
+  btn.textContent = "💾 Salvar";
+  btn.onclick = async () => {
+    const dados = PORTARIAS_DATA[uf];
+    let resultado;
+    if (dados) {
+      dados.fundamentacaoLegal = textoDiv.innerHTML;
+      resultado = await resyncDataBlock("portarias", PORTARIAS_DATA);
+    }
+    textoDiv.removeAttribute("contenteditable");
+    textoDiv.classList.remove("admin-editable");
+    mostrarFlashSalvo(btn.parentElement);
+    btn.textContent = "✏️ Editar";
+    btn.onclick = () => ativarEdicaoFundamentacao(uf, textoDiv, btn);
+    avisarFalhaSalvarNuvem(resultado);
+  };
 }
