@@ -39,6 +39,11 @@
 let CONTATOS_PESSOAS = [];
 
 let contCategoriaAtual = null;
+// Filtro de departamento (Pedagógico, Financeiro, Comercial...) dentro do
+// setor selecionado. É calculado a partir do campo `departamento` de cada
+// função — não tem cadastro próprio, some/aparece conforme o que for
+// digitado nas funções. null = "Todos".
+let contDepartamentoAtual = null;
 
 function openContatos() {
   if (!exigirPermissao("contatos")) return;
@@ -132,7 +137,24 @@ function setContCat(btn, cardId) {
   document.querySelectorAll(".tut-cat-btn").forEach(b => b.classList.remove("active"));
   if (btn) btn.classList.add("active");
   contCategoriaAtual = cardId;
+  contDepartamentoAtual = null; // trocou de setor: filtro de departamento volta pra "Todos"
   renderContContent(cardId);
+}
+
+function setContDepartamento(dep) {
+  contDepartamentoAtual = dep || null;
+  renderContContent(contCategoriaAtual);
+}
+
+// Lista de departamentos distintos cadastrados nas funções de um setor,
+// em ordem de primeira aparição (ignora funções sem departamento definido).
+function contatosDepartamentosDoSetor(funcoes) {
+  const vistos = [];
+  funcoes.forEach(f => {
+    const dep = (f.departamento || "").trim();
+    if (dep && !vistos.includes(dep)) vistos.push(dep);
+  });
+  return vistos;
 }
 
 function excluirContCategoria(cardId) {
@@ -179,9 +201,34 @@ function renderContContent(cardId) {
       </div>
       ${editBtn}
     </div>`;
+
+  // Filtro de departamento (Pedagógico, Financeiro, Comercial...), calculado
+  // a partir do que já foi digitado no campo "Departamento" das funções
+  // deste setor. Só aparece quando existe pelo menos um departamento.
+  const departamentos = contatosDepartamentosDoSetor(cat.funcoes);
+  if (departamentos.length) {
+    html += `<div class="cont-dep-filtros">`;
+    html += `<button class="cont-dep-btn ${contDepartamentoAtual ? "" : "active"}" onclick="setContDepartamento(null)">Todos</button>`;
+    departamentos.forEach(dep => {
+      const ativo = dep === contDepartamentoAtual ? "active" : "";
+      html += `<button class="cont-dep-btn ${ativo}" onclick="setContDepartamento('${dep.replace(/'/g, "\\'")}')">${escapeHtmlRegra(dep)}</button>`;
+    });
+    html += `</div>`;
+  } else {
+    contDepartamentoAtual = null;
+  }
+
+  const funcoesFiltradas = contDepartamentoAtual
+    ? cat.funcoes.filter(f => (f.departamento || "").trim() === contDepartamentoAtual)
+    : cat.funcoes;
+
   html += `<div class="cont-funcoes-grid">`;
-  cat.funcoes.forEach((f, idx) => {
-    html += renderContFuncaoCard(cat.card_id, f, idx, cat.funcoes.length > 1, cat.funcoes.length);
+  if (contDepartamentoAtual && !funcoesFiltradas.length) {
+    html += contEstadoVazio(`Nenhuma pessoa cadastrada em "${escapeHtmlRegra(contDepartamentoAtual)}"`);
+  }
+  funcoesFiltradas.forEach((f, posVisual) => {
+    const idxReal = cat.funcoes.indexOf(f);
+    html += renderContFuncaoCard(cat.card_id, f, idxReal, cat.funcoes.length > 1, funcoesFiltradas.length, posVisual);
   });
   if (adminMode) {
     html += `
@@ -194,7 +241,11 @@ function renderContContent(cardId) {
   area.innerHTML = html;
 }
 
-function renderContFuncaoCard(cardId, f, idx, podeExcluir, total) {
+function renderContFuncaoCard(cardId, f, idx, podeExcluir, total, posVisual) {
+  // posVisual = posição dentro da lista já filtrada pelo departamento (usada
+  // só pro cálculo de layout); idx = posição real na lista completa do setor
+  // (usada nas ações de editar/excluir, que indexam contatosLinhasDoCard).
+  if (posVisual === undefined) posVisual = idx;
   const titulo = f.titulo
     ? escapeHtmlRegra(f.titulo)
     : `<span class="cont-placeholder">Sem nome definido</span>`;
@@ -218,7 +269,7 @@ function renderContFuncaoCard(cardId, f, idx, podeExcluir, total) {
          ${podeExcluir ? `<button class="cont-funcao-card-excluir" onclick="excluirContFuncao('${cardId}', ${idx})">🗑️ Remover</button>` : ""}
        </div>`
     : "";
-  const basis = contFuncaoCardBasis(total, idx);
+  const basis = contFuncaoCardBasis(total, posVisual);
   return `
     <div class="cont-funcao-card" style="flex-basis:${basis};max-width:${basis};">
       <div class="cont-funcao-titulo">${titulo}</div>
@@ -404,6 +455,9 @@ function abrirEdicaoContFuncao(cardId, idx) {
             <div class="admin-inline-form">
               <label>Nome da função (ex.: Cancelamento, Matricular pessoas)</label>
               <input type="text" id="admin-contfuncao-titulo" value="${escapeHtmlRegra(linha.titulo || "")}">
+              <label>Departamento (ex.: Pedagógico, Financeiro, Comercial — opcional, usado pro filtro em cima dos cards)</label>
+              <input type="text" id="admin-contfuncao-departamento" list="cont-dep-sugestoes" value="${escapeHtmlRegra(linha.departamento || "")}">
+              <datalist id="cont-dep-sugestoes">${contatosDepartamentosDoSetor(contatosLinhasDoCard(cardId)).map(d => `<option value="${escapeHtmlRegra(d)}">`).join("")}</datalist>
               <label>Quando te procuram por isso (uma situação por linha)</label>
               <textarea id="admin-contfuncao-caixa1">${escapeHtmlRegra(linha.caixa_texto1 || "")}</textarea>
               <label>Quem procurar (ex.: Procure a Camila)</label>
@@ -426,6 +480,7 @@ function salvarEdicaoContFuncao(cardId, idx) {
   const linha = contatosLinhasDoCard(cardId)[idx];
   if (!linha) return;
   linha.titulo = document.getElementById("admin-contfuncao-titulo").value.trim();
+  linha.departamento = document.getElementById("admin-contfuncao-departamento").value.trim();
   linha.caixa_texto1 = document.getElementById("admin-contfuncao-caixa1").value.trim();
   linha.fale_com = document.getElementById("admin-contfuncao-falecom").value.trim();
   linha.caixa_texto2 = document.getElementById("admin-contfuncao-caixa2").value.trim();
@@ -484,6 +539,9 @@ function abrirNovaContFuncao(cardId) {
             <div class="admin-inline-form">
               <label>Nome da função (ex.: Cancelamento, Matricular pessoas)</label>
               <input type="text" id="admin-newcontfuncao-titulo" placeholder="Ex.: Cancelamento">
+              <label>Departamento (ex.: Pedagógico, Financeiro, Comercial — opcional, usado pro filtro em cima dos cards)</label>
+              <input type="text" id="admin-newcontfuncao-departamento" list="cont-dep-sugestoes" placeholder="Ex.: Pedagógico">
+              <datalist id="cont-dep-sugestoes">${contatosDepartamentosDoSetor(contatosLinhasDoCard(cardId)).map(d => `<option value="${escapeHtmlRegra(d)}">`).join("")}</datalist>
               <label>Quando te procuram por isso (uma situação por linha)</label>
               <textarea id="admin-newcontfuncao-caixa1" placeholder="Uma situação por linha…"></textarea>
               <label>Quem procurar (ex.: Procure a Camila)</label>
@@ -510,6 +568,7 @@ function salvarNovaContFuncao(cardId) {
     alert("Digite o nome da função.");
     return;
   }
+  const departamento = document.getElementById("admin-newcontfuncao-departamento").value.trim();
   const caixa1 = document.getElementById("admin-newcontfuncao-caixa1").value.trim();
   const falecom = document.getElementById("admin-newcontfuncao-falecom").value.trim();
   const caixa2 = document.getElementById("admin-newcontfuncao-caixa2").value.trim();
@@ -521,6 +580,7 @@ function salvarNovaContFuncao(cardId) {
     emoji: base.emoji,
     setor: base.setor,
     titulo: titulo,
+    departamento: departamento,
     fale_com: falecom,
     imagem: null,
     caixa_texto1: caixa1,
