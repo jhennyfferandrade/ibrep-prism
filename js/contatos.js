@@ -60,8 +60,8 @@ function initContatosScreen() {
   const area = document.getElementById("cont-content");
   if (area) {
     area.innerHTML = cards.length
-      ? contEstadoVazio("Selecione um setor no menu ao lado")
-      : contEstadoVazio("Nenhum setor cadastrado ainda");
+      ? contEstadoVazio("Selecione uma categoria no menu ao lado")
+      : contEstadoVazio("Nenhuma categoria cadastrada ainda");
   }
 }
 
@@ -107,7 +107,7 @@ function renderContCats() {
   let html = "";
   cards.forEach((cat, idx) => {
     const ativo = cat.card_id === contCategoriaAtual ? "active" : "";
-    const delBtn = adminMode ? `<span class="tut-cat-del" data-del-cat="${cat.card_id}" title="Excluir setor">🗑️</span>` : "";
+    const delBtn = adminMode ? `<span class="tut-cat-del" data-del-cat="${cat.card_id}" title="Excluir categoria">🗑️</span>` : "";
     html += `
           <button class="tut-cat-btn ${ativo}" data-cat="${cat.card_id}">
             <span class="tut-cat-icon" data-num="${idx + 1}"></span> ${escapeHtmlRegra(cat.setor)}${delBtn}
@@ -138,7 +138,7 @@ function setContCat(btn, cardId) {
 function excluirContCategoria(cardId) {
   const linhas = contatosLinhasDoCard(cardId);
   if (!linhas.length) return;
-  if (!confirm(`Excluir o setor "${linhas[0].setor || cardId}" e todas as suas funções? Essa ação não pode ser desfeita.`)) return;
+  if (!confirm(`Excluir a categoria "${linhas[0].setor || cardId}" e todas as suas funções? Essa ação não pode ser desfeita.`)) return;
   CONTATOS_PESSOAS = CONTATOS_PESSOAS.filter(p => p.card_id !== cardId);
   contatosSalvarENotificar();
   contCategoriaAtual = null;
@@ -146,8 +146,8 @@ function excluirContCategoria(cardId) {
   const area = document.getElementById("cont-content");
   if (area) {
     area.innerHTML = contatosAgruparEmCards().length
-      ? contEstadoVazio("Selecione um setor no menu ao lado")
-      : contEstadoVazio("Nenhum setor cadastrado ainda");
+      ? contEstadoVazio("Selecione uma categoria no menu ao lado")
+      : contEstadoVazio("Nenhuma categoria cadastrada ainda");
   }
 }
 
@@ -159,11 +159,11 @@ function renderContContent(cardId) {
   if (!area) return;
   const cat = contatosAgruparEmCards().find(c => c.card_id === cardId);
   if (!cat) {
-    area.innerHTML = contEstadoVazio("Setor não encontrado");
+    area.innerHTML = contEstadoVazio("Categoria não encontrada");
     return;
   }
   const editBtn = adminMode
-    ? `<button class="admin-edit-btn" style="margin-left:8px;" onclick="abrirEdicaoContSetor('${cat.card_id}')">✏️ Editar setor</button>`
+    ? `<button class="admin-edit-btn" style="margin-left:8px;" onclick="abrirEdicaoContSetor('${cat.card_id}')">✏️ Editar categoria</button>`
     : "";
   const subtituloHtml = cat.subtitulo
     ? `<div class="cont-setor-subtitulo">${escapeHtmlRegra(cat.subtitulo)}</div>`
@@ -270,7 +270,7 @@ function abrirEdicaoContSetor(cardId) {
         <div class="regras-detail-card">
           <div class="regras-detail-header">
             <div class="regras-detail-icon">✏️</div>
-            <div><h2>Editando setor</h2></div>
+            <div><h2>Editando categoria</h2></div>
           </div>
           <div class="regras-detail-content">
             <div class="admin-inline-form">
@@ -278,7 +278,7 @@ function abrirEdicaoContSetor(cardId) {
               <input type="text" id="admin-contsetor-emoji" maxlength="4" style="max-width:80px;" value="${escapeHtmlRegra(base.emoji || "")}">
               <label>Posição no menu (1 = primeiro)</label>
               <input type="number" id="admin-contsetor-ordem" min="1" step="1" style="max-width:100px;" value="${base.ordem_card || 1}">
-              <label>Nome do setor</label>
+              <label>Nome da categoria</label>
               <input type="text" id="admin-contsetor-nome" value="${escapeHtmlRegra(base.setor || "")}">
               <label>Subtítulo (opcional)</label>
               <input type="text" id="admin-contsetor-subtitulo" value="${escapeHtmlRegra(base.subtitulo || "")}">
@@ -332,14 +332,14 @@ function abrirNovoContSetor() {
         <div class="regras-detail-card">
           <div class="regras-detail-header">
             <div class="regras-detail-icon">➕</div>
-            <div><h2>Novo setor</h2></div>
+            <div><h2>Nova categoria</h2></div>
           </div>
           <div class="regras-detail-content">
             <div class="admin-inline-form">
-              <label>Emoji do setor</label>
+              <label>Emoji da categoria</label>
               <input type="text" id="admin-newcontsetor-emoji" placeholder="Ex.: 🎓" maxlength="4" style="max-width:80px;">
-              <label>Nome do setor</label>
-              <input type="text" id="admin-newcontsetor-nome" placeholder="Ex.: Pedagógico">
+              <label>Nome da categoria</label>
+              <input type="text" id="admin-newcontsetor-nome" placeholder="Ex.: Migração">
               <label>Subtítulo (opcional)</label>
               <input type="text" id="admin-newcontsetor-subtitulo" placeholder="Ex.: Vendas e matrículas">
               <div style="display:flex;gap:8px;">
@@ -357,7 +357,7 @@ function salvarNovoContSetor() {
   const nome = document.getElementById("admin-newcontsetor-nome").value.trim();
   const subtitulo = document.getElementById("admin-newcontsetor-subtitulo").value.trim();
   if (!nome) {
-    alert("Digite um nome para o setor.");
+    alert("Digite um nome para a categoria.");
     return;
   }
   let base = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "setor";
@@ -458,10 +458,10 @@ function excluirContFuncao(cardId, idx) {
   const linha = linhas[idx];
   if (!linha) return;
   if (linhas.length === 1) {
-    alert("Esta é a única função do setor. Para removê-la, exclua o setor inteiro.");
+    alert("Esta é a única função da categoria. Para removê-la, exclua a categoria inteira.");
     return;
   }
-  if (!confirm(`Remover a função "${linha.titulo || "sem nome"}" deste setor?`)) return;
+  if (!confirm(`Remover a função "${linha.titulo || "sem nome"}" desta categoria?`)) return;
   const posGlobal = CONTATOS_PESSOAS.indexOf(linha);
   if (posGlobal >= 0) CONTATOS_PESSOAS.splice(posGlobal, 1);
   const btnAtivo = document.querySelector(`.tut-cat-btn[data-cat="${cardId}"]`);
