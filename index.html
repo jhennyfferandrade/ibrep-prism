@@ -2426,6 +2426,36 @@
       color: var(--texto-sec);
       margin-top: 3px;
     }
+    /* ---- Filtro de departamento (Pedagógico, Financeiro, Comercial...)
+       logo abaixo do título do setor, acima da grade de cards. Calculado
+       a partir do campo "departamento" de cada função — ver contatos.js. ---- */
+    .cont-dep-filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .cont-dep-btn {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--cinza-borda);
+      background: #fff;
+      cursor: pointer;
+      font-family: "Poppins", sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--texto-sec);
+      transition: background .12s, color .12s, border-color .12s;
+    }
+    .cont-dep-btn:hover {
+      background: var(--cinza-light);
+      color: var(--roxo);
+    }
+    .cont-dep-btn.active {
+      background: var(--roxo);
+      border-color: var(--roxo);
+      color: #fff;
+    }
     /* ---- Fileira de "quadradinhos" — um card por função/situação ----
        Flexbox em vez de grid: no máximo 3 cards por fila (flex-basis
        de ~33% definido por card via JS, em contFuncaoCardBasis()).
@@ -3941,7 +3971,7 @@ async function carregarContatosDasTabelas() {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/contatos_pessoas?select=id,card_id,ordem_card,ordem_pessoa,emoji,setor,subtitulo,titulo,fale_com,imagem,caixa_texto1,caixa_texto2&order=ordem_card.asc,ordem_pessoa.asc`, { headers });
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/contatos_pessoas?select=id,card_id,ordem_card,ordem_pessoa,emoji,setor,subtitulo,titulo,departamento,fale_com,imagem,caixa_texto1,caixa_texto2&order=ordem_card.asc,ordem_pessoa.asc`, { headers });
   if (!resp.ok) {
     console.warn("Supabase: não foi possível carregar contatos_pessoas (status " + resp.status + ").");
     return null;
