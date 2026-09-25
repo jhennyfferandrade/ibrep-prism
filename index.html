@@ -4987,6 +4987,11 @@ async function salvarNoSupabase(chave, valor) {
           p_admin_senha: adminSenha,
           p_dados: valor
         })
+      : chave === "cursosestadoreal"
+      ? await supabaseRpc("salvar_cursos_estado_real", {
+          p_admin_senha: adminSenha,
+          p_vinculos: valor
+        })
       : chave === "regras"
       ? await supabaseRpc("salvar_regras", {
           p_admin_senha: adminSenha,
