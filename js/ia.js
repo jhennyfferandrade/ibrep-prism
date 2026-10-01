@@ -28,6 +28,7 @@ function iaFormatar(texto) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
   return esc
+    .replace(/^#{1,6}\s*(.+)$/gm, "<strong>$1</strong>") 
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\n/g, "<br>");
 }
