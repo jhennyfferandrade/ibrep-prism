@@ -3436,6 +3436,29 @@
       overflow-y: auto;
       }
     }
+
+  .ia-btn-home {
+  display: block;
+  margin: 22px auto 0;
+  border: 1px solid #d8b56a;
+  background: transparent;
+  color: #d8b56a;
+  border-radius: 999px;
+  padding: 10px 26px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: all .18s;
+}
+.ia-btn-home:hover {
+  background: #d8b56a;
+  color: #240e27;
+}
+.ia-btn-home.hidden-area {
+  display: none !important;
+}
+    
     @keyframes admin-flash-fade {
       0% { opacity: 1; }
       70% { opacity: 1; }
@@ -3529,6 +3552,7 @@
   <script src="js/painel.js"></script>
   <script src="js/contatos.js"></script>
   <script src="js/admin.js"></script>
+  <script src="js/ia.js"></script>
 
   <div id="welcome-screen" style="display:none">
     <div class="welcome-user-bar" id="welcome-user-bar">
@@ -3540,7 +3564,9 @@
       alt="IBREP">
     
     <div class="welcome-title">Bem-vindo ao<br><span>IBREP Prism</span></div>
-    <div class="welcome-sub"></div>
+    <div class="welcome-sub">
+  <button class="ia-btn-home" id="btn-area-ia" data-area="ia" onclick="openIA()">✨ Modo IA</button>
+</div>
     <div class="welcome-buttons">
       <button class="welcome-btn" id="btn-area-calendario" data-area="calendario" onclick="openCalendario()">
         <div class="welcome-btn-label">Calendário</div>
@@ -3618,6 +3644,7 @@
        "🛠️ Painel do administrador" na barra de admin (veja
        garantirTelaAdmin() no script principal). -->
   <div id="tela-admin-slot"></div>
+  <div id="tela-ia-slot"></div>
 
   <script>
 const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";
@@ -4339,6 +4366,22 @@ async function garantirTelaAdmin() {
   }
 }
 
+let telaIACarregada = false;
+
+async function garantirTelaIA() {
+  if (telaIACarregada) return;
+  const slot = document.getElementById("tela-ia-slot");
+  if (!slot) return;
+  try {
+    const resp = await fetch("telas/ia.html");
+    slot.innerHTML = await resp.text();
+    telaIACarregada = true;
+  } catch (e) {
+    console.error("Não foi possível carregar telas/ia.html", e);
+    slot.innerHTML = '<div style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar o Modo IA. Recarregue a página.</div>';
+  }
+}    
+    
 async function irParaTela(tela, pushHistory) {
   
   if (pushHistory === undefined) pushHistory = true;
@@ -4365,6 +4408,7 @@ async function irParaTela(tela, pushHistory) {
   document.getElementById("calendario-screen")?.classList.remove("open");
   document.getElementById("contatos-screen")?.classList.remove("open");
   document.getElementById("admin-screen")?.classList.remove("open");
+    document.getElementById("ia-screen")?.classList.remove("open");
   switch (tela) {
    case "welcome":
     document.getElementById("welcome-screen").style.display = "grid";
@@ -4421,6 +4465,12 @@ async function irParaTela(tela, pushHistory) {
     await garantirTelaAdmin();
     document.getElementById("admin-screen")?.classList.add("open");
     initAdminScreen();
+    break;
+
+    case "ia":
+    await garantirTelaIA();
+    document.getElementById("ia-screen").classList.add("open");
+    initIAScreen();
     break;
   }
   if (pushHistory) {
@@ -4595,7 +4645,7 @@ function podeEditarCalendario() {
 }
 
 function aplicarPermissoes() {
-  const areas = [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel", "calendario", "contatos" ];
+  const areas = [ "tutoriais", "comparativo", "regras", "portarias", "cursos", "painel", "calendario", "contatos", "ia" ];
   areas.forEach(area => {
     const btn = document.getElementById(`btn-area-${area}`);
     if (!btn) return;
@@ -4828,7 +4878,8 @@ function telaParaArea(tela) {
     regras: "regras",
     comparativo: "comparativo",
     cursos: "cursos",
-    contatos: "contatos"
+   contatos: "contatos",
+    ia: "ia"
   };
   return mapa[tela] || null;
 }
@@ -4843,6 +4894,7 @@ function currentSectionTela() {
   if (document.getElementById("cursos-screen")?.classList.contains("open")) return "cursos";
   if (document.getElementById("calendario-screen")?.classList.contains("open")) return "calendario";
   if (document.getElementById("contatos-screen")?.classList.contains("open")) return "contatos";
+      if (document.getElementById("ia-screen")?.classList.contains("open")) return "ia";
   return "panel";
 }
 
