@@ -1,0 +1,33 @@
+<div id="ia-screen">
+  <div class="tut-header">
+    <div class="tut-header-left">
+      <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png" alt="IBREP">
+      <strong style="font-family:'Source Serif 4',serif;font-size:20px;color:var(--roxo)">Modo IA</strong>
+    </div>
+    <button class="admin-header-back-btn" onclick="irParaTela('welcome')">← Voltar ao início</button>
+  </div>
+
+  <div class="ia-wrap">
+    <div id="ia-mensagens" class="ia-mensagens"></div>
+    <div class="ia-input-bar">
+      <textarea id="ia-input" rows="1" placeholder="Pergunte algo sobre o IBREP..."
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarIA();}"></textarea>
+      <button id="ia-enviar" onclick="enviarIA()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+#ia-screen{position:fixed;inset:0;background:var(--cinza-bg);display:none;flex-direction:column;z-index:9998;overflow:hidden}
+#ia-screen.open{display:flex}
+.ia-wrap{flex:1;display:flex;flex-direction:column;min-height:0;max-width:860px;width:100%;margin:0 auto;padding:18px}
+.ia-mensagens{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:10px 4px}
+.ia-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap}
+.ia-msg.user{align-self:flex-end;background:var(--roxo);color:#fff}
+.ia-msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--cinza-borda)}
+.ia-input-bar{display:flex;gap:10px;padding-top:12px}
+.ia-input-bar textarea{flex:1;resize:none;padding:12px 14px;border:1.5px solid var(--cinza-borda);border-radius:12px;font-size:14px;outline:none;max-height:140px}
+.ia-input-bar textarea:focus{border-color:var(--roxo-medio)}
+.ia-input-bar button{border:0;background:var(--roxo);color:#fff;border-radius:12px;padding:0 22px;font-weight:600;cursor:pointer}
+.ia-input-bar button:disabled{opacity:.5;cursor:wait}
+</style>
