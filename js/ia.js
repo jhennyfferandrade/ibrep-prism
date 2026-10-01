@@ -22,6 +22,16 @@ function iaAddMsg(tipo, texto) {
   return div;
 }
 
+function iaFormatar(texto) {
+  const esc = texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return esc
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n/g, "<br>");
+}
+
 async function enviarIA() {
   const input = document.getElementById("ia-input");
   const btn = document.getElementById("ia-enviar");
@@ -46,7 +56,7 @@ async function enviarIA() {
     });
     const data = await resp.json();
     const texto = data.resposta || data.erro || "Não consegui responder.";
-    aguarde.textContent = texto;
+    aguarde.innerHTML = iaFormatar(texto);
     IA_HISTORICO.push({ role: "assistant", content: texto });
   } catch (e) {
     aguarde.textContent = "Erro de conexão. Tente novamente.";
