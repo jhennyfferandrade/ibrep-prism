@@ -25,12 +25,13 @@
  * lá se ainda não existirem nesse formato):
  *   listar_perfis(p_admin_senha)
  *     -> { ok, perfis: [{ id, nome, permissoes:{ tutoriais, comparativo,
- *          regras, portarias, cursos, painel, calendario,
- *          calendario_editar, is_admin } }] }
+ *          regras, portarias, cursos, painel, contatos, calendario,
+ *          calendario_editar, ia, is_admin } }] }
  *   criar_perfil / editar_perfil(p_admin_senha, [p_id,] p_nome,
  *          p_area_tutoriais, p_area_comparativo, p_area_regras,
  *          p_area_portarias, p_area_cursos, p_area_painel,
- *          p_area_calendario, p_calendario_editar, p_is_admin)
+ *          p_area_contatos, p_area_calendario, p_calendario_editar,
+ *          p_is_admin, p_area_ia)
  *     -> { ok, id? }
  *   excluir_perfil(p_admin_senha, p_id) -> { ok, erro? }
  *   listar_usuarios(p_admin_senha)
@@ -61,7 +62,8 @@ const ADMIN_PERM_CAMPOS = [
   { key: "painel", label: "Painel", icon: "🏛️" },
   { key: "contatos", label: "Quem Procurar", icon: "📇" },
   { key: "calendario", label: "Calendário (ver)", icon: "📅" },
-  { key: "calendario_editar", label: "Calendário (editar)", icon: "📅✏️" }
+  { key: "calendario_editar", label: "Calendário (editar)", icon: "📅✏️" },
+  { key: "ia", label: "Íris (IA)", icon: "✨" }
 ];
 
 let adminSecaoAtual = null;
@@ -384,6 +386,7 @@ function lerPermissoesPerfilForm() {
     p_area_contatos: document.getElementById("perfil-perm-contatos").checked,
     p_area_calendario: document.getElementById("perfil-perm-calendario").checked,
     p_calendario_editar: document.getElementById("perfil-perm-calendario_editar").checked,
+    p_area_ia: document.getElementById("perfil-perm-ia").checked,
     p_is_admin: document.getElementById("perfil-perm-is-admin").checked
   };
 }
