@@ -67,6 +67,23 @@
 .ia-msg.user{align-self:flex-end;background:var(--roxo);color:#fff}
 .ia-msg.bot{align-self:flex-start;background:var(--cinza-light);border:1px solid var(--cinza-borda)}
 
+/* Respostas da Íris: parágrafos, divisória e tabelas */
+.ia-p{margin:0 0 10px}
+.ia-p:last-child{margin-bottom:0}
+.ia-hr{border:0;border-top:1px dashed var(--cinza-borda);margin:14px 0}
+
+/* Bolha mais larga quando tem tabela */
+.ia-msg.bot:has(.ia-tab-wrap){max-width:96%}
+
+.ia-tab-wrap{overflow-x:auto;margin:8px 0 14px;border:1px solid var(--cinza-borda);border-radius:10px;background:#fff}
+.ia-tab{width:100%;border-collapse:collapse;font-size:13px}
+.ia-tab th{background:var(--roxo);color:#fff;text-align:left;font-weight:600;padding:10px 14px;white-space:nowrap;border-bottom:2px solid #d8b56a}
+.ia-tab td{padding:9px 14px;border-top:1px solid #efe6f1;vertical-align:top;line-height:1.5}
+.ia-tab tbody tr:nth-child(even){background:#faf5fb}
+.ia-tab tbody tr:hover{background:var(--roxo-claro)}
+.ia-tab td:first-child{font-weight:600;color:var(--roxo-medio)}
+.ia-tab tr.ia-total td{background:var(--roxo-claro);color:var(--roxo);font-weight:700;border-top:2px solid var(--roxo-medio)}
+  
 /* Barra de pergunta embaixo */
 .ia-input-bar{flex-shrink:0;display:flex;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--cinza-borda)}
 .ia-input-bar textarea{flex:1;resize:none;padding:12px 14px;border:1.5px solid var(--cinza-borda);border-radius:12px;font-size:14px;outline:none;max-height:140px}
