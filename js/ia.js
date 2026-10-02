@@ -27,14 +27,59 @@ function iaAddMsg(tipo, texto, html) {
 }
 
 function iaFormatar(texto) {
-  const esc = texto
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return esc
-    .replace(/^#{1,6}\s*(.+)$/gm, "<strong>$1</strong>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>");
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const inline = s => esc(s)
+    .replace(/&lt;br\s*\/?&gt;/gi, "<br>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  const celulas = l => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+  const ehTab = l => /^\s*\|.*\|\s*$/.test(l);
+  const ehSep = l => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l);
+
+  const linhas = String(texto || "").split("\n");
+  let html = "";
+  let par = [];
+  let i = 0;
+  const fechaParagrafo = () => {
+    if (par.length) { html += '<div class="ia-p">' + par.join("<br>") + "</div>"; par = []; }
+  };
+
+  while (i < linhas.length) {
+    const l = linhas[i];
+
+    // Tabela: linha de cabeçalho + linha separadora (|---|---|)
+    if (ehTab(l) && i + 1 < linhas.length && ehSep(linhas[i + 1])) {
+      fechaParagrafo();
+      const cab = celulas(l);
+      i += 2;
+      const corpo = [];
+      while (i < linhas.length && ehTab(linhas[i]) && !ehSep(linhas[i])) {
+        corpo.push(celulas(linhas[i]));
+        i++;
+      }
+      html += '<div class="ia-tab-wrap"><table class="ia-tab"><thead><tr>' +
+        cab.map(h => "<th>" + inline(h) + "</th>").join("") +
+        "</tr></thead><tbody>" +
+        corpo.map(r => {
+          const total = /^total/i.test((r[0] || "").replace(/\*/g, "").trim());
+          return "<tr" + (total ? ' class="ia-total"' : "") + ">" +
+            r.map(c => "<td>" + inline(c) + "</td>").join("") + "</tr>";
+        }).join("") +
+        "</tbody></table></div>";
+      continue;
+    }
+
+    if (/^\s*-{3,}\s*$/.test(l)) {
+      fechaParagrafo();
+      html += '<hr class="ia-hr">';
+    } else if (!l.trim()) {
+      fechaParagrafo();
+    } else {
+      par.push(inline(l.replace(/^#{1,6}\s*(.+)$/, "**$1**")));
+    }
+    i++;
+  }
+  fechaParagrafo();
+  return html;
 }
 
 function iaDefinirTitulo(titulo) {
