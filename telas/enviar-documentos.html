@@ -22,7 +22,7 @@
 </head>
 <body>
 <h1>Enviar documentos para a IA</h1>
-<p class="sub">Escolha o estado, selecione os arquivos (PDF, Word .docx ou .txt) e clique em Enviar.</p>
+<p class="sub">Escolha o estado, selecione os arquivos (PDF, Word .docx, .txt ou Excel .xlsx) e clique em Enviar.</p>
 
 <div class="card">
   <label for="senha">Senha de envio</label>
@@ -33,7 +33,7 @@
   <div class="dica">Escolha "GERAL" para documentos que valem para todos os estados.</div>
 
   <label for="arquivos">Arquivos (pode escolher vários de uma vez)</label>
-  <input id="arquivos" type="file" accept=".pdf,.docx,.txt" multiple>
+  <input id="arquivos" type="file" accept=".pdf,.docx,.txt,.xlsx,.xls" multiple>
   <div class="dica">O título de cada documento será o nome do arquivo. Se enviar de novo um arquivo com o mesmo nome e estado, ele substitui o antigo.</div>
 
   <button id="enviar">Enviar</button>
@@ -46,6 +46,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ───────── CONFIGURE AQUI (só uma vez) ─────────
 const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";   // ex.: https://abcdefgh.supabase.co
@@ -96,8 +97,29 @@ async function extrairTexto(arquivo) {
     return r.value;
   }
   if (nome.endsWith(".txt")) return await arquivo.text();
+  if (nome.endsWith(".xlsx") || nome.endsWith(".xls")) {
+    // Cada linha da planilha vira "Coluna: valor | Coluna: valor", separada por linha em branco.
+    // Assim a IA mantém a ligação entre o nome da coluna e o valor, e os trechos nunca cortam um registro ao meio.
+    const wb = XLSX.read(await arquivo.arrayBuffer(), { type: "array" });
+    const blocos = [];
+    for (const aba of wb.SheetNames) {
+      const linhas = XLSX.utils.sheet_to_json(wb.Sheets[aba], {
+        header: 1, defval: "", blankrows: false,
+      });
+      if (!linhas.length) continue;
+      const cab = linhas[0].map((c) => String(c).trim());
+      blocos.push(`PLANILHA: ${aba}`);
+      for (const l of linhas.slice(1)) {
+        const partes = l
+          .map((v, i) => String(v).trim() && `${cab[i] || "coluna " + (i + 1)}: ${String(v).trim()}`)
+          .filter(Boolean);
+        if (partes.length) blocos.push(partes.join(" | "));
+      }
+    }
+    return blocos.join("\n\n");
+  }
   if (nome.endsWith(".doc")) throw new Error("Arquivo .doc antigo: abra no Word e salve como .docx.");
-  throw new Error("Formato não aceito (use PDF, DOCX ou TXT).");
+  throw new Error("Formato não aceito (use PDF, DOCX, TXT ou XLSX).");
 }
 
 function linha(texto, classe = "") {
