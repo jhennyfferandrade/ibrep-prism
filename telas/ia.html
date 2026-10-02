@@ -65,12 +65,14 @@
 .ia-mensagens{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:20px 24px;min-height:0}
 .ia-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap}
 .ia-msg.user{align-self:flex-end;background:var(--roxo);color:#fff}
-.ia-msg.bot{align-self:flex-start;background:var(--cinza-light);border:1px solid var(--cinza-borda)}
+.ia-msg.bot{align-self:flex-start;background:var(--cinza-light);border:1px solid var(--cinza-borda);white-space:normal}
 
-/* Respostas da Íris: parágrafos, divisória e tabelas */
+/* Respostas da Íris: parágrafos, títulos, divisória e tabelas */
 .ia-p{margin:0 0 10px}
 .ia-p:last-child{margin-bottom:0}
-.ia-hr{border:0;border-top:1px dashed var(--cinza-borda);margin:14px 0}
+.ia-titulo{margin:16px 0 8px;padding-left:10px;border-left:3px solid #d8b56a;color:var(--roxo);font-size:14.5px}
+.ia-p.ia-titulo:first-child{margin-top:0}
+.ia-hr{border:0;border-top:1px dashed var(--cinza-borda);margin:16px 0}
 
 /* Bolha mais larga quando tem tabela */
 .ia-msg.bot:has(.ia-tab-wrap){max-width:96%}
@@ -83,7 +85,7 @@
 .ia-tab tbody tr:hover{background:var(--roxo-claro)}
 .ia-tab td:first-child{font-weight:600;color:var(--roxo-medio)}
 .ia-tab tr.ia-total td{background:var(--roxo-claro);color:var(--roxo);font-weight:700;border-top:2px solid var(--roxo-medio)}
-  
+
 /* Barra de pergunta embaixo */
 .ia-input-bar{flex-shrink:0;display:flex;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--cinza-borda)}
 .ia-input-bar textarea{flex:1;resize:none;padding:12px 14px;border:1.5px solid var(--cinza-borda);border-radius:12px;font-size:14px;outline:none;max-height:140px}
@@ -111,7 +113,7 @@ if (typeof irParaTela === "undefined") {
   document.head.appendChild(st);
   document.getElementById("ia-screen").classList.add("open");
   const box = document.getElementById("ia-mensagens");
-  box.innerHTML = '<div class="ia-msg bot">Olá! Eu sou a Íris. (pré-visualização)</div><div class="ia-msg user">Qual o tempo mínimo na Bahia?</div>';
+  box.innerHTML = '<div class="ia-msg bot">Olá! Eu sou a Íris. (pré-visualização)</div><div class="ia-msg user">Qual a grade curricular de Pernambuco?</div><div class="ia-msg bot"><div class="ia-p ia-titulo"><strong>Grade curricular — TTI+ — Pernambuco (Recife)</strong></div><div class="ia-tab-wrap"><table class="ia-tab"><thead><tr><th>Módulo</th><th>EAD</th><th>Presencial</th><th>Prova</th></tr></thead><tbody><tr><td>Mercado</td><td>192h</td><td>44h</td><td>4h</td></tr><tr><td>Técnico</td><td>148h</td><td>32h</td><td>4h</td></tr><tr><td>Pessoas</td><td>198h</td><td>46h</td><td>4h</td></tr><tr><td>Números</td><td>102h</td><td>22h</td><td>4h</td></tr><tr class="ia-total"><td><strong>Total</strong></td><td><strong>640h</strong></td><td><strong>144h</strong></td><td><strong>16h</strong></td></tr></tbody></table></div><div class="ia-p"><strong>Atenção:</strong> este modelo encerra em 31/12/2026.</div></div>';
   document.getElementById("ia-hist-lista").innerHTML = '<div class="ia-hist-item active"><span class="ia-hist-nome">Qual o tempo mínimo na Bahia?</span></div><div class="ia-hist-item"><span class="ia-hist-nome">Coordenador de estágio</span></div>';
 }
 </script>
