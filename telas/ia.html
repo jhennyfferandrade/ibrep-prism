@@ -2,32 +2,99 @@
   <div class="tut-header">
     <div class="tut-header-left">
       <img src="https://ibrep.alfamaoraculo.com.br/assets/imagens/provasimpressas/logotipo_ibrep-prreto-55-min-1.png" alt="IBREP">
-      <strong style="font-family:'Source Serif 4',serif;font-size:20px;color:var(--roxo)">Modo IA</strong>
+      <strong style="font-family:'Source Serif 4',serif;font-size:20px;color:var(--roxo)">Íris</strong>
     </div>
     <button class="admin-header-back-btn" onclick="irParaTela('welcome')">← Voltar ao início</button>
   </div>
 
-  <div class="ia-wrap">
-    <div id="ia-mensagens" class="ia-mensagens"></div>
-    <div class="ia-input-bar">
-      <textarea id="ia-input" rows="1" placeholder="Pergunte algo sobre o IBREP..."
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarIA();}"></textarea>
-      <button id="ia-enviar" onclick="enviarIA()">Enviar</button>
-    </div>
+  <div class="ia-layout">
+    <aside class="ia-side">
+      <button class="ia-nova" onclick="iaNovaConversa()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span>Nova conversa</span>
+      </button>
+      <div class="ia-side-label">Histórico</div>
+      <div id="ia-hist-lista" class="ia-hist-lista"></div>
+    </aside>
+
+    <section class="ia-main">
+      <div class="ia-topo">
+        <span class="ia-topo-nome">Íris</span>
+        <span class="ia-topo-sep">·</span>
+        <span id="ia-titulo-conversa" class="ia-topo-titulo">Nova conversa</span>
+      </div>
+      <div id="ia-mensagens" class="ia-mensagens"></div>
+      <div class="ia-input-bar">
+        <textarea id="ia-input" rows="1" placeholder="Pergunte algo à Íris sobre o IBREP..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarIA();}"></textarea>
+        <button id="ia-enviar" onclick="enviarIA()">Enviar</button>
+      </div>
+    </section>
   </div>
 </div>
 
 <style>
 #ia-screen{position:fixed;inset:0;background:var(--cinza-bg);display:none;flex-direction:column;z-index:9998;overflow:hidden}
 #ia-screen.open{display:flex}
-.ia-wrap{flex:1;display:flex;flex-direction:column;min-height:0;max-width:860px;width:100%;margin:0 auto;padding:18px}
-.ia-mensagens{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:10px 4px}
+
+.ia-layout{flex:1;display:flex;min-height:0;padding:18px;gap:18px}
+
+/* Menu lateral esquerdo */
+.ia-side{width:270px;flex-shrink:0;background:#240e27;border-radius:5px;padding:18px 12px;display:flex;flex-direction:column;min-height:0;box-shadow:0 8px 24px rgba(56,5,63,.12)}
+.ia-nova{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#fff;border-radius:6px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;margin-bottom:16px;text-align:left;transition:background .12s}
+.ia-nova svg{color:#d8b56a;flex-shrink:0}
+.ia-nova:hover{background:rgba(255,255,255,.09)}
+.ia-side-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b591ba;padding:0 8px 10px}
+.ia-hist-lista{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;min-height:0}
+.ia-hist-item{display:flex;align-items:center;gap:8px;padding:10px;border-radius:4px;cursor:pointer;color:#e5d5e7;border-left:2px solid transparent;font-size:12.5px;transition:background .12s}
+.ia-hist-item:hover{background:rgba(255,255,255,.09);color:#fff}
+.ia-hist-item.active{background:rgba(255,255,255,.14);color:#fff;border-left-color:#d8b56a}
+.ia-hist-nome{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ia-hist-del{display:flex;align-items:center;border:0;background:transparent;color:#e5d5e7;opacity:.45;cursor:pointer;padding:4px;border-radius:4px}
+.ia-hist-item:hover .ia-hist-del{opacity:.8}
+.ia-hist-del:hover{opacity:1 !important;background:rgba(255,255,255,.16)}
+.ia-hist-vazio{padding:10px;font-size:12px;color:#b591ba}
+
+/* Área principal */
+.ia-main{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border-radius:5px;box-shadow:0 8px 24px rgba(56,5,63,.07);overflow:hidden}
+.ia-topo{flex-shrink:0;padding:16px 24px;border-bottom:1px solid var(--cinza-borda);display:flex;align-items:center;gap:8px;min-width:0}
+.ia-topo-nome{font-family:'Source Serif 4',serif;font-size:18px;font-weight:600;color:var(--roxo)}
+.ia-topo-sep{color:var(--texto-muted)}
+.ia-topo-titulo{font-size:13px;color:var(--texto-sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ia-mensagens{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:20px 24px;min-height:0}
 .ia-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap}
 .ia-msg.user{align-self:flex-end;background:var(--roxo);color:#fff}
-.ia-msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--cinza-borda)}
-.ia-input-bar{display:flex;gap:10px;padding-top:12px}
+.ia-msg.bot{align-self:flex-start;background:var(--cinza-light);border:1px solid var(--cinza-borda)}
+
+/* Barra de pergunta embaixo */
+.ia-input-bar{flex-shrink:0;display:flex;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--cinza-borda)}
 .ia-input-bar textarea{flex:1;resize:none;padding:12px 14px;border:1.5px solid var(--cinza-borda);border-radius:12px;font-size:14px;outline:none;max-height:140px}
 .ia-input-bar textarea:focus{border-color:var(--roxo-medio)}
 .ia-input-bar button{border:0;background:var(--roxo);color:#fff;border-radius:12px;padding:0 22px;font-weight:600;cursor:pointer}
 .ia-input-bar button:disabled{opacity:.5;cursor:wait}
+
+@media (max-width:700px){
+  .ia-layout{flex-direction:column;padding:10px;gap:10px}
+  .ia-side{width:100%;max-height:30%}
+}
 </style>
+
+<!-- Pré-visualização: só roda se o arquivo for aberto sozinho no navegador.
+     Dentro do app (injetado via innerHTML) este script não executa. -->
+<script>
+if (typeof irParaTela === "undefined") {
+  const st = document.createElement("style");
+  st.textContent = `
+    :root{--roxo:#240e27;--roxo-medio:#7e3188;--roxo-claro:#f5e7f7;--cinza-bg:#eef2f2;--cinza-borda:#d8e0e4;--cinza-light:#f7f9f9;--texto:#14212b;--texto-sec:#52636f;--texto-muted:#7b8a94}
+    body{font-family:"IBM Plex Sans",Arial,sans-serif;margin:0}
+    .tut-header{background:#fff;border-bottom:1px solid var(--cinza-borda);height:76px;padding:0 36px;display:flex;align-items:center;justify-content:space-between}
+    .tut-header-left{display:flex;align-items:center;gap:14px}.tut-header-left img{height:30px}
+    .admin-header-back-btn{border:1px solid var(--cinza-borda);background:#fff;border-radius:99px;padding:7px 16px;cursor:pointer}`;
+  document.head.appendChild(st);
+  document.getElementById("ia-screen").classList.add("open");
+  const box = document.getElementById("ia-mensagens");
+  box.innerHTML = '<div class="ia-msg bot">Olá! Eu sou a Íris. (pré-visualização)</div><div class="ia-msg user">Qual o tempo mínimo na Bahia?</div>';
+  document.getElementById("ia-hist-lista").innerHTML = '<div class="ia-hist-item active"><span class="ia-hist-nome">Qual o tempo mínimo na Bahia?</span></div><div class="ia-hist-item"><span class="ia-hist-nome">Coordenador de estágio</span></div>';
+}
+</script>
