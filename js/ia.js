@@ -39,8 +39,13 @@ function iaFormatar(texto) {
   let html = "";
   let par = [];
   let i = 0;
+
   const fechaParagrafo = () => {
-    if (par.length) { html += '<div class="ia-p">' + par.join("<br>") + "</div>"; par = []; }
+    if (!par.length) return;
+    // Parágrafo que é só uma linha em negrito = título de bloco
+    const titulo = par.length === 1 && /^<strong>[^<]*<\/strong>$/.test(par[0]);
+    html += '<div class="ia-p' + (titulo ? " ia-titulo" : "") + '">' + par.join("<br>") + "</div>";
+    par = [];
   };
 
   while (i < linhas.length) {
