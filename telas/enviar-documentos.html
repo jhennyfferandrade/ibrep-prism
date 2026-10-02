@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enviar documentos para a IA</title>
+<style>
+  body { font-family: system-ui, Arial, sans-serif; max-width: 760px; margin: 32px auto; padding: 0 16px; color: #1d1226; background: #faf8fc; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  p.sub { margin-top: 0; color: #5b4d6b; }
+  .card { background: #fff; border: 1px solid #e3dcec; border-radius: 12px; padding: 20px; margin-top: 16px; }
+  label { display: block; font-weight: 600; margin: 14px 0 6px; }
+  input, select, button { font-size: 16px; padding: 10px 12px; border-radius: 8px; border: 1px solid #c9bddb; width: 100%; box-sizing: border-box; }
+  button { background: #2a0f3a; color: #fff; border: none; cursor: pointer; margin-top: 18px; font-weight: 600; }
+  button:disabled { opacity: .5; cursor: wait; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { padding: 10px 12px; border-radius: 8px; margin-top: 8px; background: #f3eff8; font-size: 15px; }
+  li.ok { background: #e4f5e8; }
+  li.erro { background: #fde8e8; }
+  .dica { font-size: 14px; color: #5b4d6b; margin-top: 6px; }
+</style>
+</head>
+<body>
+<h1>Enviar documentos para a IA</h1>
+<p class="sub">Escolha o estado, selecione os arquivos (PDF, Word .docx ou .txt) e clique em Enviar.</p>
+
+<div class="card">
+  <label for="senha">Senha de envio</label>
+  <input id="senha" type="password" placeholder="A senha que você criou no Supabase">
+
+  <label for="uf">De qual estado são esses arquivos?</label>
+  <select id="uf"></select>
+  <div class="dica">Escolha "GERAL" para documentos que valem para todos os estados.</div>
+
+  <label for="arquivos">Arquivos (pode escolher vários de uma vez)</label>
+  <input id="arquivos" type="file" accept=".pdf,.docx,.txt" multiple>
+  <div class="dica">O título de cada documento será o nome do arquivo. Se enviar de novo um arquivo com o mesmo nome e estado, ele substitui o antigo.</div>
+
+  <button id="enviar">Enviar</button>
+</div>
+
+<div class="card">
+  <strong>Andamento</strong>
+  <ul id="lista"><li>Nenhum arquivo enviado ainda.</li></ul>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+// ───────── CONFIGURE AQUI (só uma vez) ─────────
+const SUPABASE_URL = "https://syiiijrsxfcuufgieybq.supabase.co";   // ex.: https://abcdefgh.supabase.co
+const ANON_KEY     = "sb_publishable_hpnB4vMacusgInT-topwfg_Dxe79QrV";           // Settings > API > anon public
+// ───────────────────────────────────────────────
+
+const ESTADOS = {
+  GERAL: "GERAL (vale para todos)",
+  AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia", CE: "Ceará",
+  DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", MA: "Maranhão",
+  MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais", PA: "Pará",
+  PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí", RJ: "Rio de Janeiro",
+  RN: "Rio Grande do Norte", RS: "Rio Grande do Sul", RO: "Rondônia", RR: "Roraima",
+  SC: "Santa Catarina", SP: "São Paulo", SE: "Sergipe", TO: "Tocantins"
+};
+
+const $ = (id) => document.getElementById(id);
+$("uf").innerHTML = Object.entries(ESTADOS)
+  .map(([sigla, nome]) => `<option value="${sigla}">${sigla} — ${nome}</option>`).join("");
+
+const PDF_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+let workerPronto = false;
+async function prepararPdfJs() {
+  if (workerPronto) return;
+  // Carrega o "trabalhador" do PDF como arquivo local (evita bloqueio ao abrir esta página direto do computador)
+  const codigo = await (await fetch(PDF_WORKER)).text();
+  pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([codigo], { type: "text/javascript" }));
+  workerPronto = true;
+}
+
+async function extrairTexto(arquivo) {
+  const nome = arquivo.name.toLowerCase();
+  if (nome.endsWith(".pdf")) {
+    await prepararPdfJs();
+    const pdf = await pdfjsLib.getDocument({ data: await arquivo.arrayBuffer() }).promise;
+    const paginas = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pagina = await pdf.getPage(i);
+      const conteudo = await pagina.getTextContent();
+      let t = "";
+      for (const item of conteudo.items) t += item.str + (item.hasEOL ? "\n" : " ");
+      paginas.push(t.trim());
+    }
+    return paginas.join("\n\n");
+  }
+  if (nome.endsWith(".docx")) {
+    const r = await mammoth.extractRawText({ arrayBuffer: await arquivo.arrayBuffer() });
+    return r.value;
+  }
+  if (nome.endsWith(".txt")) return await arquivo.text();
+  if (nome.endsWith(".doc")) throw new Error("Arquivo .doc antigo: abra no Word e salve como .docx.");
+  throw new Error("Formato não aceito (use PDF, DOCX ou TXT).");
+}
+
+function linha(texto, classe = "") {
+  const li = document.createElement("li");
+  li.textContent = texto;
+  if (classe) li.className = classe;
+  $("lista").appendChild(li);
+  return li;
+}
+
+$("enviar").onclick = async () => {
+  const senha = $("senha").value.trim();
+  const uf = $("uf").value;
+  const arquivos = [...$("arquivos").files];
+
+  if (SUPABASE_URL.startsWith("COLE") || ANON_KEY.startsWith("COLE")) {
+    alert("Antes, abra este arquivo no Bloco de Notas e preencha SUPABASE_URL e ANON_KEY no começo do script.");
+    return;
+  }
+  if (!senha) { alert("Digite a senha de envio."); return; }
+  if (!arquivos.length) { alert("Escolha pelo menos um arquivo."); return; }
+
+  $("enviar").disabled = true;
+  $("lista").innerHTML = "";
+
+  for (const arq of arquivos) {
+    const li = linha(`Lendo "${arq.name}"...`);
+    try {
+      const texto = await extrairTexto(arq);
+      if (!texto || texto.trim().length < 50) {
+        throw new Error("Não encontrei texto. Se for PDF escaneado (foto de papel), precisa de OCR.");
+      }
+      li.textContent = `Enviando "${arq.name}" (${texto.length.toLocaleString("pt-BR")} caracteres)...`;
+      const titulo = arq.name.replace(/\.[^.]+$/, "").replace(/_+/g, " ").trim();
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/ingerir-documento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${ANON_KEY}`,
+          "apikey": ANON_KEY
+        },
+        body: JSON.stringify({ senha, uf, titulo, texto })
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok || !dados.ok) throw new Error(dados.erro || `Erro ${resp.status}`);
+      li.textContent = `OK: "${titulo}" (${uf}) — ${dados.trechos} trechos gravados.`;
+      li.className = "ok";
+    } catch (e) {
+      li.textContent = `FALHOU: "${arq.name}" — ${e.message || e}`;
+      li.className = "erro";
+    }
+  }
+  $("enviar").disabled = false;
+  linha("Terminou. Pode escolher outros arquivos e enviar de novo.");
+};
+</script>
+</body>
+</html>
