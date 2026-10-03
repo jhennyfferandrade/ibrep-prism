@@ -62,18 +62,22 @@
 .ia-topo-sep{color:var(--texto-muted)}
 .ia-topo-titulo{font-size:13px;color:var(--texto-sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.ia-mensagens{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:20px 24px;min-height:0}
-.ia-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:14px;line-height:1.6;white-space:pre-wrap}
-.ia-msg.user{align-self:flex-end;background:var(--roxo);color:#fff}
-/* Resposta da Íris: sem balão, só o conteúdo direto na página */
-#ia-screen .ia-msg.bot{align-self:stretch;max-width:100%;background:transparent !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;padding:4px 0 !important;white-space:normal}
+/* Layout estilo conversa: coluna central de leitura (até 760px) */
+.ia-mensagens{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:26px;padding:28px max(24px, calc((100% - 760px) / 2));min-height:0}
+.ia-msg{font-size:15px;line-height:1.7;white-space:pre-wrap;color:var(--texto)}
+/* Pergunta: balão cinza claro à direita */
+.ia-msg.user{align-self:flex-end;max-width:80%;background:#f0efec;color:var(--texto);padding:12px 18px;border-radius:18px}
+/* Resposta da Íris: sem balão, texto direto na página */
+#ia-screen .ia-msg.bot{align-self:stretch;max-width:100%;background:transparent !important;border:0 !important;border-radius:0 !important;box-shadow:none !important;padding:0 !important;white-space:normal}
+.ia-msg.bot .mm-txt{font-size:15px;line-height:1.7}
+.ia-msg.bot strong{font-weight:700;color:var(--texto)}
 
 /* Respostas da Íris: parágrafos, títulos, divisória e tabelas */
-.ia-p{margin:0 0 10px}
+.ia-p{margin:0 0 12px}
 .ia-p:last-child{margin-bottom:0}
-.ia-titulo{margin:16px 0 8px;padding-left:10px;border-left:3px solid #d8b56a;color:var(--roxo);font-size:14.5px}
+.ia-titulo{margin:18px 0 8px;color:var(--texto);font-size:15px}
 .ia-p.ia-titulo:first-child{margin-top:0}
-.ia-hr{border:0;border-top:1px dashed var(--cinza-borda);margin:16px 0}
+.ia-hr{border:0;border-top:1px solid var(--cinza-borda);margin:18px 0}
 
 
 .ia-tab-wrap{overflow-x:auto;margin:8px 0 14px;border:1px solid var(--cinza-borda);border-radius:10px;background:#fff}
@@ -86,10 +90,10 @@
 .ia-tab tr.ia-total td{background:var(--roxo-claro);color:var(--roxo);font-weight:700;border-top:2px solid var(--roxo-medio)}
 
 /* Barra de pergunta embaixo */
-.ia-input-bar{flex-shrink:0;display:flex;gap:10px;padding:14px 24px 18px;border-top:1px solid var(--cinza-borda)}
-.ia-input-bar textarea{flex:1;resize:none;padding:12px 14px;border:1.5px solid var(--cinza-borda);border-radius:12px;font-size:14px;outline:none;max-height:140px}
+.ia-input-bar{flex-shrink:0;display:flex;gap:10px;padding:10px max(24px, calc((100% - 760px) / 2)) 20px}
+.ia-input-bar textarea{flex:1;resize:none;padding:14px 18px;border:1.5px solid var(--cinza-borda);border-radius:22px;font-size:15px;outline:none;max-height:140px;box-shadow:0 2px 10px rgba(56,5,63,.06)}
 .ia-input-bar textarea:focus{border-color:var(--roxo-medio)}
-.ia-input-bar button{border:0;background:var(--roxo);color:#fff;border-radius:12px;padding:0 22px;font-weight:600;cursor:pointer}
+.ia-input-bar button{border:0;background:var(--roxo);color:#fff;border-radius:22px;padding:0 22px;font-weight:600;cursor:pointer}
 .ia-input-bar button:disabled{opacity:.5;cursor:wait}
 
 @media (max-width:700px){
