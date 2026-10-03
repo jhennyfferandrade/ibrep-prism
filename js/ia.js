@@ -4,19 +4,54 @@ let IA_CONVERSAS = [];
 
 const IA_SAUDACAO = "Olá! Eu sou a Íris. Pergunte o que precisar sobre regras, portarias, contatos, instituições e cursos do IBREP.";
 
-// ───────── Lembrar a conversa ativa (sobrevive ao recarregar a página) ─────────
+// ───────── Cache local: permite reabrir a conversa na hora ao recarregar ─────────
 
-const iaChaveAtiva = () => `ia_conversa_ativa_${currentUser?.id ?? ""}`;
+const IA_CACHE_CONVERSA = "ia_cache_conversa";
+const IA_CACHE_LISTA = "ia_cache_lista";
 
-function iaLembrarConversa(id) {
-  try {
-    if (id === null || id === undefined) localStorage.removeItem(iaChaveAtiva());
-    else localStorage.setItem(iaChaveAtiva(), String(id));
-  } catch {}
+function iaUsuarioId() {
+  return (typeof currentUser !== "undefined" && currentUser && currentUser.id != null) ? String(currentUser.id) : "";
 }
 
-function iaConversaLembrada() {
-  try { return localStorage.getItem(iaChaveAtiva()); } catch { return null; }
+function iaCacheLer(chave) {
+  try { return JSON.parse(localStorage.getItem(chave) || "null"); } catch { return null; }
+}
+
+function iaCacheGravar(chave, valor) {
+  try { localStorage.setItem(chave, JSON.stringify(valor)); } catch {}
+}
+
+function iaSalvarCache() {
+  iaCacheGravar(IA_CACHE_CONVERSA, {
+    u: iaUsuarioId(),
+    id: IA_CONVERSA_ID,
+    titulo: document.getElementById("ia-titulo-conversa")?.textContent || "Nova conversa",
+    msgs: IA_HISTORICO
+  });
+}
+
+function iaLimparCache() {
+  try { localStorage.removeItem(IA_CACHE_CONVERSA); } catch {}
+}
+
+// Desenha a conversa guardada, de forma SÍNCRONA (sem esperar a rede).
+function iaRestaurarDoCache() {
+  const c = iaCacheLer(IA_CACHE_CONVERSA);
+  if (!c || !Array.isArray(c.msgs) || !c.msgs.length) return false;
+  const uAtual = iaUsuarioId();
+  if (uAtual && c.u && uAtual !== c.u) return false; // cache de outro usuário
+
+  IA_CONVERSA_ID = c.id ?? null;
+  IA_HISTORICO = c.msgs;
+  const box = document.getElementById("ia-mensagens");
+  if (!box) return false;
+  box.innerHTML = "";
+  IA_HISTORICO.forEach(m => {
+    if (m.role === "user") iaAddMsg("user", m.content);
+    else iaAddMsg("bot", iaFormatar(m.content), true);
+  });
+  iaDefinirTitulo(c.titulo);
+  return true;
 }
 
 function openIA() {
@@ -38,25 +73,35 @@ function iaAguardarUsuario(ms = 8000) {
 
 async function initIAScreen() {
   const box = document.getElementById("ia-mensagens");
-  if (box && !box.children.length) iaAddMsg("bot", IA_SAUDACAO);
 
-  // 1) Só continua quando o usuário estiver carregado (a chave do localStorage depende dele)
+  // 1) NA HORA: se há conversa guardada, desenha ela (e a lista do histórico) sem esperar a rede
+  let restaurou = false;
+  if (!IA_CONVERSA_ID && !IA_HISTORICO.length) {
+    restaurou = iaRestaurarDoCache();
+    const lc = iaCacheLer(IA_CACHE_LISTA);
+    if (lc && Array.isArray(lc.lista) && (!iaUsuarioId() || lc.u === iaUsuarioId())) {
+      IA_CONVERSAS = lc.lista;
+      iaRenderLista();
+    }
+  }
+  // Só mostra a saudação se realmente não há conversa para mostrar
+  if (!restaurou && box && !box.children.length) iaAddMsg("bot", IA_SAUDACAO);
+
+  // 2) EM SEGUNDO PLANO: confirma usuário e atualiza o histórico com o servidor
   if (!(await iaAguardarUsuario())) return;
 
-  // 2) Carrega a lista do histórico
+  // cache era de outro usuário? então volta para uma conversa nova
+  const c = iaCacheLer(IA_CACHE_CONVERSA);
+  if (restaurou && c && c.u && c.u !== iaUsuarioId()) {
+    iaNovaConversa();
+  }
+
   const listou = await iaCarregarLista();
 
-  // 3) Se já há conversa aberta na memória, não mexe
-  if (IA_CONVERSA_ID) return;
-
-  // 4) Restaura a conversa que estava aberta antes de recarregar
-  const lembrada = iaConversaLembrada();
-  console.log("Íris: conversa lembrada =", lembrada, "| lista carregada =", listou, "| conversas =", IA_CONVERSAS.length);
-  if (!lembrada) return;
-
-  const c = IA_CONVERSAS.find(x => String(x.id) === String(lembrada));
-  if (c) await iaAbrirConversa(c.id);
-  else if (listou) iaLembrarConversa(null); // só apaga se a lista carregou e a conversa realmente não existe mais
+  // a conversa aberta foi excluída em outro lugar? então limpa
+  if (listou && IA_CONVERSA_ID && !IA_CONVERSAS.some(x => String(x.id) === String(IA_CONVERSA_ID))) {
+    iaNovaConversa();
+  }
 }
 
 function iaAddMsg(tipo, texto, html) {
@@ -146,6 +191,7 @@ async function iaCarregarLista() {
       p_usuario_id: String(currentUser.id)
     });
     if (!Array.isArray(IA_CONVERSAS)) IA_CONVERSAS = [];
+    iaCacheGravar(IA_CACHE_LISTA, { u: iaUsuarioId(), lista: IA_CONVERSAS });
   } catch (e) {
     console.warn("Íris: não foi possível carregar o histórico.", e);
     IA_CONVERSAS = [];
@@ -194,7 +240,7 @@ function iaRenderLista() {
 function iaNovaConversa() {
   IA_CONVERSA_ID = null;
   IA_HISTORICO = [];
-  iaLembrarConversa(null);
+  iaLimparCache();
   const box = document.getElementById("ia-mensagens");
   if (box) box.innerHTML = "";
   iaAddMsg("bot", IA_SAUDACAO);
@@ -210,7 +256,6 @@ async function iaAbrirConversa(id) {
       p_id: id
     });
     IA_CONVERSA_ID = id;
-    iaLembrarConversa(id);
     IA_HISTORICO = Array.isArray(msgs) ? msgs : [];
     const box = document.getElementById("ia-mensagens");
     box.innerHTML = "";
@@ -220,6 +265,7 @@ async function iaAbrirConversa(id) {
     });
     const c = IA_CONVERSAS.find(x => x.id === id);
     iaDefinirTitulo(c ? c.titulo : "Conversa");
+    iaSalvarCache();
     iaRenderLista();
   } catch (e) {
     alert("Não foi possível abrir essa conversa.");
@@ -252,8 +298,7 @@ async function iaSalvarConversa() {
     });
     if (id) {
       IA_CONVERSA_ID = id;
-      iaLembrarConversa(id);
-    }
+      }
     if (IA_HISTORICO.length === 2) iaDefinirTitulo(titulo);
     await iaCarregarLista();
   } catch (e) {
@@ -291,6 +336,7 @@ async function enviarIA() {
     aguarde.innerHTML = iaFormatar(texto);
     if (data.resposta) {
       IA_HISTORICO.push({ role: "assistant", content: texto });
+      iaSalvarCache();
       ok = true;
     } else {
       IA_HISTORICO.pop();
