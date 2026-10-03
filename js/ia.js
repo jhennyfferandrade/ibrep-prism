@@ -24,22 +24,39 @@ function openIA() {
   irParaTela("ia");
 }
 
+// Espera o usuário logado estar disponível (ao recarregar, ele pode demorar alguns instantes)
+function iaAguardarUsuario(ms = 8000) {
+  return new Promise(resolve => {
+    const t0 = Date.now();
+    (function checar() {
+      if (typeof currentUser !== "undefined" && currentUser && currentUser.id != null) return resolve(true);
+      if (Date.now() - t0 > ms) return resolve(false);
+      setTimeout(checar, 100);
+    })();
+  });
+}
+
 async function initIAScreen() {
   const box = document.getElementById("ia-mensagens");
-  const vazia = box && !box.children.length;
-  if (vazia) iaAddMsg("bot", IA_SAUDACAO);
+  if (box && !box.children.length) iaAddMsg("bot", IA_SAUDACAO);
 
-  await iaCarregarLista();
+  // 1) Só continua quando o usuário estiver carregado (a chave do localStorage depende dele)
+  if (!(await iaAguardarUsuario())) return;
 
-  // Só restaura se não há conversa aberta na memória (ex.: acabou de recarregar a página)
-  if (vazia && !IA_CONVERSA_ID) {
-    const lembrada = iaConversaLembrada();
-    if (lembrada) {
-      const c = IA_CONVERSAS.find(x => String(x.id) === lembrada);
-      if (c) await iaAbrirConversa(c.id);
-      else iaLembrarConversa(null); // conversa não existe mais (foi excluída)
-    }
-  }
+  // 2) Carrega a lista do histórico
+  const listou = await iaCarregarLista();
+
+  // 3) Se já há conversa aberta na memória, não mexe
+  if (IA_CONVERSA_ID) return;
+
+  // 4) Restaura a conversa que estava aberta antes de recarregar
+  const lembrada = iaConversaLembrada();
+  console.log("Íris: conversa lembrada =", lembrada, "| lista carregada =", listou, "| conversas =", IA_CONVERSAS.length);
+  if (!lembrada) return;
+
+  const c = IA_CONVERSAS.find(x => String(x.id) === String(lembrada));
+  if (c) await iaAbrirConversa(c.id);
+  else if (listou) iaLembrarConversa(null); // só apaga se a lista carregou e a conversa realmente não existe mais
 }
 
 function iaAddMsg(tipo, texto, html) {
@@ -122,16 +139,20 @@ function iaDefinirTitulo(titulo) {
 // ───────── Histórico (lateral esquerda) ─────────
 
 async function iaCarregarLista() {
-  if (!currentUser) return;
+  if (!currentUser) return false;
+  let ok = true;
   try {
     IA_CONVERSAS = await supabaseRpc("ia_listar_conversas", {
       p_usuario_id: String(currentUser.id)
     });
+    if (!Array.isArray(IA_CONVERSAS)) IA_CONVERSAS = [];
   } catch (e) {
     console.warn("Íris: não foi possível carregar o histórico.", e);
     IA_CONVERSAS = [];
+    ok = false;
   }
   iaRenderLista();
+  return ok;
 }
 
 function iaRenderLista() {
