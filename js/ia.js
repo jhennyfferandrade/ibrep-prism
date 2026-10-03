@@ -48,7 +48,7 @@ function iaRestaurarDoCache() {
   box.innerHTML = "";
   IA_HISTORICO.forEach(m => {
     if (m.role === "user") iaAddMsg("user", m.content);
-    else iaAddMsg("bot", iaFormatar(m.content), true);
+    else iaAddMsgBot(m.content);
   });
   iaDefinirTitulo(c.titulo);
   return true;
@@ -176,6 +176,36 @@ function iaFormatar(texto) {
   return html;
 }
 
+// Troca [[MAPA:n]] pelo JSON do mapa, para ele ficar guardado junto com o texto da conversa
+function iaComMapas(resposta, mapas) {
+  return String(resposta || "").replace(/\[\[MAPA:(\d+)\]\]/g, (_, n) => {
+    const m = (mapas || [])[Number(n)];
+    return m ? "[[MAPA]]" + JSON.stringify(m) + "[[/MAPA]]" : "";
+  });
+}
+
+// Desenha texto + tabelas + mapas dentro de um balão
+function iaRenderResposta(el, content) {
+  const mapas = [];
+  const texto = String(content || "").replace(/\[\[MAPA\]\]([\s\S]*?)\[\[\/MAPA\]\]/g, (_, j) => {
+    try {
+      mapas.push(JSON.parse(j));
+      return "\n\n[[MAPA:" + (mapas.length - 1) + "]]\n\n";
+    } catch { return ""; }
+  });
+  if (typeof MapaVisual !== "undefined") MapaVisual.montar(el, texto, mapas);
+  else el.innerHTML = iaFormatar(texto.replace(/\[\[MAPA:\d+\]\]/g, "")); // se o mapa-visual.js não carregou
+}
+
+// Mensagem da Íris (usada ao reabrir conversas)
+function iaAddMsgBot(content) {
+  const div = iaAddMsg("bot", "");
+  iaRenderResposta(div, content);
+  const box = document.getElementById("ia-mensagens");
+  if (box) box.scrollTop = box.scrollHeight;
+  return div;
+}
+
 function iaDefinirTitulo(titulo) {
   const el = document.getElementById("ia-titulo-conversa");
   if (el) el.textContent = titulo || "Nova conversa";
@@ -261,7 +291,7 @@ async function iaAbrirConversa(id) {
     box.innerHTML = "";
     IA_HISTORICO.forEach(m => {
       if (m.role === "user") iaAddMsg("user", m.content);
-      else iaAddMsg("bot", iaFormatar(m.content), true);
+      else iaAddMsgBot(m.content);
     });
     const c = IA_CONVERSAS.find(x => x.id === id);
     iaDefinirTitulo(c ? c.titulo : "Conversa");
@@ -331,9 +361,12 @@ async function enviarIA() {
       },
       body: JSON.stringify({ mensagens: IA_HISTORICO, userId: currentUser.id })
     });
-    const data = await resp.json();
-    const texto = data.resposta || data.erro || "Não consegui responder.";
-    aguarde.innerHTML = iaFormatar(texto);
+        const data = await resp.json();
+    const texto = data.resposta
+      ? iaComMapas(data.resposta, data.mapas)
+      : (data.erro || "Não consegui responder.");
+    if (data.resposta) iaRenderResposta(aguarde, texto);
+    else aguarde.textContent = texto;
     if (data.resposta) {
       IA_HISTORICO.push({ role: "assistant", content: texto });
       iaSalvarCache();
