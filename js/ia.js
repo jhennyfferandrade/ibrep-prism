@@ -4,15 +4,42 @@ let IA_CONVERSAS = [];
 
 const IA_SAUDACAO = "Olá! Eu sou a Íris. Pergunte o que precisar sobre regras, portarias, contatos, instituições e cursos do IBREP.";
 
+// ───────── Lembrar a conversa ativa (sobrevive ao recarregar a página) ─────────
+
+const iaChaveAtiva = () => `ia_conversa_ativa_${currentUser?.id ?? ""}`;
+
+function iaLembrarConversa(id) {
+  try {
+    if (id === null || id === undefined) localStorage.removeItem(iaChaveAtiva());
+    else localStorage.setItem(iaChaveAtiva(), String(id));
+  } catch {}
+}
+
+function iaConversaLembrada() {
+  try { return localStorage.getItem(iaChaveAtiva()); } catch { return null; }
+}
+
 function openIA() {
   if (!exigirPermissao("ia")) return;
   irParaTela("ia");
 }
 
-function initIAScreen() {
+async function initIAScreen() {
   const box = document.getElementById("ia-mensagens");
-  if (box && !box.children.length) iaAddMsg("bot", IA_SAUDACAO);
-  iaCarregarLista();
+  const vazia = box && !box.children.length;
+  if (vazia) iaAddMsg("bot", IA_SAUDACAO);
+
+  await iaCarregarLista();
+
+  // Só restaura se não há conversa aberta na memória (ex.: acabou de recarregar a página)
+  if (vazia && !IA_CONVERSA_ID) {
+    const lembrada = iaConversaLembrada();
+    if (lembrada) {
+      const c = IA_CONVERSAS.find(x => String(x.id) === lembrada);
+      if (c) await iaAbrirConversa(c.id);
+      else iaLembrarConversa(null); // conversa não existe mais (foi excluída)
+    }
+  }
 }
 
 function iaAddMsg(tipo, texto, html) {
@@ -146,6 +173,7 @@ function iaRenderLista() {
 function iaNovaConversa() {
   IA_CONVERSA_ID = null;
   IA_HISTORICO = [];
+  iaLembrarConversa(null);
   const box = document.getElementById("ia-mensagens");
   if (box) box.innerHTML = "";
   iaAddMsg("bot", IA_SAUDACAO);
@@ -161,6 +189,7 @@ async function iaAbrirConversa(id) {
       p_id: id
     });
     IA_CONVERSA_ID = id;
+    iaLembrarConversa(id);
     IA_HISTORICO = Array.isArray(msgs) ? msgs : [];
     const box = document.getElementById("ia-mensagens");
     box.innerHTML = "";
@@ -200,7 +229,10 @@ async function iaSalvarConversa() {
       p_titulo: titulo,
       p_mensagens: IA_HISTORICO
     });
-    if (id) IA_CONVERSA_ID = id;
+    if (id) {
+      IA_CONVERSA_ID = id;
+      iaLembrarConversa(id);
+    }
     if (IA_HISTORICO.length === 2) iaDefinirTitulo(titulo);
     await iaCarregarLista();
   } catch (e) {
