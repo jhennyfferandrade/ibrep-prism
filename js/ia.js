@@ -191,10 +191,22 @@ function iaRenderResposta(el, content) {
     try {
       mapas.push(JSON.parse(j));
       return "\n\n[[MAPA:" + (mapas.length - 1) + "]]\n\n";
-    } catch { return ""; }
+    } catch (e) {
+      console.warn("Íris: JSON do mapa inválido.", e, j);
+      return "\n\n⚠️ Não consegui montar o mapa visual. Peça novamente.\n\n";
+    }
   });
-  if (typeof MapaVisual !== "undefined") MapaVisual.montar(el, texto, mapas);
-  else el.innerHTML = iaFormatar(texto.replace(/\[\[MAPA:\d+\]\]/g, "")); // se o mapa-visual.js não carregou
+  console.log("Íris: mapas nesta resposta =", mapas.length, "| MapaVisual carregado =", typeof MapaVisual !== "undefined");
+  if (typeof MapaVisual !== "undefined") {
+    MapaVisual.montar(el, texto, mapas);
+  } else {
+    // mapa-visual.js não carregou: antes o mapa sumia em silêncio, agora avisa
+    console.error("Íris: mapa-visual.js não foi carregado (confira o nome/caminho do arquivo no servidor).");
+    const aviso = mapas.length
+      ? "\n\n⚠️ O mapa não pôde ser desenhado: o arquivo mapa-visual.js não foi carregado.\n\n"
+      : "";
+    el.innerHTML = iaFormatar(texto.replace(/\[\[MAPA:\d+\]\]/g, aviso));
+  }
 }
 
 // Mensagem da Íris (usada ao reabrir conversas)
