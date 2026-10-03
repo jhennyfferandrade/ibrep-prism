@@ -113,6 +113,8 @@
     ".mm-leg i{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px;border-radius:3px;border:1px solid}",
     /* texto e tabelas */
     ".mm-gap{height:.6em}",
+    ".mm-li{display:flex;gap:.7em;padding-left:.5em;margin:.15em 0}",
+    ".mm-b{flex:none;min-width:1em;text-align:right}",
     ".mm-txt hr{border:0;border-top:1px solid #ddd8cb;margin:10px 0}",
     ".mm-tw{overflow-x:auto;margin:8px 0}",
     ".mm-tb{border-collapse:collapse;font-size:13px;min-width:100%}",
@@ -204,7 +206,13 @@
       var ind = l.match(/^[ \t]*/)[0].length;
       l = l.trim().replace(/^#{1,6}\s*/, "").replace(/^[-*]\s+/, "• ");
       if (/^(📌|▸)/u.test(l) && l.indexOf("**") < 0) l = l.replace(/^((?:📌|▸)\s*)(.+)$/u, "$1**$2**");
-      out.push('<div' + (ind >= 2 ? ' style="margin-left:' + Math.min(ind, 8) * 0.5 + 'em"' : "") + ">" + inline(l) + "</div>");
+      var estilo = ind >= 2 ? ' style="margin-left:' + Math.min(ind, 8) * 0.5 + 'em"' : "";
+      var li = l.match(/^(•|\d+[.)])\s+(.*)$/);
+      if (li) { // item de lista: marcador + texto com recuo
+        out.push('<div class="mm-li"' + estilo + '><span class="mm-b">' + esc(li[1]) + "</span><span>" + inline(li[2]) + "</span></div>");
+        continue;
+      }
+      out.push("<div" + estilo + ">" + inline(l) + "</div>");
     }
     return out.join("");
   }
