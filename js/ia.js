@@ -2,7 +2,7 @@ let IA_HISTORICO = [];
 let IA_CONVERSA_ID = null;
 let IA_CONVERSAS = [];
 
-const IA_SAUDACAO = "Olá! Eu sou a Kym. Pergunte o que precisar sobre regras, portarias, contatos, instituições, cursos do IBREP entre outras coisas.";
+const IA_SAUDACAO = "Olá! Eu sou a Kym. Pergunte o que precisar sobre regras, portarias, contatos, instituições, cursos do IBREP e entre outras coisas.";
 
 // ───────── Cache local: permite reabrir a conversa na hora ao recarregar ─────────
 
