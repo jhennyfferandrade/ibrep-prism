@@ -2,7 +2,7 @@ let IA_HISTORICO = [];
 let IA_CONVERSA_ID = null;
 let IA_CONVERSAS = [];
 
-const IA_SAUDACAO = "Olá! Eu sou a Íris. Pergunte o que precisar sobre regras, portarias, contatos, instituições e cursos do IBREP.";
+const IA_SAUDACAO = "Olá! Eu sou a Kym. Pergunte o que precisar sobre regras, portarias, contatos, instituições e cursos do IBREP.";
 
 // ───────── Cache local: permite reabrir a conversa na hora ao recarregar ─────────
 
@@ -192,16 +192,16 @@ function iaRenderResposta(el, content) {
       mapas.push(JSON.parse(j));
       return "\n\n[[MAPA:" + (mapas.length - 1) + "]]\n\n";
     } catch (e) {
-      console.warn("Íris: JSON do mapa inválido.", e, j);
+      console.warn("Kym: JSON do mapa inválido.", e, j);
       return "\n\n⚠️ Não consegui montar o mapa visual. Peça novamente.\n\n";
     }
   });
-  console.log("Íris: mapas nesta resposta =", mapas.length, "| MapaVisual carregado =", typeof MapaVisual !== "undefined");
+  console.log("Kym: mapas nesta resposta =", mapas.length, "| MapaVisual carregado =", typeof MapaVisual !== "undefined");
   if (typeof MapaVisual !== "undefined") {
     MapaVisual.montar(el, texto, mapas);
   } else {
     // mapa-visual.js não carregou: antes o mapa sumia em silêncio, agora avisa
-    console.error("Íris: mapa-visual.js não foi carregado (confira o nome/caminho do arquivo no servidor).");
+    console.error("Kym: mapa-visual.js não foi carregado (confira o nome/caminho do arquivo no servidor).");
     const aviso = mapas.length
       ? "\n\n⚠️ O mapa não pôde ser desenhado: o arquivo mapa-visual.js não foi carregado.\n\n"
       : "";
@@ -209,7 +209,7 @@ function iaRenderResposta(el, content) {
   }
 }
 
-// Mensagem da Íris (usada ao reabrir conversas)
+// Mensagem da Kym (usada ao reabrir conversas)
 function iaAddMsgBot(content) {
   const div = iaAddMsg("bot", "");
   iaRenderResposta(div, content);
@@ -235,7 +235,7 @@ async function iaCarregarLista() {
     if (!Array.isArray(IA_CONVERSAS)) IA_CONVERSAS = [];
     iaCacheGravar(IA_CACHE_LISTA, { u: iaUsuarioId(), lista: IA_CONVERSAS });
   } catch (e) {
-    console.warn("Íris: não foi possível carregar o histórico.", e);
+    console.warn("Kym: não foi possível carregar o histórico.", e);
     IA_CONVERSAS = [];
     ok = false;
   }
@@ -344,7 +344,7 @@ async function iaSalvarConversa() {
     if (IA_HISTORICO.length === 2) iaDefinirTitulo(titulo);
     await iaCarregarLista();
   } catch (e) {
-    console.warn("Íris: não foi possível salvar a conversa.", e);
+    console.warn("Kym: não foi possível salvar a conversa.", e);
   }
 }
 
