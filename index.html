@@ -3446,7 +3446,7 @@
   background: transparent;
   color: #d8b56a;
   border-radius: 999px;
-  padding: 10px 26px;
+  padding: 8px 28px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -3567,7 +3567,7 @@
     
     <div class="welcome-title">Bem-vindo ao<br><span>IBREP Prism</span></div>
     <div class="welcome-sub">
-  <button class="ia-btn-home" id="btn-area-ia" data-area="ia" onclick="openIA()">Íris</button>
+  <button class="ia-btn-home" id="btn-area-ia" data-area="ia" onclick="openIA()" aria-label="Kym"><img src="kym_logo_site.png" alt="Kym" style="height:30px;width:auto;display:block"></button>
 </div>
     <div class="welcome-buttons">
       <button class="welcome-btn" id="btn-area-calendario" data-area="calendario" onclick="openCalendario()">
@@ -4380,7 +4380,7 @@ async function garantirTelaIA() {
     telaIACarregada = true;
   } catch (e) {
     console.error("Não foi possível carregar telas/ia.html", e);
-    slot.innerHTML = '<div style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar a Íris. Recarregue a página.</div>';
+    slot.innerHTML = '<div style="padding:40px;text-align:center;color:#a33;">Não foi possível carregar a Kym. Recarregue a página.</div>';
   }
 }    
     
